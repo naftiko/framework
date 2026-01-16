@@ -1,0 +1,15 @@
+---
+naftiko: "0.2"
+capability:
+  exposes:
+  - address: "localhost"
+    port: 8080
+  consumes:
+  - expositionSuffix: "notion"
+    targetUri: "https://api.notion.com/v1/{{path}}"
+    authent:
+      type: "basic"
+      username: "scott"
+      password: "tiger"
+  - expositionSuffix: "github"
+    targetUri: "https://api.github.com/v1/{{path}}"

@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  naftiko-capability:
+    # Build the image from the Dockerfile in the current directory
+    build: .
+    image: naftiko-capability:latest
+    
+    # Mount the local file into the container
+    volumes:
+      - ./naftiko.yaml:/data/mounted-naftiko.yaml
+    
+    # Override the default entrypoint arguments
+    # We pass the path to the mounted file as an argument to the Java app
+    command: ["/data/mounted-naftiko.yaml"]
