@@ -4,6 +4,7 @@ FROM maven:3.9.6-eclipse-temurin-25 AS build
 WORKDIR /app
 COPY pom.xml .
 COPY src ./src
+
 # Build the jar
 RUN mvn clean package -DskipTests
 
@@ -12,7 +13,7 @@ FROM eclipse-temurin:25-jre-alpine
 WORKDIR /app
 
 # Copy the built jar from the build stage
-COPY --from=build /app/target/naftiko-capability-0.2-SNAPSHOT.jar app.jar
+COPY --from=build /app/target/framework-0.2-SNAPSHOT.jar app.jar
 
 # Copy a default naftiko.yaml into the image (Optional fallback)
 COPY naftiko.yaml /app/naftiko.yaml

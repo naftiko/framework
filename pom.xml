@@ -9,6 +9,7 @@
     <version>0.2-SNAPSHOT</version>
 
 	<properties>
+        <java.version>25</java.version>
         <maven.compiler.source>25</maven.compiler.source>
         <maven.compiler.target>25</maven.compiler.target>
 		<restlet.version>2.7.0-m2</restlet.version>
