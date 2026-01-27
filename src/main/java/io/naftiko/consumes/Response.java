@@ -11,11 +11,23 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package io.naftiko.adapter.http;
+package io.naftiko.consumes;
+
+import java.util.List;
 
 /**
- * HTTP Parameter representation
+ * HTTP Response representation
  */
-public class Parameter {
+public class Response {
+
+    private List<Parameter> parameters;
+
+    public Response() {
+        super();
+    }
+
+    public List<Parameter> getParameters() {
+        return parameters;
+    }
 
 }

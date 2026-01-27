@@ -6,7 +6,7 @@
 
     <groupId>io.naftiko</groupId>
     <artifactId>framework</artifactId>
-    <version>0.2-SNAPSHOT</version>
+    <version>0.3-SNAPSHOT</version>
 
 	<properties>
         <java.version>25</java.version>

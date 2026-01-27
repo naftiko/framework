@@ -11,24 +11,30 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package io.naftiko.config;
-
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+package io.naftiko.consumes.spec;
 
 /**
- * Configuration for forwarding trusted headers
+ * OAuth Bearer Token Authentication Specification Element
  */
-public class ForwardConfig {
+public class BearerAuthenticationSpec extends AuthenticationSpec {
 
-    private final List<String> trustedHeaders;
+    private volatile String token;
 
-    ForwardConfig() {
-        this.trustedHeaders = new CopyOnWriteArrayList<>();
+    public BearerAuthenticationSpec() {
+        this(null);
     }
 
-    public List<String> getTrustedHeaders() {
-        return trustedHeaders;
+    public BearerAuthenticationSpec(String token) {
+        super("bearer");
+        this.token = token;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
     }
 
 }

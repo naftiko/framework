@@ -1,0 +1,44 @@
+/**
+ * Copyright 2025-2026 Naftiko
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ */
+package io.naftiko.exposes;
+
+import org.restlet.Restlet;
+import org.restlet.routing.TemplateRoute;
+import org.restlet.routing.Variable;
+import io.naftiko.Capability;
+import io.naftiko.exposes.spec.ApiResourceSpec;
+import io.naftiko.exposes.spec.ApiServerSpec;
+
+/**
+ * Implementation of the ServerAdapter abstract class that sets up an HTTP server using the Restlet
+ * Framework acting as a spec-driven API server.
+ */
+public class ApiServerAdapter extends ServerAdapter {
+
+    public ApiServerAdapter(Capability capability, ApiServerSpec serverConfig) {
+        super(capability, serverConfig);
+
+        for (ApiResourceSpec res : getApiServerConfig().getResources()) {
+            String pathTemplate = toUriTemplate(res.getPath());
+            Restlet resourceRestlet = new ApiOperationsRestlet(capability, res);
+            TemplateRoute route = getRouter().attach(pathTemplate, resourceRestlet);
+            route.getTemplate().getVariables().put("path", new Variable(Variable.TYPE_URI_PATH));
+        }
+    }
+
+    public ApiServerSpec getApiServerConfig() {
+        return (ApiServerSpec) getConfig();
+    }
+
+}

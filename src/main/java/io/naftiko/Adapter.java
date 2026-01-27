@@ -21,5 +21,15 @@ public abstract class Adapter {
     public abstract void start() throws Exception;
 
     public abstract void stop() throws Exception;
-    
+        
+    /**
+     * Converts a Mustache template to a URI template.
+     *
+     * @param mustacheTemplate the Mustache template
+     * @return the URI template
+     */
+    public static String toUriTemplate(String mustacheTemplate) {
+        return mustacheTemplate.replaceAll("\\{\\{(\\w+)\\}\\}", "{$1}");
+    }
+
 }

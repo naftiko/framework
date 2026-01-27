@@ -11,22 +11,22 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package io.naftiko.config;
+package io.naftiko.consumes.spec;
 
 /**
- * HTTP Basic Authentication Configuration
+ * HTTP Digest Authentication Specification Element
  */
-public class BasicAuthenticationConfig extends AuthenticationConfig {
+public class DigestAuthenticationSpec extends AuthenticationSpec {
 
     private volatile String username;
     private volatile char[] password;
 
-    public BasicAuthenticationConfig() {
+    public DigestAuthenticationSpec() {
         this(null, null);
     }
 
-    public BasicAuthenticationConfig(String username, char[] password) {
-        super("basic");
+    public DigestAuthenticationSpec(String username, char[] password) {
+        super("digest");
         this.username = username;
         this.password = password;
     }
