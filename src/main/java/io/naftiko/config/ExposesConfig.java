@@ -13,9 +13,6 @@
  */
 package io.naftiko.config;
 
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-
 /**
  * Configuration of exposed adapter endpoints
  */
@@ -25,7 +22,7 @@ public class ExposesConfig {
 
     private volatile int port;
 
-    private final List<String> forwardHeaders;
+    private volatile ForwardConfig forward;
 
     public ExposesConfig() {
         this("localhost", 0);
@@ -34,7 +31,7 @@ public class ExposesConfig {
     public ExposesConfig(String address, int port) {
         this.address = address;
         this.port = port;
-        this.forwardHeaders = new CopyOnWriteArrayList<>();
+        this.forward = null;
     }
 
     public String getAddress() {
@@ -53,8 +50,12 @@ public class ExposesConfig {
         this.port = port;
     }
 
-    public List<String> getForwardHeaders() {
-        return forwardHeaders;
+    public ForwardConfig getForward() {
+        return forward;
+    }
+
+    public void setForward(ForwardConfig forward) {
+        this.forward = forward;
     }
 
 }

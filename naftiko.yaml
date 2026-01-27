@@ -7,7 +7,8 @@ capability:
   exposes:
   - address: "localhost"
     port: 8080
-    forwardHeaders:
+    forward:
+      trustedHeaders:
       - "X-Notion"
   consumes:
   - expositionSuffix: "notion"
