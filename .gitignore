@@ -1,2 +1,3 @@
 /target/classes
 .DS_Store
+/src/.vscode
