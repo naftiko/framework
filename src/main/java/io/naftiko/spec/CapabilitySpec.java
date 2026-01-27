@@ -11,35 +11,32 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package io.naftiko.adapter.http;
+package io.naftiko.spec;
 
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import io.naftiko.consumes.spec.HttpClientSpec;
+import io.naftiko.exposes.spec.ServerSpec;
 
 /**
- * HTTP Request representation
+ * Capability Specification Element
  */
-public class Request {
+public class CapabilitySpec {
 
-    private volatile String httpMethod;
+    private final List<ServerSpec> exposes;
+    private final List<HttpClientSpec> consumes;
 
-    private volatile String targetUri;
-
-    private List<Parameter> parameters;
-
-    public Request() {
-        super();
+    public CapabilitySpec() {
+        this.exposes = new CopyOnWriteArrayList<>();
+        this.consumes = new CopyOnWriteArrayList<>();
     }
 
-    public List<Parameter> getParameters() {
-        return parameters;
+    public List<ServerSpec> getExposes() {
+        return exposes;
     }
 
-    public String getHttpMethod() {
-        return httpMethod;
-    }
-
-    public String getTargetUri() {
-        return targetUri;
+    public List<HttpClientSpec> getConsumes() {
+        return consumes;
     }
 
 }

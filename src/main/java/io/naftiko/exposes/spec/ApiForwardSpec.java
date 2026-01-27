@@ -11,30 +11,39 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package io.naftiko.config;
+package io.naftiko.exposes.spec;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * Capability Configuration
+ * Specification Element for forwarding trusted headers
  */
-public class CapabilityConfig {
+public class ApiForwardSpec {
 
-    private final List<ExposesConfig> exposes;
-    private final List<ConsumesConfig> consumes;
+    private volatile String targetNamespace;
 
-    public CapabilityConfig() {
-        this.exposes = new CopyOnWriteArrayList<>();
-        this.consumes = new CopyOnWriteArrayList<>();
+    private final List<String> trustedHeaders;
+
+    public ApiForwardSpec() {
+        this(null);
     }
 
-    public List<ExposesConfig> getExposes() {
-        return exposes;
+    public ApiForwardSpec(String targetNamespace) {
+        this.targetNamespace = targetNamespace;
+        this.trustedHeaders = new CopyOnWriteArrayList<>();
     }
 
-    public List<ConsumesConfig> getConsumes() {
-        return consumes;
+    public String getTargetNamespace() {
+        return targetNamespace;
+    }
+
+    public void setTargetNamespace(String targetNamespace) {
+        this.targetNamespace = targetNamespace;
+    }
+
+    public List<String> getTrustedHeaders() {
+        return trustedHeaders;
     }
 
 }
