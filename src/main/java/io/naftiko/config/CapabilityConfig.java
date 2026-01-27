@@ -21,8 +21,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class CapabilityConfig {
 
-    private volatile List<ExposesConfig> exposes;
-    private volatile List<ConsumesConfig> consumes;
+    private final List<ExposesConfig> exposes;
+    private final List<ConsumesConfig> consumes;
 
     public CapabilityConfig() {
         this.exposes = new CopyOnWriteArrayList<>();

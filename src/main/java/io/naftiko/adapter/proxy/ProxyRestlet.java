@@ -100,6 +100,15 @@ public class ProxyRestlet extends Restlet {
             }
         }
 
+        // Copy forward headers from the original request
+        for (String header : proxyAdapter.getExposesConfig().getForwardHeaders()) {
+            String headerValue = request.getHeaders().getFirstValue(header);
+            
+            if (headerValue != null) {
+                clientRequest.getHeaders().add(header, headerValue);
+            }
+        }
+
         // Forward the request to the target endpoint
         getHttpAdapter().getHttpClient().handle(clientRequest, clientResponse);
         response.setStatus(clientResponse.getStatus());
