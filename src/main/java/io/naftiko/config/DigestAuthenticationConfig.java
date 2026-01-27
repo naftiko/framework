@@ -16,16 +16,16 @@ package io.naftiko.config;
 /**
  * HTTP Digest Authentication Configuration
  */
-public class DigestAuthConfig extends AuthConfig {
+public class DigestAuthenticationConfig extends AuthenticationConfig {
 
     private volatile String username;
     private volatile char[] password;
 
-    public DigestAuthConfig() {
+    public DigestAuthenticationConfig() {
         this(null, null);
     }
 
-    public DigestAuthConfig(String username, char[] password) {
+    public DigestAuthenticationConfig(String username, char[] password) {
         super("digest");
         this.username = username;
         this.password = password;

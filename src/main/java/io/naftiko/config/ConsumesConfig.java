@@ -26,12 +26,12 @@ public class ConsumesConfig {
     private volatile String targetUri;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    private volatile AuthConfig authent;
+    private volatile AuthenticationConfig authentication;
 
-    public ConsumesConfig(String expositionSuffix, String targetUri, AuthConfig authent) {
+    public ConsumesConfig(String expositionSuffix, String targetUri, AuthenticationConfig authentication) {
         this.expositionSuffix = expositionSuffix;
         this.targetUri = targetUri;
-        this.authent = authent;
+        this.authentication = authentication;
     }
 
     public ConsumesConfig(String targetUri) {
@@ -58,12 +58,12 @@ public class ConsumesConfig {
         this.targetUri = targetUri;
     }
 
-    public AuthConfig getAuthent() {
-        return authent;
+    public AuthenticationConfig getAuthentication() {
+        return authentication;
     }
 
-    public void setAuthent(AuthConfig authent) {
-        this.authent = authent;
+    public void setAuthentication(AuthenticationConfig authentication) {
+        this.authentication = authentication;
     }
 
 }

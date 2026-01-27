@@ -14,27 +14,37 @@
 package io.naftiko.config;
 
 /**
- * OAuth Bearer Token Authentication Configuration
+ * Info Configuration
  */
-public class BearerAuthConfig extends AuthConfig {
+public class InfoConfig {
 
-    private volatile String token;
+    private volatile String name;
 
-    public BearerAuthConfig() {
-        this(null);
+    private volatile String description;
+
+    public InfoConfig(String name, String description) {
+        this.name = name;
+        this.description = description  ;
     }
 
-    public BearerAuthConfig(String token) {
-        super("bearer");
-        this.token = token;
+    InfoConfig() {
+        this(null, null);
     }
 
-    public String getToken() {
-        return token;
+    public String getName() {
+        return name;
     }
 
-    public void setToken(String token) {
-        this.token = token;
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+    
+    public void setDescription(String description) {
+        this.description = description;
     }
 
 }

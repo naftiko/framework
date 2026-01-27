@@ -16,16 +16,16 @@ package io.naftiko.config;
 /**
  * HTTP Basic Authentication Configuration
  */
-public class BasicAuthConfig extends AuthConfig {
+public class BasicAuthenticationConfig extends AuthenticationConfig {
 
     private volatile String username;
     private volatile char[] password;
 
-    public BasicAuthConfig() {
+    public BasicAuthenticationConfig() {
         this(null, null);
     }
 
-    public BasicAuthConfig(String username, char[] password) {
+    public BasicAuthenticationConfig(String username, char[] password) {
         super("basic");
         this.username = username;
         this.password = password;

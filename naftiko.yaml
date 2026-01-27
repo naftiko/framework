@@ -1,5 +1,8 @@
 ---
 naftiko: "0.2"
+info:
+  name: "Notion capability"
+  description: "This is a capability enabling consumption of Notion API."
 capability:
   exposes:
   - address: "localhost"
@@ -7,9 +10,10 @@ capability:
   consumes:
   - expositionSuffix: "notion"
     targetUri: "https://api.notion.com/v1/{{path}}"
-    authent:
+    authentication:
       type: "basic"
       username: "scott"
       password: "tiger"
   - expositionSuffix: "github"
     targetUri: "https://api.github.com/v1/{{path}}"
+    

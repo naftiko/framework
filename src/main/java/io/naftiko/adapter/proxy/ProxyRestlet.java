@@ -19,12 +19,12 @@ import org.restlet.Restlet;
 import org.restlet.data.ChallengeResponse;
 import org.restlet.data.ChallengeScheme;
 import io.naftiko.adapter.http.HttpAdapter;
-import io.naftiko.config.ApiKeyAuthConfig;
-import io.naftiko.config.AuthConfig;
-import io.naftiko.config.BasicAuthConfig;
-import io.naftiko.config.BearerAuthConfig;
+import io.naftiko.config.ApiKeyAuthenticationConfig;
+import io.naftiko.config.AuthenticationConfig;
+import io.naftiko.config.BasicAuthenticationConfig;
+import io.naftiko.config.BearerAuthenticationConfig;
 import io.naftiko.config.ConsumesConfig;
-import io.naftiko.config.DigestAuthConfig;
+import io.naftiko.config.DigestAuthenticationConfig;
 
 /**
  * Proxy Restlet to handle incoming requests and forward them to target endpoints
@@ -48,16 +48,16 @@ public class ProxyRestlet extends Restlet {
         Response clientResponse = new Response(clientRequest);
         clientRequest.setEntity(request.getEntity());
 
-        AuthConfig authConfig = consumesConfig.getAuthent();
+        AuthenticationConfig authenticationConfig = consumesConfig.getAuthentication();
 
-        if (authConfig != null) {
+        if (authenticationConfig != null) {
             // Add authentication headers if needed
-            String type = authConfig.getType();
+            String type = authenticationConfig.getType();
             ChallengeResponse challengeResponse = null;
 
             switch (type) {
                 case "basic":
-                    BasicAuthConfig basicAuth = (BasicAuthConfig) authConfig;
+                    BasicAuthenticationConfig basicAuth = (BasicAuthenticationConfig) authenticationConfig;
                     challengeResponse = new ChallengeResponse(ChallengeScheme.HTTP_BASIC);
                     challengeResponse.setIdentifier(basicAuth.getUsername());
                     challengeResponse.setSecret(basicAuth.getPassword());
@@ -65,7 +65,7 @@ public class ProxyRestlet extends Restlet {
                     break;
 
                 case "digest":
-                    DigestAuthConfig digestAuth = (DigestAuthConfig) authConfig;
+                    DigestAuthenticationConfig digestAuth = (DigestAuthenticationConfig) authenticationConfig;
                     challengeResponse = new ChallengeResponse(ChallengeScheme.HTTP_DIGEST);
                     challengeResponse.setIdentifier(digestAuth.getUsername());
                     challengeResponse.setSecret(digestAuth.getPassword());
@@ -73,7 +73,7 @@ public class ProxyRestlet extends Restlet {
                     break;
 
                 case "bearer":
-                    BearerAuthConfig bearerAuth = (BearerAuthConfig) authConfig;
+                    BearerAuthenticationConfig bearerAuth = (BearerAuthenticationConfig) authenticationConfig;
                     challengeResponse =
                             new ChallengeResponse(ChallengeScheme.HTTP_OAUTH_BEARER);
                     challengeResponse.setRawValue(bearerAuth.getToken());
@@ -81,7 +81,7 @@ public class ProxyRestlet extends Restlet {
                     break;
 
                 case "apikey":
-                    ApiKeyAuthConfig apiKeyAuth = (ApiKeyAuthConfig) authConfig;
+                    ApiKeyAuthenticationConfig apiKeyAuth = (ApiKeyAuthenticationConfig) authenticationConfig;
                     String key = apiKeyAuth.getKey();
                     String value = apiKeyAuth.getValue();
                     String placement = apiKeyAuth.getPlacement();

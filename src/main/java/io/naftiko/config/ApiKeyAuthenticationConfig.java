@@ -16,17 +16,17 @@ package io.naftiko.config;
 /**
  * API Key Authentication Configuration
  */
-public class ApiKeyAuthConfig extends AuthConfig {
+public class ApiKeyAuthenticationConfig extends AuthenticationConfig {
 
     private volatile String key;
     private volatile String placement;
     private volatile String value;
 
-    public ApiKeyAuthConfig() {
+    public ApiKeyAuthenticationConfig() {
         this(null, null, null);
     }   
 
-    public ApiKeyAuthConfig(String key, String placement, String value) {
+    public ApiKeyAuthenticationConfig(String key, String placement, String value) {
         super("apikey");
         this.key = key;
         this.placement = placement;

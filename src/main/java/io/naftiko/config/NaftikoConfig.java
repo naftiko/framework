@@ -25,11 +25,18 @@ public class NaftikoConfig {
 
     private volatile String naftiko;
 
+    private volatile InfoConfig info;
+
     private volatile CapabilityConfig capability;
 
+    public NaftikoConfig(String naftiko, InfoConfig info, CapabilityConfig capability) {
+        this.naftiko = naftiko;
+        this.info = info;
+        this.capability = capability;
+    }
+
     public NaftikoConfig() {
-        this.naftiko = "0.2";
-        this.capability = new CapabilityConfig();
+        this(null, null, null);
     }
 
     public String getNaftiko() {
@@ -39,7 +46,15 @@ public class NaftikoConfig {
     public void setNaftiko(String naftiko) {
         this.naftiko = naftiko;
     }
-    
+
+    public InfoConfig getInfo() {
+        return info;
+    }
+
+    public void setInfo(InfoConfig info) {
+        this.info = info;
+    }
+
     public CapabilityConfig getCapability() {
         return capability;
     }
@@ -52,21 +67,27 @@ public class NaftikoConfig {
         try {
             // Serialize to JSON
             NaftikoConfig config = new NaftikoConfig();
+            config.setNaftiko("0.2");
+            config.setInfo(
+                    new InfoConfig("Sample Capability", "A sample capability configuration"));
+            config.setCapability(new CapabilityConfig());
             List<ExposesConfig> exposesConfigs = config.getCapability().getExposes();
-            
+
             ExposesConfig exposes = new ExposesConfig("localhost", 8080);
             exposesConfigs.add(exposes);
 
             List<ConsumesConfig> consumesConfigs = config.getCapability().getConsumes();
-            ConsumesConfig consumes = new ConsumesConfig("notion", "https://api.notion.com/v1/{{path}}", null);
+            ConsumesConfig consumes =
+                    new ConsumesConfig("notion", "https://api.notion.com/v1/{{path}}", null);
             consumesConfigs.add(consumes);
 
-            BasicAuthConfig basicAuth = new BasicAuthConfig("scott", "tiger".toCharArray());
-            consumes.setAuthent(basicAuth);
+            BasicAuthenticationConfig basicAuth =
+                    new BasicAuthenticationConfig("scott", "tiger".toCharArray());
+            consumes.setAuthentication(basicAuth);
 
             consumes = new ConsumesConfig("github", "https://api.github.com/v1/{{path}}", null);
             consumesConfigs.add(consumes);
- 
+
             YAMLFactory yamlFactory = new YAMLFactory();
             ObjectMapper objectMapper = new ObjectMapper(yamlFactory);
             String output = objectMapper.writeValueAsString(config);

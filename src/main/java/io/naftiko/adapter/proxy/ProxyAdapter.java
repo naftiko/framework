@@ -34,18 +34,27 @@ public class ProxyAdapter extends Adapter {
     private final Server server;
     private final Router router;
 
-    public ProxyAdapter(Capability capability, ExposesConfig exposesConfig)  {
+    public ProxyAdapter(Capability capability, ExposesConfig exposesConfig) {
         this.capability = capability;
-        this.server = new Server(Protocol.HTTP, exposesConfig.getAddress(),
-                exposesConfig.getPort());
+        this.server =
+                new Server(Protocol.HTTP, exposesConfig.getAddress(), exposesConfig.getPort());
         this.router = new Router();
+        boolean expositionSuffixRequired = getConsumesConfig().size() > 1;
 
-        for(ConsumesConfig config : getConsumesConfig()) {
+        for (ConsumesConfig config : getConsumesConfig()) {
             // Initialize each consume config if needed
             ProxyRestlet proxy = new ProxyRestlet(this, config);
-            TemplateRoute route = this.router.attach('/' + config.getExpositionSuffix() + "/{path}", proxy);
+            String pathTemplate = "/{path}";
+
+            if (expositionSuffixRequired && (config.getExpositionSuffix() == null
+                    || config.getExpositionSuffix().isEmpty())) {
+                throw new IllegalArgumentException(
+                        "An expositionSuffix is required when more than one source API is proxied.");
+            }
+
+            TemplateRoute route = this.router.attach(pathTemplate, proxy);
             route.getTemplate().getVariables().put("path", new Variable(Variable.TYPE_URI_PATH));
-        }   
+        }
 
         this.server.setNext(this.router);
     }

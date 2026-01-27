@@ -25,14 +25,16 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
     property = "type" // The name of the JSON property holding the type identifier
 )
 @JsonSubTypes({
-    @JsonSubTypes.Type(value = BasicAuthConfig.class, name = "basic"),
-    @JsonSubTypes.Type(value = ApiKeyAuthConfig.class, name = "apikey")
+    @JsonSubTypes.Type(value = ApiKeyAuthenticationConfig.class, name = "apikey"),
+    @JsonSubTypes.Type(value = BasicAuthenticationConfig.class, name = "basic"),
+    @JsonSubTypes.Type(value = BearerAuthenticationConfig.class, name = "bearer"),
+    @JsonSubTypes.Type(value = DigestAuthenticationConfig.class, name = "digest")
 })
-public abstract class AuthConfig {
+public abstract class AuthenticationConfig {
 
     private volatile String type;
 
-    public AuthConfig(String type) {
+    public AuthenticationConfig(String type) {
         this.type = type;
     }
 
