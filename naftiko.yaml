@@ -7,6 +7,9 @@ capability:
   exposes:
   - address: "localhost"
     port: 8080
+    forward:
+      trustedHeaders:
+      - "X-Notion"
   consumes:
   - expositionSuffix: "notion"
     targetUri: "https://api.notion.com/v1/{{path}}"

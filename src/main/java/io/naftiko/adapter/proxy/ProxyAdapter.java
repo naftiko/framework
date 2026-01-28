@@ -33,9 +33,11 @@ public class ProxyAdapter extends Adapter {
     private final Capability capability;
     private final Server server;
     private final Router router;
+    private final ExposesConfig exposesConfig;
 
     public ProxyAdapter(Capability capability, ExposesConfig exposesConfig) {
         this.capability = capability;
+        this.exposesConfig = exposesConfig;
         this.server =
                 new Server(Protocol.HTTP, exposesConfig.getAddress(), exposesConfig.getPort());
         this.router = new Router();
@@ -67,8 +69,8 @@ public class ProxyAdapter extends Adapter {
         return getCapability().getConfig().getCapability().getConsumes();
     }
 
-    public List<ExposesConfig> getExposesConfig() {
-        return getCapability().getConfig().getCapability().getExposes();
+    public ExposesConfig getExposesConfig() {
+        return exposesConfig;
     }
 
     public Server getServer() {

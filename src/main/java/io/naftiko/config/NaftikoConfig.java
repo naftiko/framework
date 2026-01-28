@@ -67,13 +67,16 @@ public class NaftikoConfig {
         try {
             // Serialize to JSON
             NaftikoConfig config = new NaftikoConfig();
-            config.setNaftiko("0.2");
+            config.setNaftiko("0.3");
             config.setInfo(
                     new InfoConfig("Sample Capability", "A sample capability configuration"));
             config.setCapability(new CapabilityConfig());
             List<ExposesConfig> exposesConfigs = config.getCapability().getExposes();
 
             ExposesConfig exposes = new ExposesConfig("localhost", 8080);
+            ForwardConfig forwardConfig = new ForwardConfig();
+            forwardConfig.getTrustedHeaders().add("Notion-Version");
+            exposes.setForward(forwardConfig);
             exposesConfigs.add(exposes);
 
             List<ConsumesConfig> consumesConfigs = config.getCapability().getConsumes();

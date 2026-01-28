@@ -22,6 +22,8 @@ public class ExposesConfig {
 
     private volatile int port;
 
+    private volatile ForwardConfig forward;
+
     public ExposesConfig() {
         this("localhost", 0);
     }
@@ -29,6 +31,7 @@ public class ExposesConfig {
     public ExposesConfig(String address, int port) {
         this.address = address;
         this.port = port;
+        this.forward = null;
     }
 
     public String getAddress() {
@@ -45,6 +48,14 @@ public class ExposesConfig {
 
     public void setPort(int port) {
         this.port = port;
+    }
+
+    public ForwardConfig getForward() {
+        return forward;
+    }
+
+    public void setForward(ForwardConfig forward) {
+        this.forward = forward;
     }
 
 }

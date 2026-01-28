@@ -57,7 +57,8 @@ public class ProxyRestlet extends Restlet {
 
             switch (type) {
                 case "basic":
-                    BasicAuthenticationConfig basicAuth = (BasicAuthenticationConfig) authenticationConfig;
+                    BasicAuthenticationConfig basicAuth =
+                            (BasicAuthenticationConfig) authenticationConfig;
                     challengeResponse = new ChallengeResponse(ChallengeScheme.HTTP_BASIC);
                     challengeResponse.setIdentifier(basicAuth.getUsername());
                     challengeResponse.setSecret(basicAuth.getPassword());
@@ -65,7 +66,8 @@ public class ProxyRestlet extends Restlet {
                     break;
 
                 case "digest":
-                    DigestAuthenticationConfig digestAuth = (DigestAuthenticationConfig) authenticationConfig;
+                    DigestAuthenticationConfig digestAuth =
+                            (DigestAuthenticationConfig) authenticationConfig;
                     challengeResponse = new ChallengeResponse(ChallengeScheme.HTTP_DIGEST);
                     challengeResponse.setIdentifier(digestAuth.getUsername());
                     challengeResponse.setSecret(digestAuth.getPassword());
@@ -73,15 +75,16 @@ public class ProxyRestlet extends Restlet {
                     break;
 
                 case "bearer":
-                    BearerAuthenticationConfig bearerAuth = (BearerAuthenticationConfig) authenticationConfig;
-                    challengeResponse =
-                            new ChallengeResponse(ChallengeScheme.HTTP_OAUTH_BEARER);
+                    BearerAuthenticationConfig bearerAuth =
+                            (BearerAuthenticationConfig) authenticationConfig;
+                    challengeResponse = new ChallengeResponse(ChallengeScheme.HTTP_OAUTH_BEARER);
                     challengeResponse.setRawValue(bearerAuth.getToken());
                     clientRequest.setChallengeResponse(challengeResponse);
                     break;
 
                 case "apikey":
-                    ApiKeyAuthenticationConfig apiKeyAuth = (ApiKeyAuthenticationConfig) authenticationConfig;
+                    ApiKeyAuthenticationConfig apiKeyAuth =
+                            (ApiKeyAuthenticationConfig) authenticationConfig;
                     String key = apiKeyAuth.getKey();
                     String value = apiKeyAuth.getValue();
                     String placement = apiKeyAuth.getPlacement();
@@ -97,6 +100,15 @@ public class ProxyRestlet extends Restlet {
 
                 default:
                     break;
+            }
+        }
+
+        // Copy forward headers from the original request
+        for (String header : proxyAdapter.getExposesConfig().getForward().getTrustedHeaders()) {
+            String headerValue = request.getHeaders().getFirstValue(header, true);
+
+            if (headerValue != null) {
+                clientRequest.getHeaders().add(header, headerValue);
             }
         }
 

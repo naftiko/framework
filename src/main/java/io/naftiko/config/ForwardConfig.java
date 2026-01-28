@@ -17,24 +17,18 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * Capability Configuration
+ * Configuration for forwarding trusted headers
  */
-public class CapabilityConfig {
+public class ForwardConfig {
 
-    private final List<ExposesConfig> exposes;
-    private final List<ConsumesConfig> consumes;
+    private final List<String> trustedHeaders;
 
-    public CapabilityConfig() {
-        this.exposes = new CopyOnWriteArrayList<>();
-        this.consumes = new CopyOnWriteArrayList<>();
+    ForwardConfig() {
+        this.trustedHeaders = new CopyOnWriteArrayList<>();
     }
 
-    public List<ExposesConfig> getExposes() {
-        return exposes;
-    }
-
-    public List<ConsumesConfig> getConsumes() {
-        return consumes;
+    public List<String> getTrustedHeaders() {
+        return trustedHeaders;
     }
 
 }
