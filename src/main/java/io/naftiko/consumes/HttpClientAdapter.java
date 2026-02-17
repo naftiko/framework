@@ -38,26 +38,26 @@ public class HttpClientAdapter extends Adapter {
 
     private volatile Capability capability;
 
-    private volatile HttpClientSpec config;
+    private volatile HttpClientSpec spec;
 
     private final Client httpClient;
 
-    public HttpClientAdapter(Capability capability, HttpClientSpec config) {
+    public HttpClientAdapter(Capability capability, HttpClientSpec spec) {
         this.capability = capability;
-        this.config = config;
+        this.spec = spec;
         this.httpClient = new Client(HTTP, HTTPS);
     }
 
     /**
-     * Finds the OperationConfig for a given operationId by searching through all resources and
+     * Finds the OperationSpec for a given operationId by searching through all resources and
      * their operations.
      * 
      * @param operationId The ID of the operation to find
-     * @return The OperationConfig if found, or null if not found
+     * @return The OperationSpec if found, or null if not found
      */
-    public OperationSpec getOperationConfig(String operationId) {
-        for (HttpResourceSpec resourceConfig : getConfig().getResources()) {
-            for (OperationSpec op : resourceConfig.getOperations()) {
+    public OperationSpec getOperationSpec(String operationId) {
+        for (HttpResourceSpec res : getSpec().getResources()) {
+            for (OperationSpec op : res.getOperations()) {
                 if (op.getName().equals(operationId)) {
                     return op;
                 }
@@ -72,7 +72,7 @@ public class HttpClientAdapter extends Adapter {
      */
     public void setHeaders(Request request) {
         // Set any default headers from the input parameters
-        for (ParameterSpec param : getConfig().getInputParameters()) {
+        for (ParameterSpec param : getSpec().getInputParameters()) {
             if ("header".equals(param.getIn())) {
                 request.getHeaders().set(param.getName(), param.getValue());
             }
@@ -80,20 +80,20 @@ public class HttpClientAdapter extends Adapter {
     }
 
     /**
-     * Set the appropriate authentication headers on the client request based on the configuration
+     * Set the appropriate authentication headers on the client request based on the specification
      */
     public void setChallengeResponse(Request request, String targetRef) {
-        AuthenticationSpec authenticationConfig = getConfig().getAuthentication();
+        AuthenticationSpec authenticationSpec = getSpec().getAuthentication();
 
-        if (authenticationConfig != null) {
+        if (authenticationSpec != null) {
             // Add authentication headers if needed
-            String type = authenticationConfig.getType();
+            String type = authenticationSpec.getType();
             ChallengeResponse challengeResponse = null;
 
             switch (type) {
                 case "basic":
                     BasicAuthenticationSpec basicAuth =
-                            (BasicAuthenticationSpec) authenticationConfig;
+                            (BasicAuthenticationSpec) authenticationSpec;
                     challengeResponse = new ChallengeResponse(ChallengeScheme.HTTP_BASIC);
                     challengeResponse.setIdentifier(basicAuth.getUsername());
                     challengeResponse.setSecret(basicAuth.getPassword());
@@ -102,7 +102,7 @@ public class HttpClientAdapter extends Adapter {
 
                 case "digest":
                     DigestAuthenticationSpec digestAuth =
-                            (DigestAuthenticationSpec) authenticationConfig;
+                            (DigestAuthenticationSpec) authenticationSpec;
                     challengeResponse = new ChallengeResponse(ChallengeScheme.HTTP_DIGEST);
                     challengeResponse.setIdentifier(digestAuth.getUsername());
                     challengeResponse.setSecret(digestAuth.getPassword());
@@ -111,7 +111,7 @@ public class HttpClientAdapter extends Adapter {
 
                 case "bearer":
                     BearerAuthenticationSpec bearerAuth =
-                            (BearerAuthenticationSpec) authenticationConfig;
+                            (BearerAuthenticationSpec) authenticationSpec;
                     challengeResponse = new ChallengeResponse(ChallengeScheme.HTTP_OAUTH_BEARER);
                     challengeResponse.setRawValue(bearerAuth.getToken());
                     request.setChallengeResponse(challengeResponse);
@@ -119,7 +119,7 @@ public class HttpClientAdapter extends Adapter {
 
                 case "apikey":
                     ApiKeyAuthenticationSpec apiKeyAuth =
-                            (ApiKeyAuthenticationSpec) authenticationConfig;
+                            (ApiKeyAuthenticationSpec) authenticationSpec;
                     String key = apiKeyAuth.getKey();
                     String value = apiKeyAuth.getValue();
                     String placement = apiKeyAuth.getPlacement();
@@ -147,12 +147,12 @@ public class HttpClientAdapter extends Adapter {
         this.capability = capability;
     }
 
-    public HttpClientSpec getConfig() {
-        return config;
+    public HttpClientSpec getSpec() {
+        return spec;
     }
 
-    public void setConfig(HttpClientSpec config) {
-        this.config = config;
+    public void setSpec(HttpClientSpec spec) {
+        this.spec = spec;
     }
 
     public Client getHttpClient() {

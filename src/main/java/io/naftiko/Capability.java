@@ -32,12 +32,12 @@ import io.naftiko.spec.NaftikoSpec;
  */
 public class Capability {
 
-    private volatile NaftikoSpec config;
+    private volatile NaftikoSpec spec;
     private volatile List<ServerAdapter> serverAdapters;
     private volatile List<HttpClientAdapter> httpClientAdapters;
 
-    public Capability(NaftikoSpec config) {
-        this.config = config;
+    public Capability(NaftikoSpec spec) {
+        this.spec = spec;
 
         // Initialize HTTP client adapters first
         this.httpClientAdapters = new CopyOnWriteArrayList<>();
@@ -45,33 +45,33 @@ public class Capability {
         // Then initialize server adapters with reference to source adapters
         this.serverAdapters = new CopyOnWriteArrayList<>();
 
-        if (config.getCapability().getExposes().isEmpty()) {
+        if (spec.getCapability().getExposes().isEmpty()) {
             throw new IllegalArgumentException("Capability must expose at least one endpoint.");
         }
 
-        for (ServerSpec serverConfig : config.getCapability().getExposes()) {
+        for (ServerSpec serverConfig : spec.getCapability().getExposes()) {
             if ("api".equals(serverConfig.getType())) {
                 this.serverAdapters.add(new ApiServerAdapter(this, (ApiServerSpec) serverConfig));
             }
         }
 
-        if (config.getCapability().getConsumes().isEmpty()) {
+        if (spec.getCapability().getConsumes().isEmpty()) {
             throw new IllegalArgumentException("Capability must consume at least one endpoint.");
         }
 
-        for (HttpClientSpec clientConfig : config.getCapability().getConsumes()) {
+        for (HttpClientSpec clientConfig : spec.getCapability().getConsumes()) {
             if ("http".equals(clientConfig.getType())) {
                 this.httpClientAdapters.add(new HttpClientAdapter(this, clientConfig));
             }
         }
     }
 
-    public NaftikoSpec getConfig() {
-        return config;
+    public NaftikoSpec getSpec() {
+        return spec;
     }
 
-    public void setConfig(NaftikoSpec config) {
-        this.config = config;
+    public void setSpec(NaftikoSpec config) {
+        this.spec = config;
     }
 
     public List<HttpClientAdapter> getHttpClientAdapters() {
@@ -121,8 +121,8 @@ public class Capability {
                 ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
                 // Ignore unknown properties to handle potential Restlet framework classes
                 mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-                NaftikoSpec config = mapper.readValue(file, NaftikoSpec.class);
-                Capability capability = new Capability(config);
+                NaftikoSpec spec = mapper.readValue(file, NaftikoSpec.class);
+                Capability capability = new Capability(spec);
                 capability.start();
                 System.out.println("Capability started successfully.");
             } catch (Exception e) {

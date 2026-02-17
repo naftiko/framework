@@ -26,10 +26,10 @@ import io.naftiko.exposes.spec.ApiServerSpec;
  */
 public class ApiServerAdapter extends ServerAdapter {
 
-    public ApiServerAdapter(Capability capability, ApiServerSpec serverConfig) {
-        super(capability, serverConfig);
+    public ApiServerAdapter(Capability capability, ApiServerSpec serverSpec) {
+        super(capability, serverSpec);
 
-        for (ApiResourceSpec res : getApiServerConfig().getResources()) {
+        for (ApiResourceSpec res : getApiServerSpec().getResources()) {
             String pathTemplate = toUriTemplate(res.getPath());
             Restlet resourceRestlet = new ApiOperationsRestlet(capability, res);
             TemplateRoute route = getRouter().attach(pathTemplate, resourceRestlet);
@@ -37,8 +37,8 @@ public class ApiServerAdapter extends ServerAdapter {
         }
     }
 
-    public ApiServerSpec getApiServerConfig() {
-        return (ApiServerSpec) getConfig();
+    public ApiServerSpec getApiServerSpec() {
+        return (ApiServerSpec) getSpec();
     }
 
 }
