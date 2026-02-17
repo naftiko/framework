@@ -17,7 +17,8 @@ public class Cli implements Runnable {
     }
     
     public static void main(String[] args) {
-        int exitCode = new CommandLine(new Cli()).execute(args);
+        CommandLine command = new CommandLine(new Cli());
+        int exitCode = command.execute(args);
         System.exit(exitCode);
     }
 }
