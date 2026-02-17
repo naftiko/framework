@@ -19,7 +19,24 @@ capability:
       address: "localhost"
       port: 9090
       namespace: "sample"
+
       resources:
+        - path: "/notion/{{path}}"
+          label: "Notion API Pass-thru Proxy"
+          description: "A proxy to forward requests to the Notion API while the capability is being configured"
+          forward:
+            targetNamespace: "notion"
+            trustedHeaders:
+              - "Notion-Version"
+
+        - path: "/github/{{path}}"
+          label: "GitHub API Pass-thru Proxy"
+          description: "A proxy to forward requests to the GitHub API while the capability is being configured"
+          forward:
+            targetNamespace: "github"
+            trustedHeaders:
+            - "Notion-Version"
+
         - path: "/users/{{username}}"
           name: "user"
           label: "User resource"
@@ -30,6 +47,7 @@ capability:
               label: "Get User"
               steps:
                 - call: "github.get-user"
+
         - path: "/databases/{{database_id}}"
           name: "db"
           label: "Database resource"
@@ -50,33 +68,19 @@ capability:
                   value: "$.notion.db.get-database.{{dbName}}"
               steps:
                 - call: "notion.get-database"
-        - path: "/notion/{{path}}"
-          label: "Notion API Pass-thru Proxy"
-          description: "A proxy to forward requests to the Notion API while the capability is being configured"
-          forward:
-            targetNamespace: "notion"
-            trustedHeaders:
-              - "Notion-Version"
-        - path: "/github/{{path}}"
-          label: "GitHub API Pass-thru Proxy"
-          description: "A proxy to forward requests to the GitHub API while the capability is being configured"
-          forward:
-            targetNamespace: "github"
-            trustedHeaders:
-            - "Notion-Version"
 
   consumes:
     - type: "http"
       namespace: "notion"
       baseUri: "https://api.notion.com/v1/"
+      authentication:
+        type: "bearer"
+        token: ""
       inputParameters:
         - name: "Notion-Version"
           in: "header"
-          value: "2022-06-28"
-      authentication:
-        type: "basic"
-        username: "scott"
-        password: "tiger"
+          value: "2025-09-03"
+
       resources:
         - path: "databases/{{database_id}}"
           name: "db"
@@ -102,6 +106,7 @@ capability:
             - method: "DELETE"
               name: "delete-database"
               label: "Delete Database"
+
         - path: "databases/{{database_id}}/query"
           name: "query-db"
           label: "Query database resource"
@@ -109,7 +114,6 @@ capability:
             - method: "POST"
               name: "query-database"
               label: "Query Database"
-
     - type: "http"
       namespace: "github"
       baseUri: "https://api.github.com/v1/"
