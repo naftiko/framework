@@ -60,13 +60,13 @@ public class ApiOperationsRestlet extends Restlet {
 
                             for (HttpClientAdapter adapter : getCapability()
                                     .getHttpClientAdapters()) {
-                                if (adapter.getConfig().getNamespace().equals(clientNamespace)) {
+                                if (adapter.getSpec().getNamespace().equals(clientNamespace)) {
                                     OperationSpec clientOp =
-                                            adapter.getOperationConfig(clientOpName);
+                                            adapter.getOperationSpec(clientOpName);
 
                                     if (clientOp != null) {
                                         ResourceSpec clientRes = clientOp.getParentResource();
-                                        String clientResUri = adapter.getConfig().getBaseUri()
+                                        String clientResUri = adapter.getSpec().getBaseUri()
                                                 + clientRes.getPath();
                                         clientRequest = new Request(
                                                 Method.valueOf(clientOp.getMethod()), clientResUri);
@@ -93,10 +93,10 @@ public class ApiOperationsRestlet extends Restlet {
 
         if (clientRequest == null && forward != null) {
             for (HttpClientAdapter adapter : getCapability().getHttpClientAdapters()) {
-                if (adapter.getConfig().getNamespace().equals(forward.getTargetNamespace())) {
+                if (adapter.getSpec().getNamespace().equals(forward.getTargetNamespace())) {
                     // Prepare the HTTP client request
                     String path = (String) request.getAttributes().get("path");
-                    String targetRef = adapter.getConfig().getBaseUri() + path;
+                    String targetRef = adapter.getSpec().getBaseUri() + path;
                     clientRequest = new Request(request.getMethod(), targetRef);
                     clientRequest.setEntity(request.getEntity());
                     clientAdapter = adapter;

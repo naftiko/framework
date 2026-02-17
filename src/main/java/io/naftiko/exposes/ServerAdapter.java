@@ -26,14 +26,14 @@ import io.naftiko.exposes.spec.ServerSpec;
 public abstract class ServerAdapter extends Adapter {
 
     private final Capability capability;
-    private final ServerSpec config;
+    private final ServerSpec spec;
     private final Server server;
     private final Router router;
 
-    public ServerAdapter(Capability capability, ServerSpec config) {
+    public ServerAdapter(Capability capability, ServerSpec spec) {
         this.capability = capability;
-        this.config = config;
-        this.server = new Server(Protocol.HTTP, config.getAddress(), config.getPort());
+        this.spec = spec;
+        this.server = new Server(Protocol.HTTP, spec.getAddress(), spec.getPort());
         this.router = new Router();
         this.server.setNext(this.router);
     }
@@ -42,8 +42,8 @@ public abstract class ServerAdapter extends Adapter {
         return capability;
     }
 
-    public ServerSpec getConfig() {
-        return config;
+    public ServerSpec getSpec() {
+        return spec;
     }
 
     public Server getServer() {
