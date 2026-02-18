@@ -16,33 +16,30 @@ package io.naftiko.spec;
 /**
  * Parameter Specification Element
  */
-public class ParameterSpec {
+public class ParameterSpec extends StructureSpec {
 
     private volatile String in;
 
-    private volatile String name;
-
-    private volatile String value;
-
-    private volatile String defaultValue;  
+    private volatile String jsonPath;
 
     public ParameterSpec() {
-        this(null, null, null, null);
+        super();
     }
 
-    public ParameterSpec(String in, String name) {
-        this(name, null, in, null);
-    }
-
-    public ParameterSpec(String in, String name, String value) {
-        this(in, name, value, null);
-    }
-
-    public ParameterSpec(String in, String name, String value, String defaultValue) {
+    public ParameterSpec(String name, String type, String in, String jsonPath) {
+        super(name, type, null, null, null, null, null, null, null, null, null, null, null);
         this.in = in;
-        this.name = name;
-        this.value = value;
-        this.defaultValue = defaultValue;
+        this.jsonPath = jsonPath;
+    }
+
+    public ParameterSpec(String name, String type, StructureSpec items, StructureSpec values,
+            String constant, String selector, String maxLength, Integer precision, Integer scale,
+            String contentEncoding, String contentCompression, String contentMediaType,
+            String description, String in, String jsonPath) {
+        super(name, type, items, values, constant, selector, maxLength, precision, scale,
+                contentEncoding, contentCompression, contentMediaType, description);
+        this.in = in;
+        this.jsonPath = jsonPath;
     }
 
     public String getIn() {
@@ -53,28 +50,12 @@ public class ParameterSpec {
         this.in = in;
     }
 
-    public String getName() {
-        return name;
+    public String getJsonPath() {
+        return jsonPath;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getValue() {
-        return value;
-    }
-
-    public void setValue(String value) {
-        this.value = value;
-    }
-
-    public String getDefaultValue() {
-        return defaultValue;
-    }
-
-    public void setDefaultValue(String defaultValue) {
-        this.defaultValue = defaultValue;
+    public void setJsonPath(String jsonPath) {
+        this.jsonPath = jsonPath;
     }
 
 }

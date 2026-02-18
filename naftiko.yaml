@@ -79,7 +79,7 @@ capability:
       inputParameters:
         - name: "Notion-Version"
           in: "header"
-          value: "2025-09-03"
+          const: "2025-09-03"
 
       resources:
         - path: "databases/{{database_id}}"
