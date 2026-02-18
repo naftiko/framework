@@ -16,7 +16,7 @@ package io.naftiko.consumes.spec;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.naftiko.spec.ParameterSpec;
+import io.naftiko.spec.InputParameterSpec;
 
 /**
  * Specification Element of consumed HTTP adapter endpoints
@@ -31,7 +31,7 @@ public class HttpClientSpec {
     private volatile String baseUri;
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private final List<ParameterSpec> inputParameters;
+    private final List<InputParameterSpec> inputParameters;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private volatile AuthenticationSpec authentication;
@@ -79,7 +79,7 @@ public class HttpClientSpec {
         this.baseUri = baseUri;
     }
 
-    public List<ParameterSpec> getInputParameters() {
+    public List<InputParameterSpec> getInputParameters() {
         return inputParameters;
     }
 

@@ -32,7 +32,7 @@ public class ResourceSpec {
     private volatile String description;
     
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private final List<ParameterSpec> inputParameters;
+    private final List<InputParameterSpec> inputParameters;
 
     public ResourceSpec() {
         this(null, null, null, null);
@@ -78,7 +78,7 @@ public class ResourceSpec {
         this.description = description;
     }
 
-    public List<ParameterSpec> getInputParameters() {
+    public List<InputParameterSpec> getInputParameters() {
         return inputParameters;
     }
 
