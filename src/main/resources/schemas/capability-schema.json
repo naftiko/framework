@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://naftiko.io/schemas/v0.3/capability.json",
-  "title": "Naftiko Capability Specification",
+  "name": "Naftiko Capability Specification",
   "description": "This Schema should be used to describe and validate Naftiko Capabilities",
   "type": "object",
   "properties": {
