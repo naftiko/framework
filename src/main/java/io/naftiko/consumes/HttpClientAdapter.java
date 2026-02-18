@@ -74,7 +74,7 @@ public class HttpClientAdapter extends Adapter {
         // Set any default headers from the input parameters
         for (ParameterSpec param : getSpec().getInputParameters()) {
             if ("header".equals(param.getIn())) {
-                request.getHeaders().set(param.getName(), param.getValue());
+                request.getHeaders().set(param.getName(), param.getConstant());
             }
         }
     }
