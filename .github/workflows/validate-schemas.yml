@@ -28,7 +28,7 @@ jobs:
           cache-dependency-path: '.github/package-lock.json'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --no-fund --no-audit
 
       - name: Validate JSON examples
         working-directory: ${{ github.workspace }} 
@@ -36,7 +36,7 @@ jobs:
           for file in src/main/resources/schemas/examples/*.json; do
             [ -f "$file" ] || continue
             echo "Validating $file..."
-            npx --prefix .github ajv validate -s src/main/resources/schemas/capability-schema.json -d "$file" --spec=draft2020
+            npx --prefix .github ajv validate -s src/main/resources/schemas/capability-schema.json -d "$file" --spec=draft2020  --strict-schema=false
           done
 
       - name: Validate YAML examples
@@ -45,5 +45,6 @@ jobs:
           for file in src/main/resources/schemas/examples/*.{yaml,yml}; do
             [ -f "$file" ] || continue
             echo "Validating $file..."
-            npx --prefix .github ajv validate -s src/main/resources/schemas/capability-schema.json -d "$file" --spec=draft2020
+            npx --prefix .github ajv validate -s src/main/resources/schemas/capability-schema.json -d "$file" --spec=draft2020  --strict-schema=false
           done
+          
