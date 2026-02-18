@@ -14,32 +14,32 @@
 package io.naftiko.spec;
 
 /**
- * Parameter Specification Element
+ * Output Parameter Specification Element
  */
-public class ParameterSpec extends StructureSpec {
+public class OutputParameterSpec extends StructureSpec {
 
     private volatile String in;
 
-    private volatile String jsonPath;
+    private volatile String valuePath;
 
-    public ParameterSpec() {
+    public OutputParameterSpec() {
         super();
     }
 
-    public ParameterSpec(String name, String type, String in, String jsonPath) {
+    public OutputParameterSpec(String name, String type, String in, String valuePath) {
         super(name, type, null, null, null, null, null, null, null, null, null, null, null);
         this.in = in;
-        this.jsonPath = jsonPath;
+        this.valuePath = valuePath;
     }
 
-    public ParameterSpec(String name, String type, StructureSpec items, StructureSpec values,
+    public OutputParameterSpec(String name, String type, StructureSpec items, StructureSpec values,
             String constant, String selector, String maxLength, Integer precision, Integer scale,
             String contentEncoding, String contentCompression, String contentMediaType,
-            String description, String in, String jsonPath) {
+            String description, String in, String valuePath) {
         super(name, type, items, values, constant, selector, maxLength, precision, scale,
                 contentEncoding, contentCompression, contentMediaType, description);
         this.in = in;
-        this.jsonPath = jsonPath;
+        this.valuePath = valuePath;
     }
 
     public String getIn() {
@@ -50,12 +50,12 @@ public class ParameterSpec extends StructureSpec {
         this.in = in;
     }
 
-    public String getJsonPath() {
-        return jsonPath;
+    public String getValuePath() {
+        return valuePath;
     }
 
-    public void setJsonPath(String jsonPath) {
-        this.jsonPath = jsonPath;
+    public void setValuePath(String valuePath) {
+        this.valuePath = valuePath;
     }
 
 }

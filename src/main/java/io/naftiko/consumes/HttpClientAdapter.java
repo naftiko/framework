@@ -26,8 +26,8 @@ import io.naftiko.consumes.spec.BearerAuthenticationSpec;
 import io.naftiko.consumes.spec.DigestAuthenticationSpec;
 import io.naftiko.consumes.spec.HttpClientSpec;
 import io.naftiko.consumes.spec.HttpResourceSpec;
+import io.naftiko.spec.InputParameterSpec;
 import io.naftiko.spec.OperationSpec;
-import io.naftiko.spec.ParameterSpec;
 import static org.restlet.data.Protocol.HTTP;
 import static org.restlet.data.Protocol.HTTPS;
 
@@ -72,7 +72,7 @@ public class HttpClientAdapter extends Adapter {
      */
     public void setHeaders(Request request) {
         // Set any default headers from the input parameters
-        for (ParameterSpec param : getSpec().getInputParameters()) {
+        for (InputParameterSpec param : getSpec().getInputParameters()) {
             if ("header".equals(param.getIn())) {
                 request.getHeaders().set(param.getName(), param.getConstant());
             }

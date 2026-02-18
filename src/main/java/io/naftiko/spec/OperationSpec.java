@@ -36,13 +36,13 @@ public class OperationSpec {
     private volatile String description;
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private final List<ParameterSpec> inputParameters;
+    private final List<InputParameterSpec> inputParameters;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private volatile String outputRawFormat;
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private final List<ParameterSpec> outputParameters;
+    private final List<OutputParameterSpec> outputParameters;
 
     public OperationSpec() {
         this(null, null, null, null, null, null);
@@ -99,7 +99,7 @@ public class OperationSpec {
         this.description = description;
     }
 
-    public List<ParameterSpec> getInputParameters() {
+    public List<InputParameterSpec> getInputParameters() {
         return inputParameters;
     }
 
@@ -111,7 +111,7 @@ public class OperationSpec {
         this.outputRawFormat = outputRawFormat;
     }
     
-    public List<ParameterSpec> getOutputParameters() {
+    public List<OutputParameterSpec> getOutputParameters() {
         return outputParameters;
     }
 
