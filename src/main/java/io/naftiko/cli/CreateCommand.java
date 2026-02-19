@@ -4,8 +4,9 @@ import picocli.CommandLine.Command;
 
 @Command(
     name = "create",
+    mixinStandardHelpOptions = true,
     aliases = {"c", "cr"},
-    description = "Create resources",
+    description = "Create a naftiko resource. Look at the subcommands to know what kind of resource.",
     subcommands = {CreateCapabilityCommand.class}
 )
 public class CreateCommand implements Runnable {

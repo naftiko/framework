@@ -12,6 +12,7 @@ import com.networknt.schema.ValidationMessage;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -19,35 +20,37 @@ import java.util.Set;
 
 @Command(
     name = "validate",
+    mixinStandardHelpOptions = true,
     aliases = {"v", "val"},
-    description = "Validate a YAML or JSON file against a JSON Schema"
+    description = "Validate a YAML or JSON capability configuration file against a JSON Schema"
 )
 public class ValidateCommand implements Runnable {
     
-    @Parameters(index = "0", description = "Path to the YAML or JSON file to validate")
+    @Parameters(index = "0", description = "Path to the YAML or JSON capability configuration file to validate")
     private String filePath;
-    
-    @Parameters(index = "1", description = "Path to the JSON Schema file")
-    private String schemaPath;
+
+    @Parameters(index = "1", description = "Version of the schema to use for validation (expected format: x.x). If not set this is the lastest.", defaultValue = "")
+    private String schemaVersion;
     
     @Override
     public void run() {
         try {
-            // Check files exist.
+            // Check that file to validate exist and load it.
             Path fileToValidate = Paths.get(filePath);
-            Path schemaFile = Paths.get(schemaPath);
             if (!Files.exists(fileToValidate)) {
                 System.err.println("Error: File not found: " + filePath);
                 System.exit(1);
             }
-            if (!Files.exists(schemaFile)) {
-                System.err.println("Error: Schema file not found: " + schemaPath);
+            JsonNode dataNode = loadFile(fileToValidate.toFile());
+
+            // Load schema.
+            String schemaFileName = schemaVersion.isEmpty() ? "capability-schema.json" : "capability-schema-v" + schemaVersion + ".json";
+            InputStream schemaInputStream = getClass().getClassLoader().getResourceAsStream("schemas/" + schemaFileName);
+            if (schemaInputStream == null) {
+                System.err.println("Error: Scheam version " + schemaVersion + " is not supported");
                 System.exit(1);
             }
-            
-            // Load file to validate and schema file.
-            JsonNode dataNode = loadFile(fileToValidate.toFile());
-            JsonNode schemaNode = loadFile(schemaFile.toFile());
+            JsonNode schemaNode = new ObjectMapper().readTree(schemaInputStream);
             
             // Create JSON Schema validator
             JsonSchemaFactory factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7);
@@ -60,12 +63,10 @@ public class ValidateCommand implements Runnable {
             if (errors.isEmpty()) {
                 System.out.println("✓ Validation successful!");
                 System.out.println("  File: " + filePath);
-                System.out.println("  Schema: " + schemaPath);
                 System.out.println("  Status: OK");
             } else {
                 System.err.println("✗ Validation failed!");
                 System.err.println("  File: " + filePath);
-                System.err.println("  Schema: " + schemaPath);
                 System.err.println("\nErrors found:");
                 
                 int errorCount = 1;

@@ -12,8 +12,9 @@ import io.naftiko.cli.enums.FileFormat;
 
 @Command(
     name = "capability",
+    mixinStandardHelpOptions = true,
     aliases = {"cap"},
-    description = "Create a new capability"
+    description = "Create a new capability configuration file"
 )
 public class CreateCapabilityCommand implements Runnable {
     

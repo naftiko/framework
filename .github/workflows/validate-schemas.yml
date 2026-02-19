@@ -1,0 +1,50 @@
+name: Validate Examples Against Schema
+
+on:
+  push:
+    paths:
+      - 'src/main/resources/schemas/**'
+  pull_request:
+    paths:
+      - 'src/main/resources/schemas/**'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .github
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '25'
+          cache: 'npm'
+          cache-dependency-path: '.github/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci --no-fund --no-audit
+
+      - name: Validate JSON examples
+        working-directory: ${{ github.workspace }} 
+        run: |
+          for file in src/main/resources/schemas/examples/*.json; do
+            [ -f "$file" ] || continue
+            echo "Validating $file..."
+            npx --prefix .github ajv validate -s src/main/resources/schemas/capability-schema.json -d "$file" --spec=draft2020  --strict-schema=false
+          done
+
+      - name: Validate YAML examples
+        working-directory: ${{ github.workspace }}
+        run: |
+          for file in src/main/resources/schemas/examples/*.{yaml,yml}; do
+            [ -f "$file" ] || continue
+            echo "Validating $file..."
+            npx --prefix .github ajv validate -s src/main/resources/schemas/capability-schema.json -d "$file" --spec=draft2020  --strict-schema=false
+          done
+          
