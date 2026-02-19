@@ -19,13 +19,15 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import io.naftiko.consumes.HttpClientAdapter;
-import io.naftiko.consumes.spec.HttpClientSpec;
-import io.naftiko.exposes.ApiServerAdapter;
-import io.naftiko.exposes.ServerAdapter;
-import io.naftiko.exposes.spec.ApiServerSpec;
-import io.naftiko.exposes.spec.ServerSpec;
+import io.naftiko.engine.consumes.ClientAdapter;
+import io.naftiko.engine.consumes.HttpClientAdapter;
+import io.naftiko.engine.exposes.ApiServerAdapter;
+import io.naftiko.engine.exposes.ServerAdapter;
 import io.naftiko.spec.NaftikoSpec;
+import io.naftiko.spec.consumes.ClientSpec;
+import io.naftiko.spec.consumes.HttpClientSpec;
+import io.naftiko.spec.exposes.ApiServerSpec;
+import io.naftiko.spec.exposes.ServerSpec;
 
 /**
  * Main Capability class that initializes and manages adapters based on configuration
@@ -34,13 +36,13 @@ public class Capability {
 
     private volatile NaftikoSpec spec;
     private volatile List<ServerAdapter> serverAdapters;
-    private volatile List<HttpClientAdapter> httpClientAdapters;
+    private volatile List<ClientAdapter> clientAdapters;
 
     public Capability(NaftikoSpec spec) {
         this.spec = spec;
 
-        // Initialize HTTP client adapters first
-        this.httpClientAdapters = new CopyOnWriteArrayList<>();
+        // Initialize client adapters first
+        this.clientAdapters = new CopyOnWriteArrayList<>();
 
         // Then initialize server adapters with reference to source adapters
         this.serverAdapters = new CopyOnWriteArrayList<>();
@@ -49,9 +51,9 @@ public class Capability {
             throw new IllegalArgumentException("Capability must expose at least one endpoint.");
         }
 
-        for (ServerSpec serverConfig : spec.getCapability().getExposes()) {
-            if ("api".equals(serverConfig.getType())) {
-                this.serverAdapters.add(new ApiServerAdapter(this, (ApiServerSpec) serverConfig));
+        for (ServerSpec serverSpec : spec.getCapability().getExposes()) {
+            if ("api".equals(serverSpec.getType())) {
+                this.serverAdapters.add(new ApiServerAdapter(this, (ApiServerSpec) serverSpec));
             }
         }
 
@@ -59,9 +61,9 @@ public class Capability {
             throw new IllegalArgumentException("Capability must consume at least one endpoint.");
         }
 
-        for (HttpClientSpec clientConfig : spec.getCapability().getConsumes()) {
-            if ("http".equals(clientConfig.getType())) {
-                this.httpClientAdapters.add(new HttpClientAdapter(this, clientConfig));
+        for (ClientSpec clientSpec : spec.getCapability().getConsumes()) {
+            if ("http".equals(clientSpec.getType())) {
+                this.clientAdapters.add(new HttpClientAdapter(this, (HttpClientSpec) clientSpec));
             }
         }
     }
@@ -74,8 +76,8 @@ public class Capability {
         this.spec = config;
     }
 
-    public List<HttpClientAdapter> getHttpClientAdapters() {
-        return httpClientAdapters;
+    public List<ClientAdapter> getClientAdapters() {
+        return clientAdapters;
     }
 
     public List<ServerAdapter> getServerAdapters() {
@@ -83,7 +85,7 @@ public class Capability {
     }
 
     public void start() throws Exception {
-        for (HttpClientAdapter adapter : getHttpClientAdapters()) {
+        for (ClientAdapter adapter : getClientAdapters()) {
             adapter.start();
         }
 
@@ -97,7 +99,7 @@ public class Capability {
             adapter.stop();
         }
 
-        for (HttpClientAdapter adapter : getHttpClientAdapters()) {
+        for (ClientAdapter adapter : getClientAdapters()) {
             adapter.stop();
         }
     }

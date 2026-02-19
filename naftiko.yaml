@@ -4,14 +4,14 @@ info:
   label: "Sample Capability"
   description: "This is a sample capability specification to demonstrate the features of Naftiko"
   tags:
-  - Naftiko
-  - Sample
+    - Naftiko
+    - Sample
   created: "2026-01-01"
   modified: "2026-02-12"
   stakeholders:
-  - role: "editor"
-    fullName: "John Doe"
-    email: "john.doe@example.com" 
+    - role: "editor"
+      fullName: "John Doe"
+      email: "john.doe@example.com"
 
 capability:
   exposes:
@@ -21,53 +21,57 @@ capability:
       namespace: "sample"
 
       resources:
-        - path: "/notion/{{path}}"
-          label: "Notion API Pass-thru Proxy"
-          description: "A proxy to forward requests to the Notion API while the capability is being configured"
-          forward:
-            targetNamespace: "notion"
-            trustedHeaders:
-              - "Notion-Version"
-
-        - path: "/github/{{path}}"
-          label: "GitHub API Pass-thru Proxy"
-          description: "A proxy to forward requests to the GitHub API while the capability is being configured"
-          forward:
-            targetNamespace: "github"
-            trustedHeaders:
-            - "Notion-Version"
-
-        - path: "/users/{{username}}"
-          name: "user"
-          label: "User resource"
-          description: "This is a resource to retrieve user information"
+        - path: "/notion/pre-release"
+          name: "pr"
+          label: "Pre-release resource"
+          description: "This is a resource to retrieve the list of pre-release participants stored in Notion"
           operations:
             - method: "GET"
-              name: "get-user"
-              label: "Get User"
-              steps:
-                - call: "github.get-user"
-
-        - path: "/databases/{{database_id}}"
-          name: "db"
-          label: "Database resource"
-          description: "This is a resource to retrieve and update information about a database"
-          inputParameters:
-            - name: "database_id"
-              in: "path"
-          operations:
-            - method: "GET"
-              name: "get-db"
-              label: "Get Database"
+              call: "notion.query-db"
+              with:
+                datasource_id: "2fe4adce-3d02-8028-bec8-000bfb5cafa2"
               outputParameters:
-                - name: "database_id"
-                  value: "$.notion.db.get-database.{{dbId}}"
-                - name: "Api-Version"
-                  value: "v1"
-                - name: "name"
-                  value: "$.notion.db.get-database.{{dbName}}"
-              steps:
-                - call: "notion.get-database"
+                - type: "array"
+                  mapping: "$.results"
+                  items:
+                    - type: "object"
+                      properties:
+                        name:
+                          type: "string"
+                          mapping: "$.properties.Name.title[0].text.content"
+                        company:
+                          type: "string"
+                          mapping: "$.properties.Company.rich_text[0].text.content"
+                        title:
+                          type: "string"
+                          mapping: "$.properties.Title.rich_text[0].text.content"
+                        location:
+                          type: "string"
+                          mapping: "$.properties.Location.rich_text[0].text.content"
+                        owner:
+                          type: "string"
+                          mapping: "$.properties.Owner.people[0].name"
+                        participation_status:
+                          type: "string"
+                          mapping: "$.properties.Participation Status.select.name"
+                        comments:
+                          type: "string"
+                          mapping: "$.properties.Comments.rich_text[0].text.content"
+              mappings:
+                - from: "$.results[*].properties.Name.title[0].text.content"
+                  to: "$.name"
+                - from: "$.results[*].properties.Company.rich_text[0].text.content"
+                  to: "$.company"
+                - from: "$.results[*].properties.Title.rich_text[0].text.content"
+                  to: "$.title"
+                - from: "$.results[*].properties.Location.rich_text[0].text.content"
+                  to: "$.location"
+                - from: "$.results[*].properties.Owner.people[0].name"
+                  to: "$.owner"
+                - from: "$.results[*].properties.Participation Status.select.name"
+                  to: "$.participation_status"
+                - from: "$.results[*].properties.Comments.rich_text[0].text.content"
+                  to: "$.comments"
 
   consumes:
     - type: "http"
@@ -75,53 +79,28 @@ capability:
       baseUri: "https://api.notion.com/v1/"
       authentication:
         type: "bearer"
-        token: ""
+        token: "{{notion_api_key}}"
       inputParameters:
+        - name: "notion_api_key"
+          in: "environment"
         - name: "Notion-Version"
           in: "header"
           const: "2025-09-03"
 
       resources:
-        - path: "databases/{{database_id}}"
-          name: "db"
-          label: "Database resource"
-          description: "This is a resource to retrieve and update information about a database"
-          inputParameters:
-            - name: "database_id"
-              in: "path"
-              value: "1234"
-          operations:
-            - method: "GET"
-              name: "get-database"
-              label: "Get Database"
-              outputRawFormat: "XML"
-              outputParameters:
-                - name: "dbName"
-                  value: "$response.title[0].text.content"
-                - name: "dbId"
-                  value: "$response.id"
-            - method: "PUT"
-              name: "update-database"
-              label: "Update Database"
-            - method: "DELETE"
-              name: "delete-database"
-              label: "Delete Database"
-
-        - path: "databases/{{database_id}}/query"
-          name: "query-db"
+        - path: "data_sources/{{datasource_id}}/query"
+          name: "query"
           label: "Query database resource"
           operations:
             - method: "POST"
-              name: "query-database"
+              name: "query-db"
               label: "Query Database"
-    - type: "http"
-      namespace: "github"
-      baseUri: "https://api.github.com/v1/"
-      resources:
-        - path: "/users/{{username}}"
-          name: "user"
-          label: "User resource"
-          operations:
-            - method: "GET"
-              name: "get-user"
-              label: "Get User"
+              body: |
+                {
+                  "filter": {
+                    "property": "Participation Status",
+                    "select": {
+                      "equals": "Committed"
+                    }
+                  }
+                }

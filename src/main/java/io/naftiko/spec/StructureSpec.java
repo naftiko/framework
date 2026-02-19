@@ -21,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * JSON Structure Specification Element
  */
-public class StructureSpec {
+public class StructureSpec<T extends StructureSpec<T>> {
 
     @JsonProperty("name")
     private volatile String name;
@@ -31,7 +31,7 @@ public class StructureSpec {
 
     @JsonProperty("properties")
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    private final List<StructureSpec> properties;
+    private final List<T> properties;
 
     @JsonProperty("required")
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -39,15 +39,15 @@ public class StructureSpec {
 
     @JsonProperty("items")
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    private volatile StructureSpec items;
+    private volatile T items;
 
     @JsonProperty("values")
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    private volatile StructureSpec values;
+    private volatile T values;
 
     @JsonProperty("choices")
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    private final List<StructureSpec> choices;
+    private final List<T> choices;
 
     @JsonProperty("const")
     private volatile String constant;
@@ -89,7 +89,7 @@ public class StructureSpec {
         this(null, null, null, null, null, null, null, null, null, null, null, null, null);
     }
 
-    public StructureSpec(String name, String type, StructureSpec items, StructureSpec values,
+    public StructureSpec(String name, String type, T items, T values,
             String constant, String selector, String maxLength, Integer precision, Integer scale,
             String contentEncoding, String contentCompression, String contentMediaType,
             String description) {
@@ -130,7 +130,7 @@ public class StructureSpec {
         this.type = type;
     }
 
-    public List<StructureSpec> getProperties() {
+    public List<T> getProperties() {
         return properties;
     }
 
@@ -138,19 +138,19 @@ public class StructureSpec {
         return required;
     }
 
-    public StructureSpec getItems() {
+    public T getItems() {
         return items;
     }
 
-    public void setItems(StructureSpec items) {
+    public void setItems(T items) {
         this.items = items;
     }
 
-    public StructureSpec getValues() {
+    public T getValues() {
         return values;
     }
 
-    public void setValues(StructureSpec values) {
+    public void setValues(T values) {
         this.values = values;
     }
 
@@ -166,8 +166,80 @@ public class StructureSpec {
         return this.enumeration;
     }
 
-    public List<StructureSpec> getChoices() {
+    public List<T> getChoices() {
         return choices;
+    }
+
+    public String getSelector() {
+        return selector;
+    }
+
+    public void setSelector(String selector) {
+        this.selector = selector;
+    }
+
+    public String getMaxLength() {
+        return maxLength;
+    }
+
+    public void setMaxLength(String maxLength) {
+        this.maxLength = maxLength;
+    }
+
+    public Integer getPrecision() {
+        return precision;
+    }
+
+    public void setPrecision(Integer precision) {
+        this.precision = precision;
+    }
+
+    public Integer getScale() {
+        return scale;
+    }
+
+    public void setScale(Integer scale) {
+        this.scale = scale;
+    }
+
+    public String getContentEncoding() {
+        return contentEncoding;
+    }
+
+    public void setContentEncoding(String contentEncoding) {
+        this.contentEncoding = contentEncoding;
+    }
+
+    public String getContentCompression() {
+        return contentCompression;
+    }
+
+    public void setContentCompression(String contentCompression) {
+        this.contentCompression = contentCompression;
+    }
+
+    public String getContentMediaType() {
+        return contentMediaType;
+    }
+
+    public void setContentMediaType(String contentMediaType) {
+        this.contentMediaType = contentMediaType;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public List<String> getExamples() {
+        return examples;
+    }
+
+    public List<String> getTuple() {
+        return tuple;
     }
 
 }

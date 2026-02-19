@@ -13,33 +13,38 @@
  */
 package io.naftiko.spec;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
 /**
  * Input Parameter Specification Element
  */
-public class InputParameterSpec extends StructureSpec {
+@JsonDeserialize(using = InputParameterDeserializer.class)
+@JsonSerialize(using = InputParameterSerializer.class)
+public class InputParameterSpec extends StructureSpec<InputParameterSpec> {
 
     private volatile String in;
 
-    private volatile String valueTemplate;
+    private volatile String template;
 
     public InputParameterSpec() {
         super();
     }
 
-    public InputParameterSpec(String name, String type, String in, String valueTemplate) {
+    public InputParameterSpec(String name, String type, String in, String template) {
         super(name, type, null, null, null, null, null, null, null, null, null, null, null);
         this.in = in;
-        this.valueTemplate = valueTemplate;
+        this.template = template;
     }
 
-    public InputParameterSpec(String name, String type, StructureSpec items, StructureSpec values,
+    public InputParameterSpec(String name, String type, InputParameterSpec items, InputParameterSpec values,
             String constant, String selector, String maxLength, Integer precision, Integer scale,
             String contentEncoding, String contentCompression, String contentMediaType,
-            String description, String in, String valueTemplate) {
+            String description, String in, String template) {
         super(name, type, items, values, constant, selector, maxLength, precision, scale,
                 contentEncoding, contentCompression, contentMediaType, description);
         this.in = in;
-        this.valueTemplate = valueTemplate;
+        this.template = template;
     }
 
     public String getIn() {
@@ -50,12 +55,12 @@ public class InputParameterSpec extends StructureSpec {
         this.in = in;
     }
 
-    public String getValueTemplate() {
-        return valueTemplate;
+    public String getTemplate() {
+        return template;
     }
 
-    public void setValueTemplate(String valueTemplate) {
-        this.valueTemplate = valueTemplate;
+    public void setTemplate(String template) {
+        this.template = template;
     }
 
 }

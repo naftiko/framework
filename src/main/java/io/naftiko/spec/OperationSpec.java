@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public class OperationSpec {
 
     @JsonIgnore
-    private final ResourceSpec parentResource;
+    private volatile ResourceSpec parentResource;
 
     private volatile String method;
 
@@ -41,30 +41,48 @@ public class OperationSpec {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private volatile String outputRawFormat;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private volatile String outputSchema;
+
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private final List<OutputParameterSpec> outputParameters;
 
     public OperationSpec() {
-        this(null, null, null, null, null, null);
+        this(null, null, null, null, null, null, null);
     }
 
     public OperationSpec(ResourceSpec parentResource, String method, String name, String label) {
-        this(parentResource, method, name, label, null, null);
+        this(parentResource, method, name, label, null, null, null);
     }
 
     public OperationSpec(ResourceSpec parentResource, String method, String name, String label, String description, String outputRawFormat) {
+        this(parentResource, method, name, label, description, outputRawFormat, null);
+    }
+
+    public OperationSpec(ResourceSpec parentResource, String method, String name, String label, String description, String outputRawFormat, String outputSchema) {
         this.parentResource = parentResource;
         this.method = method;
         this.name = name;
         this.label = label;
         this.description = description;
         this.outputRawFormat = outputRawFormat;
+        this.outputSchema = outputSchema;
         this.inputParameters = new CopyOnWriteArrayList<>();
         this.outputParameters = new CopyOnWriteArrayList<>();
     }
 
     public ResourceSpec getParentResource() {
         return parentResource;
+    }
+
+    /**
+     * Sets the parent resource for this operation.
+     * This is called during deserialization to establish the parent-child relationship.
+     * 
+     * @param parentResource the parent ResourceSpec
+     */
+    public void setParentResource(ResourceSpec parentResource) {
+        this.parentResource = parentResource;
     }
 
     public String getMethod() {
@@ -109,6 +127,14 @@ public class OperationSpec {
 
     public void setOutputRawFormat(String outputRawFormat) {
         this.outputRawFormat = outputRawFormat;
+    }
+
+    public String getOutputSchema() {
+        return outputSchema;
+    }
+
+    public void setOutputSchema(String outputSchema) {
+        this.outputSchema = outputSchema;
     }
     
     public List<OutputParameterSpec> getOutputParameters() {
