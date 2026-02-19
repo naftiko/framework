@@ -119,7 +119,28 @@ public class ApiOperationsRestlet extends Restlet {
                             return true;
                         }
 
-                        sendResponse(serverOp, response, found);
+                        // Apply output mappings if present or forward the raw entity
+                        if (serverOp.getOutputParameters() != null
+                                && !serverOp.getOutputParameters().isEmpty()) {
+                            try {
+                                String mapped = mapOutputParameters(serverOp, found);
+
+                                if (mapped != null) {
+                                    response.setEntity(mapped, MediaType.APPLICATION_JSON);
+                                } else {
+                                    response.setEntity(found.clientResponse.getEntity());
+                                }
+                            } catch (Exception e) {
+                                response.setStatus(Status.SERVER_ERROR_INTERNAL);
+                                response.setEntity(
+                                        "Failed to map output parameters: " + e.getMessage(),
+                                        MediaType.TEXT_PLAIN);
+                            }
+                        } else {
+                            response.setEntity(found.clientResponse.getEntity());
+                        }
+
+                        response.commit();
                         return true;
                     } else {
                         response.setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
@@ -133,13 +154,6 @@ public class ApiOperationsRestlet extends Restlet {
                     for (ApiServerStepSpec step : serverOp.getSteps()) {
                         // Merge step-level 'with' parameters if present
                         Map<String, Object> stepParams = new ConcurrentHashMap<>(inputParameters);
-                        
-                        // First merge step-level 'with' parameters
-                        if (step.getWith() != null) {
-                            stepParams.putAll(step.getWith());
-                        }
-                        
-                        // Then merge call-level 'with' parameters (call level takes precedence)
                         if (step.getCall() != null && step.getCall().getWith() != null) {
                             stepParams.putAll(step.getCall().getWith());
                         }
@@ -177,7 +191,28 @@ public class ApiOperationsRestlet extends Restlet {
                     if (found != null) {
                         // Return the response based on the last client request
                         response.setStatus(found.clientResponse.getStatus());
-                        sendResponse(serverOp, response, found);
+
+                        if (serverOp.getOutputParameters() != null
+                                && !serverOp.getOutputParameters().isEmpty()) {
+                            try {
+                                String mapped = mapOutputParameters(serverOp, found);
+
+                                if (mapped != null) {
+                                    response.setEntity(mapped, MediaType.APPLICATION_JSON);
+                                } else {
+                                    response.setEntity(found.clientResponse.getEntity());
+                                }
+                            } catch (Exception e) {
+                                response.setStatus(Status.SERVER_ERROR_INTERNAL);
+                                response.setEntity(
+                                        "Failed to map output parameters: " + e.getMessage(),
+                                        MediaType.TEXT_PLAIN);
+                            }
+                        } else {
+                            response.setEntity(found.clientResponse.getEntity());
+                        }
+
+                        response.commit();
                         return true;
                     }
                 }
@@ -185,30 +220,6 @@ public class ApiOperationsRestlet extends Restlet {
         }
 
         return false;
-    }
-
-    private void sendResponse(ApiServerOperationSpec serverOp, Response response,
-            HandlingContext found) {
-        // Apply output mappings if present or forward the raw entity
-        if (serverOp.getOutputParameters() != null && !serverOp.getOutputParameters().isEmpty()) {
-            try {
-                String mapped = mapOutputParameters(serverOp, found);
-
-                if (mapped != null) {
-                    response.setEntity(mapped, MediaType.APPLICATION_JSON);
-                } else {
-                    response.setEntity(found.clientResponse.getEntity());
-                }
-            } catch (Exception e) {
-                response.setStatus(Status.SERVER_ERROR_INTERNAL);
-                response.setEntity("Failed to map output parameters: " + e.getMessage(),
-                        MediaType.TEXT_PLAIN);
-            }
-        } else {
-            response.setEntity(found.clientResponse.getEntity());
-        }
-
-        response.commit();
     }
 
     /**
@@ -234,15 +245,10 @@ public class ApiOperationsRestlet extends Restlet {
                     copyTrustedHeaders(request, clientRequest,
                             getResourceSpec().getForward().getTrustedHeaders());
 
-                    // Resolve HTTP client input parameters for authentication template resolution
-                    Map<String, Object> parameters = new ConcurrentHashMap<>();
-                    Resolver.resolveInputParametersToRequest(clientRequest,
-                            httpAdapter.getHttpClientSpec().getInputParameters(), parameters);
-
                     // Set any authentication needed on the client request
                     Response clientResponse = new Response(clientRequest);
                     httpAdapter.setChallengeResponse(clientRequest,
-                            clientRequest.getResourceRef().toString(), parameters);
+                            clientRequest.getResourceRef().toString(), null);
                     httpAdapter.setHeaders(clientRequest);
 
                     // Send the request to the target endpoint
