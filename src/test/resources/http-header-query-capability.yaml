@@ -1,0 +1,34 @@
+capability:
+  naftiko: "0.3"
+  exposes:
+    - type: api
+      address: localhost
+      port: 0
+      resources:
+        - path: /search
+          operations:
+            - method: POST
+              name: search
+              call:
+                operation: testns.search
+              inputParameters:
+                - name: userId
+                  in: body
+                  template: $.user.id
+  consumes:
+    - type: http
+      namespace: testns
+      baseUri: http://example.com
+      inputParameters:
+        - name: X-API-Key
+          in: header
+          const: "ABC123"
+      resources:
+        - path: /items
+          operations:
+            - method: POST
+              name: search
+              inputParameters:
+                - name: q
+                  in: query
+                  template: "{{userId}}"

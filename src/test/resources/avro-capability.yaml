@@ -1,0 +1,62 @@
+---
+naftiko: "0.3"
+info:
+  label: "Avro Test Capability"
+  description: "Test capability for Avro message decoding from API responses"
+  tags:
+    - Test
+    - Avro
+  created: "2026-02-21"
+  modified: "2026-02-21"
+
+capability:
+  exposes:
+    - type: "api"
+      address: "localhost"
+      port: 9093
+      namespace: "test-avro"
+
+      resources:
+        - path: "/avro/records"
+          name: "records"
+          label: "Avro Records Resource"
+          description: "Test resource that parses Avro messages"
+          operations:
+            - method: "GET"
+              call:
+                operation: "mock-avro.get-records"
+              outputParameters:
+                - type: "array"
+                  mapping: "$.records"
+                  items:
+                    - type: "object"
+                      properties:
+                        id:
+                          type: "string"
+                          mapping: "$.id"
+                        title:
+                          type: "string"
+                          mapping: "$.title"
+                        description:
+                          type: "string"
+                          mapping: "$.description"
+
+  consumes:
+    - type: "http"
+      namespace: "mock-avro"
+      baseUri: "http://localhost:8080/"
+      inputParameters:
+        - name: "Accept"
+          in: "header"
+          const: "application/avro"
+
+      resources:
+        - path: "api/records"
+          name: "records"
+          label: "Mock Records API"
+          operations:
+            - method: "GET"
+              name: "get-records"
+              label: "Get Records"
+              outputRawFormat: "Avro"
+              outputSchema: "schemas/test-records.avsc"

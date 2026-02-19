@@ -15,8 +15,8 @@ package io.naftiko.spec;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import io.naftiko.consumes.spec.HttpClientSpec;
-import io.naftiko.exposes.spec.ServerSpec;
+import io.naftiko.spec.consumes.ClientSpec;
+import io.naftiko.spec.exposes.ServerSpec;
 
 /**
  * Capability Specification Element
@@ -24,7 +24,7 @@ import io.naftiko.exposes.spec.ServerSpec;
 public class CapabilitySpec {
 
     private final List<ServerSpec> exposes;
-    private final List<HttpClientSpec> consumes;
+    private final List<ClientSpec> consumes;
 
     public CapabilitySpec() {
         this.exposes = new CopyOnWriteArrayList<>();
@@ -35,7 +35,7 @@ public class CapabilitySpec {
         return exposes;
     }
 
-    public List<HttpClientSpec> getConsumes() {
+    public List<ClientSpec> getConsumes() {
         return consumes;
     }
 

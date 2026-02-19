@@ -13,33 +13,40 @@
  */
 package io.naftiko.spec;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
 /**
  * Output Parameter Specification Element
  */
-public class OutputParameterSpec extends StructureSpec {
+@JsonDeserialize(using = OutputParameterDeserializer.class)
+@JsonSerialize(using = OutputParameterSerializer.class)
+public class OutputParameterSpec extends StructureSpec<OutputParameterSpec> {
 
     private volatile String in;
 
-    private volatile String valuePath;
+    @JsonProperty("mapping")
+    private volatile String mapping;
 
     public OutputParameterSpec() {
         super();
     }
 
-    public OutputParameterSpec(String name, String type, String in, String valuePath) {
+    public OutputParameterSpec(String name, String type, String in, String mapping) {
         super(name, type, null, null, null, null, null, null, null, null, null, null, null);
         this.in = in;
-        this.valuePath = valuePath;
+        this.mapping = mapping;
     }
 
-    public OutputParameterSpec(String name, String type, StructureSpec items, StructureSpec values,
+    public OutputParameterSpec(String name, String type, String mapping, OutputParameterSpec items, OutputParameterSpec values,
             String constant, String selector, String maxLength, Integer precision, Integer scale,
             String contentEncoding, String contentCompression, String contentMediaType,
-            String description, String in, String valuePath) {
+            String description, String in) {
         super(name, type, items, values, constant, selector, maxLength, precision, scale,
                 contentEncoding, contentCompression, contentMediaType, description);
         this.in = in;
-        this.valuePath = valuePath;
+        this.mapping = mapping;
     }
 
     public String getIn() {
@@ -50,12 +57,12 @@ public class OutputParameterSpec extends StructureSpec {
         this.in = in;
     }
 
-    public String getValuePath() {
-        return valuePath;
+    public String getMapping() {
+        return mapping;
     }
 
-    public void setValuePath(String valuePath) {
-        this.valuePath = valuePath;
+    public void setMapping(String mapping) {
+        this.mapping = mapping;
     }
 
 }
