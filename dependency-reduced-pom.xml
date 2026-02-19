@@ -11,15 +11,29 @@
         <version>3.4.1</version>
         <executions>
           <execution>
+            <id>capability</id>
             <phase>package</phase>
             <goals>
               <goal>shade</goal>
             </goals>
             <configuration>
+              <outputFile>${project.build.directory}/capability.jar</outputFile>
               <transformers>
                 <transformer>
                   <mainClass>io.naftiko.Capability</mainClass>
                 </transformer>
+              </transformers>
+            </configuration>
+          </execution>
+          <execution>
+            <id>cli</id>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <outputFile>${project.build.directory}/cli.jar</outputFile>
+              <transformers>
                 <transformer>
                   <mainClass>io.naftiko.Cli</mainClass>
                 </transformer>
@@ -52,9 +66,9 @@
     </plugins>
   </build>
   <properties>
-    <maven.compiler.target>25</maven.compiler.target>
+    <maven.compiler.target>21</maven.compiler.target>
     <restlet.version>2.7.0-m2</restlet.version>
-    <java.version>25</java.version>
-    <maven.compiler.source>25</maven.compiler.source>
+    <java.version>21</java.version>
+    <maven.compiler.source>21</maven.compiler.source>
   </properties>
 </project>
