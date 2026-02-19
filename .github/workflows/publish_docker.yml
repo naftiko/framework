@@ -1,0 +1,12 @@
+name: Build and Push Docker Image to Github packages
+
+on:
+  workflow_dispatch:
+
+jobs:
+  say-hello:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Print message
+        run: echo "Build and Push Docker Image to Github packages"
