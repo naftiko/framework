@@ -8,6 +8,7 @@ The goal of this CLI is to simplify configuration and validation. While everythi
 
 ## Getting started
 ### Prerequisites
+* You must have java installed.
 * You must have mvn installed and use it as package manager.
   * For MacOS we suggest to use brew installer
   ```
@@ -18,7 +19,7 @@ The goal of this CLI is to simplify configuration and validation. While everythi
 ```
 mvn clean install
 ```
-It should generate 2 jar files in the target folder.
+It should generate several jar files in the target folder. One of them should be cli.jar.
 ### Execute
 * To compile the source code:
   ```
@@ -26,15 +27,15 @@ It should generate 2 jar files in the target folder.
   ```
 * To generate a capability configuration file, execute the following command:
   ```
-  java -jar target/framework-0.2-SNAPSHOT.jar create capability
+  java -jar target/cli.jar create capability
   ```
   It should create a capability configuration file at the root of the project.
 * To validate a capability configuration file from a json schema file:
   ```
-  java -jar target/framework-0.2-SNAPSHOT.jar validate path_to_your_configuratio_file.yaml_or_json path_to_the_json_scheam_file.json
+  java -jar target/cli.jar validate path_to_your_configuratio_file.yaml_or_json path_to_the_json_scheam_file.json
   ```
 ## Execution command and aliases
-* To avoid typing java -jar target/framework-0.2-SNAPSHOT.jar a target/appassembler/bin/naftiko script is generated when compiling. If you want this script to be available everywhere, add an alias to your ~/.bashrc or ~/.zshrc file:
+* To avoid typing java -jar target/cli.jar a target/appassembler/bin/naftiko script is generated when compiling. If you want this script to be available everywhere, add an alias to your ~/.bashrc or ~/.zshrc file:
   ```
   alias naftiko='path_to_your_framework_project_folder/target/appassembler/bin/naftiko'
   ```

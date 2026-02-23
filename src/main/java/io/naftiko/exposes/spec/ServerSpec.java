@@ -11,27 +11,51 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package io.naftiko.config;
+package io.naftiko.exposes.spec;
+
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 /**
- * Configuration of exposed adapter endpoints
+ * Base Exposed Adapter Specification Element
  */
-public class ExposesConfig {
+@JsonTypeInfo(
+    use = JsonTypeInfo.Id.NAME,
+    include = JsonTypeInfo.As.PROPERTY, // Include the type identifier as a property in the JSON
+    property = "type" // The name of the JSON property holding the type identifier
+)
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = ApiServerSpec.class, name = "api")
+})
+public abstract class ServerSpec {
+
+    private volatile String type;
 
     private volatile String address;
 
     private volatile int port;
 
-    private volatile ForwardConfig forward;
-
-    public ExposesConfig() {
-        this("localhost", 0);
+    public ServerSpec() {
+        this(null, "localhost", 0);
     }
 
-    public ExposesConfig(String address, int port) {
+    public ServerSpec(String type) {
+        this();
+        this.type = type;
+    }
+
+    public ServerSpec(String type, String address, int port) {
+        this.type = type;
         this.address = address;
         this.port = port;
-        this.forward = null;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 
     public String getAddress() {
@@ -48,14 +72,6 @@ public class ExposesConfig {
 
     public void setPort(int port) {
         this.port = port;
-    }
-
-    public ForwardConfig getForward() {
-        return forward;
-    }
-
-    public void setForward(ForwardConfig forward) {
-        this.forward = forward;
     }
 
 }

@@ -14,67 +14,92 @@
 package io.naftiko;
 
 import java.io.File;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import io.naftiko.adapter.http.HttpAdapter;
-import io.naftiko.adapter.proxy.ProxyAdapter;
-import io.naftiko.config.NaftikoConfig;
+import io.naftiko.consumes.HttpClientAdapter;
+import io.naftiko.consumes.spec.HttpClientSpec;
+import io.naftiko.exposes.ApiServerAdapter;
+import io.naftiko.exposes.ServerAdapter;
+import io.naftiko.exposes.spec.ApiServerSpec;
+import io.naftiko.exposes.spec.ServerSpec;
+import io.naftiko.spec.NaftikoSpec;
 
 /**
  * Main Capability class that initializes and manages adapters based on configuration
  */
 public class Capability {
 
-    private volatile NaftikoConfig config;
-    private volatile ProxyAdapter proxyAdapter;
-    private volatile HttpAdapter httpAdapter;
+    private volatile NaftikoSpec spec;
+    private volatile List<ServerAdapter> serverAdapters;
+    private volatile List<HttpClientAdapter> httpClientAdapters;
 
-    public Capability(NaftikoConfig config) {
-        this.config = config;
+    public Capability(NaftikoSpec spec) {
+        this.spec = spec;
 
-        // Initialize source adapters first
-        this.httpAdapter = new HttpAdapter(this);
+        // Initialize HTTP client adapters first
+        this.httpClientAdapters = new CopyOnWriteArrayList<>();
 
-        // Then initialize sink adapters with reference to source adapters
-        if(config.getCapability().getExposes().isEmpty()) {
+        // Then initialize server adapters with reference to source adapters
+        this.serverAdapters = new CopyOnWriteArrayList<>();
+
+        if (spec.getCapability().getExposes().isEmpty()) {
             throw new IllegalArgumentException("Capability must expose at least one endpoint.");
         }
-        
-        this.proxyAdapter = new ProxyAdapter(this, config.getCapability().getExposes().get(0));
+
+        for (ServerSpec serverConfig : spec.getCapability().getExposes()) {
+            if ("api".equals(serverConfig.getType())) {
+                this.serverAdapters.add(new ApiServerAdapter(this, (ApiServerSpec) serverConfig));
+            }
+        }
+
+        if (spec.getCapability().getConsumes().isEmpty()) {
+            throw new IllegalArgumentException("Capability must consume at least one endpoint.");
+        }
+
+        for (HttpClientSpec clientConfig : spec.getCapability().getConsumes()) {
+            if ("http".equals(clientConfig.getType())) {
+                this.httpClientAdapters.add(new HttpClientAdapter(this, clientConfig));
+            }
+        }
     }
 
-    public NaftikoConfig getConfig() {
-        return config;
+    public NaftikoSpec getSpec() {
+        return spec;
     }
 
-    public void setConfig(NaftikoConfig config) {
-        this.config = config;
+    public void setSpec(NaftikoSpec config) {
+        this.spec = config;
     }
 
-    public ProxyAdapter getProxyAdapter() {
-        return proxyAdapter;
+    public List<HttpClientAdapter> getHttpClientAdapters() {
+        return httpClientAdapters;
     }
 
-    public void setProxyAdapter(ProxyAdapter restAdapter) {
-        this.proxyAdapter = restAdapter;
-    }
-
-    public HttpAdapter getHttpAdapter() {
-        return httpAdapter;
-    }
-
-    public void setHttpAdapter(HttpAdapter httpAdapter) {
-        this.httpAdapter = httpAdapter;
+    public List<ServerAdapter> getServerAdapters() {
+        return serverAdapters;
     }
 
     public void start() throws Exception {
-        getProxyAdapter().start();
-        getHttpAdapter().start();
+        for (HttpClientAdapter adapter : getHttpClientAdapters()) {
+            adapter.start();
+        }
+
+        for (ServerAdapter adapter : getServerAdapters()) {
+            adapter.start();
+        }
     }
 
     public void stop() throws Exception {
-        getProxyAdapter().stop();
-        getHttpAdapter().stop();
+        for (ServerAdapter adapter : getServerAdapters()) {
+            adapter.stop();
+        }
+
+        for (HttpClientAdapter adapter : getHttpClientAdapters()) {
+            adapter.stop();
+        }
     }
 
     /**
@@ -94,8 +119,10 @@ public class Capability {
         if (file.exists()) {
             try {
                 ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-                NaftikoConfig config = mapper.readValue(file, NaftikoConfig.class);
-                Capability capability = new Capability(config);
+                // Ignore unknown properties to handle potential Restlet framework classes
+                mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+                NaftikoSpec spec = mapper.readValue(file, NaftikoSpec.class);
+                Capability capability = new Capability(spec);
                 capability.start();
                 System.out.println("Capability started successfully.");
             } catch (Exception e) {

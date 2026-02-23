@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.naftiko</groupId>
     <artifactId>framework</artifactId>
-    <version>0.2-SNAPSHOT</version>
+    <version>0.3-SNAPSHOT</version>
 
 	<properties>
-        <java.version>25</java.version>
-        <maven.compiler.source>25</maven.compiler.source>
-        <maven.compiler.target>25</maven.compiler.target>
+        <java.version>21</java.version>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
 		<restlet.version>2.7.0-m2</restlet.version>
     </properties>
 
-	<dependencies>
+    <dependencies>
         <dependency>
             <groupId>info.picocli</groupId>
             <artifactId>picocli</artifactId>
@@ -36,29 +36,34 @@
             <artifactId>json-schema-validator</artifactId>
             <version>1.0.87</version>
         </dependency>
-		<dependency>
-			<groupId>org.restlet</groupId>
-			<artifactId>org.restlet</artifactId>
-			<version>${restlet.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.restlet</groupId>
-			<artifactId>org.restlet.ext.jackson</artifactId>
-			<version>${restlet.version}</version>
-		</dependency>
         <dependency>
-		    <groupId>com.jayway.jsonpath</groupId>
-		    <artifactId>json-path</artifactId>
-		    <version>2.9.0</version>
-		</dependency>
-		<dependency>
-		    <groupId>com.fasterxml.jackson.dataformat</groupId>
-		    <artifactId>jackson-dataformat-yaml</artifactId>
-		    <version>2.15.4</version>
-		</dependency>
+            <groupId>org.restlet</groupId>
+            <artifactId>org.restlet</artifactId>
+            <version>${restlet.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.restlet</groupId>
+            <artifactId>org.restlet.ext.jackson</artifactId>
+            <version>${restlet.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.jayway.jsonpath</groupId>
+            <artifactId>json-path</artifactId>
+            <version>2.9.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+            <version>2.15.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.json-structure</groupId>
+            <artifactId>json-structure</artifactId>
+            <version>0.5.5</version>
+        </dependency>
     </dependencies>
 
-	<build>
+    <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -66,16 +71,32 @@
                 <version>3.4.1</version>
                 <executions>
                     <execution>
+                        <id>capability</id>
                         <phase>package</phase>
                         <goals>
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <outputFile>${project.build.directory}/capability.jar</outputFile>
                             <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                <transformer
+                                    implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>io.naftiko.Capability</mainClass>
                                 </transformer>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                            </transformers>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>cli</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <outputFile>${project.build.directory}/cli.jar</outputFile>
+                            <transformers>
+                                <transformer
+                                    implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>io.naftiko.Cli</mainClass>
                                 </transformer>
                             </transformers>
@@ -107,5 +128,5 @@
             </plugin>
         </plugins>
     </build>
-	
+
 </project>

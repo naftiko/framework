@@ -11,40 +11,29 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package io.naftiko.config;
+package io.naftiko.exposes.spec;
 
 /**
- * Info Configuration
+ * API Operation Step Specification Element
  */
-public class InfoConfig {
+public class ApiStepSpec {
 
-    private volatile String name;
+    private volatile String call;
 
-    private volatile String description;
-
-    public InfoConfig(String name, String description) {
-        this.name = name;
-        this.description = description  ;
+    public ApiStepSpec() {
+        this(null);
     }
 
-    InfoConfig() {
-        this(null, null);
+    public ApiStepSpec(String call) {
+        this.call = call;
     }
 
-    public String getName() {
-        return name;
+    public String getCall() {
+        return call;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-    
-    public void setDescription(String description) {
-        this.description = description;
+    public void setCall(String call) {
+        this.call = call;
     }
 
 }

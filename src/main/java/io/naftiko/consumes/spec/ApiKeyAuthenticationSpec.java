@@ -11,22 +11,22 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package io.naftiko.config;
+package io.naftiko.consumes.spec;
 
 /**
- * API Key Authentication Configuration
+ * API Key Authentication Specification Element
  */
-public class ApiKeyAuthenticationConfig extends AuthenticationConfig {
+public class ApiKeyAuthenticationSpec extends AuthenticationSpec {
 
     private volatile String key;
     private volatile String placement;
     private volatile String value;
 
-    public ApiKeyAuthenticationConfig() {
+    public ApiKeyAuthenticationSpec() {
         this(null, null, null);
     }   
 
-    public ApiKeyAuthenticationConfig(String key, String placement, String value) {
+    public ApiKeyAuthenticationSpec(String key, String placement, String value) {
         super("apikey");
         this.key = key;
         this.placement = placement;

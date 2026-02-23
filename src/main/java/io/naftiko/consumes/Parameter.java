@@ -11,30 +11,11 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package io.naftiko.config;
+package io.naftiko.consumes;
 
 /**
- * OAuth Bearer Token Authentication Configuration
+ * HTTP Parameter representation
  */
-public class BearerAuthenticationConfig extends AuthenticationConfig {
-
-    private volatile String token;
-
-    public BearerAuthenticationConfig() {
-        this(null);
-    }
-
-    public BearerAuthenticationConfig(String token) {
-        super("bearer");
-        this.token = token;
-    }
-
-    public String getToken() {
-        return token;
-    }
-
-    public void setToken(String token) {
-        this.token = token;
-    }
+public class Parameter {
 
 }

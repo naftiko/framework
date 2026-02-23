@@ -11,7 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package io.naftiko.adapter.http;
+package io.naftiko.consumes;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -20,29 +20,37 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * HTTP Operation representation
  */
 public class Operation {
+    
+    private volatile String httpMethod;
 
-    private volatile Request request;
+    private volatile String targetUri;
+
+    private List<Parameter> parameters;
 
     private final List<Response> responses;
 
     public Operation() {
         super();
-        this.request = null;
+        this.httpMethod = null;
+        this.targetUri = null;  
+        this.parameters = new CopyOnWriteArrayList<>();
         this.responses = new CopyOnWriteArrayList<>();
     }
 
-    public Request getRequest() {
-        return this.request;
+    public List<Parameter> getParameters() {
+        return parameters;
+    }
+
+    public String getHttpMethod() {
+        return httpMethod;
+    }
+
+    public String getTargetUri() {
+        return targetUri;
     }
 
     public List<Response> getResponses() {
         return this.responses;
     }
 
-    public void setRequest(Request request) {
-        this.request = request;
-    }
-
-
-    
 }
