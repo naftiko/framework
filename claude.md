@@ -2,7 +2,7 @@
 When designing a Capability :  
 
 # Do's
-- Keep the [Naftiko Specification](https://github.com/naftiko/framework/blob/main/SPECIFICATION.md) as an first class citizen in your context
+- Keep the [Naftiko Specification](./SPECIFICATION.md) as an first class citizen in your context
 # Dont's 
 - Do not expose a intputParameter if it is not used in any of the steps
 - Do not declare consumed outputparameters that are not used in the exposed part
