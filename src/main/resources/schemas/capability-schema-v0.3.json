@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://naftiko.io/schemas/v0.4/capability.json",
+  "$id": "https://naftiko.io/schemas/v0.3/capability.json",
   "name": "Naftiko Capability Specification",
   "description": "This Schema should be used to describe and validate Naftiko Capabilities",
   "type": "object",
@@ -8,7 +8,7 @@
     "naftiko": {
       "type": "string",
       "description": "Version of the Naftiko schema",
-      "const": "0.4"
+      "const": "0.3"
     },
     "info": {
       "$ref": "#/$defs/Info"
@@ -24,23 +24,14 @@
   ],
   "additionalProperties": false,
   "$defs": {
-    "IdentifierKebab": {
-      "type": "string",
-      "description": "Kebab-case identifier (alphanumeric and hyphens).",
-      "pattern": "^[a-zA-Z0-9-]+$"
-    },
-    "IdentifierExtended": {
-      "type": "string",
-      "description": "Extended identifier (alphanumeric, hyphens, underscores, and wildcard).",
-      "pattern": "^[a-zA-Z0-9-_*]+$"
-    },
-    "ConsumedInputParameter": {
+    "InputParameter": {
       "type": "object",
       "description": "Describes a single function parameter. A unique parameter is defined by a combination of a name and location.",
       "properties": {
         "name": {
-          "$ref": "#/$defs/IdentifierExtended",
-          "description": "Name of the parameter"
+          "type": "string",
+          "description": "Name of the parameter",
+          "pattern": "^[a-zA-Z0-9-_]+$"
         },
         "in": {
           "type": "string",
@@ -55,7 +46,7 @@
         },
         "value": {
           "type": "string",
-          "description": "Value of the parameter. Can be a static value or an expression resolved from the execution context (e.g. $this.namespace.param)"
+          "description": "Value or JSONPath reference"
         }
       },
       "required": [
@@ -64,352 +55,24 @@
       ],
       "additionalProperties": false
     },
-    "ExposedInputParameter": {
+    "OutputParameter": {
       "type": "object",
-      "description": "Declares an input parameter for an exposed resource or operation. Type and description are mandatory since the framework cannot infer them.",
+      "description": "Describes a single function output parameter. It is referenced by and ID for later usage in the Exposes layer to define how the output of a consumed function is mapped.",
       "properties": {
         "name": {
-          "$ref": "#/$defs/IdentifierExtended",
-          "description": "Name of the parameter."
-        },
-        "in": {
           "type": "string",
-          "description": "Location of the parameter.",
-          "enum": [
-            "query",
-            "header",
-            "path",
-            "cookie",
-            "body"
-          ]
-        },
-        "type": {
-          "type": "string",
-          "description": "The expected data type of the parameter.",
-          "enum": [
-            "string",
-            "number",
-            "integer",
-            "boolean",
-            "array",
-            "object"
-          ]
-        },
-        "description": {
-          "type": "string",
-          "description": "A meaningful description of the parameter. Used for agent discovery and human documentation."
-        },
-        "pattern": {
-          "type": "string",
-          "description": "Optional regex pattern for validation. Only applicable when type is 'string'."
+          "description": "The name of the output parameter",
+          "pattern": "^[a-zA-Z0-9-_]+$"
         },
         "value": {
           "type": "string",
-          "description": "Static value or expression resolved from the execution context."
+          "description": "The value of the output parameter. It is retrived by reference to the consumed function response using JsonPath syntax. E.g. $response.data.user.id"
         }
       },
       "required": [
-        "name",
-        "in",
-        "type",
-        "description"
+        "name"
       ],
       "additionalProperties": false
-    },
-    "ConsumedOutputParameter": {
-      "type": "object",
-      "description": "Output parameter of a consumed operation. Extracts a named value from the raw API response via JsonPath, for use in orchestration steps.",
-      "properties": {
-        "name": {
-          "$ref": "#/$defs/IdentifierExtended",
-          "description": "Name of the output parameter. It will be used as a reference in the mapping definitions of the steps to indicate where to map values to."
-        },
-        "type": {
-          "type": "string",
-          "enum": [
-            "string",
-            "number",
-            "boolean",
-            "object",
-            "array"
-          ]
-        },
-        "value": {
-          "type": "string",
-          "description": "JsonPath expression against the raw response payload. E.g. $.results[*].id"
-        }
-      },
-      "required": [
-        "name",
-        "type",
-        "value"
-      ],
-      "unevaluatedProperties": false
-    },
-    "MappedOutputParameterBase": {
-      "type": "object",
-      "description": "Base for an inline-mapped output parameter with recursive typing and JsonPath extraction.",
-      "properties": {
-        "type": {
-          "type": "string",
-          "enum": [
-            "string",
-            "number",
-            "boolean",
-            "object",
-            "array"
-          ]
-        },
-        "mapping": {
-          "type": "string",
-          "description": "JsonPath expression to extract the value. E.g. $.properties.Name.title[0].text.content"
-        }
-      },
-      "required": [
-        "type"
-      ]
-    },
-    "MappedOutputParameterString": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/MappedOutputParameterBase"
-        },
-        {
-          "properties": {
-            "type": {
-              "const": "string"
-            },
-            "mapping": true
-          },
-          "required": [
-            "mapping"
-          ],
-          "unevaluatedProperties": false
-        }
-      ]
-    },
-    "MappedOutputParameterNumber": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/MappedOutputParameterBase"
-        },
-        {
-          "properties": {
-            "type": {
-              "const": "number"
-            },
-            "mapping": true
-          },
-          "required": [
-            "mapping"
-          ],
-          "unevaluatedProperties": false
-        }
-      ]
-    },
-    "MappedOutputParameterBoolean": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/MappedOutputParameterBase"
-        },
-        {
-          "properties": {
-            "type": {
-              "const": "boolean"
-            },
-            "mapping": true
-          },
-          "required": [
-            "mapping"
-          ],
-          "unevaluatedProperties": false
-        }
-      ]
-    },
-    "MappedOutputParameterObject": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/MappedOutputParameterBase"
-        },
-        {
-          "properties": {
-            "type": {
-              "const": "object"
-            },
-            "mapping": true,
-            "properties": {
-              "type": "object",
-              "description": "A map of named properties. Each key is a property name, each value is a typed output parameter.",
-              "additionalProperties": {
-                "$ref": "#/$defs/MappedOutputParameter"
-              }
-            }
-          },
-          "required": [
-            "properties"
-          ],
-          "unevaluatedProperties": false
-        }
-      ]
-    },
-    "MappedOutputParameterArray": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/MappedOutputParameterBase"
-        },
-        {
-          "properties": {
-            "type": {
-              "const": "array"
-            },
-            "mapping": true,
-            "items": {
-              "$ref": "#/$defs/MappedItemArray"
-            }
-          },
-          "required": [
-            "items"
-          ],
-          "unevaluatedProperties": false
-        }
-      ]
-    },
-    "MappedItemArray": {
-      "type": "array",
-      "description": "Describes the shape of items inside an array output parameter.",
-      "items": {
-        "$ref": "#/$defs/MappedOutputParameter"
-      },
-      "minItems": 1
-    },
-    "MappedOutputParameter": {
-      "description": "Inline-mapped output parameter (simple mode). Used when the exposed operation has a single call + with.",
-      "oneOf": [
-        {
-          "$ref": "#/$defs/MappedOutputParameterString"
-        },
-        {
-          "$ref": "#/$defs/MappedOutputParameterNumber"
-        },
-        {
-          "$ref": "#/$defs/MappedOutputParameterBoolean"
-        },
-        {
-          "$ref": "#/$defs/MappedOutputParameterObject"
-        },
-        {
-          "$ref": "#/$defs/MappedOutputParameterArray"
-        }
-      ]
-    },
-    "OrchestratedOutputParameterBase": {
-      "type": "object",
-      "description": "Base for a named output parameter whose value is populated by step mappings during orchestration.",
-      "properties": {
-        "name": {
-          "$ref": "#/$defs/IdentifierExtended",
-          "description": "Name of the output parameter. It will be used as a reference in the mapping definitions of the steps to indicate where to map values to."
-        },
-        "type": {
-          "type": "string",
-          "enum": [
-            "string",
-            "number",
-            "boolean",
-            "object",
-            "array"
-          ]
-        }
-      },
-      "required": [
-        "name",
-        "type"
-      ]
-    },
-    "OrchestratedOutputParameterScalar": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/OrchestratedOutputParameterBase"
-        },
-        {
-          "properties": {
-            "type": {
-              "enum": [
-                "string",
-                "number",
-                "boolean"
-              ]
-            },
-            "name": true
-          },
-          "unevaluatedProperties": false
-        }
-      ]
-    },
-    "OrchestratedOutputParameterArray": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/OrchestratedOutputParameterBase"
-        },
-        {
-          "properties": {
-            "type": {
-              "const": "array"
-            },
-            "name": true,
-            "items": {
-              "type": "array",
-              "items": {
-                "$ref": "#/$defs/OrchestratedOutputParameter"
-              },
-              "minItems": 1
-            }
-          },
-          "required": [
-            "items"
-          ],
-          "unevaluatedProperties": false
-        }
-      ]
-    },
-    "OrchestratedOutputParameterObject": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/OrchestratedOutputParameterBase"
-        },
-        {
-          "properties": {
-            "type": {
-              "const": "object"
-            },
-            "name": true,
-            "properties": {
-              "type": "object",
-              "additionalProperties": {
-                "$ref": "#/$defs/OrchestratedOutputParameter"
-              }
-            }
-          },
-          "required": [
-            "properties"
-          ],
-          "unevaluatedProperties": false
-        }
-      ]
-    },
-    "OrchestratedOutputParameter": {
-      "description": "Named output parameter (orchestrated mode). Used when the exposed operation has steps with mappings/lookups.",
-      "oneOf": [
-        {
-          "$ref": "#/$defs/OrchestratedOutputParameterScalar"
-        },
-        {
-          "$ref": "#/$defs/OrchestratedOutputParameterArray"
-        },
-        {
-          "$ref": "#/$defs/OrchestratedOutputParameterObject"
-        }
-      ]
     },
     "Hostname": {
       "type": "string",
@@ -462,12 +125,12 @@
         "created": {
           "type": "string",
           "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
-          "description": "The date when the capability was created"
+          "description": "The date and time when the capability was created"
         },
         "modified": {
           "type": "string",
           "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
-          "description": "The date when the capability was last modified"
+          "description": "The date and time when the capability was last modified"
         },
         "stakeholders": {
           "type": "array",
@@ -551,7 +214,8 @@
           "maximum": 65535
         },
         "namespace": {
-          "$ref": "#/$defs/IdentifierKebab",
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9-]+$",
           "description": "Unique identifier for this exposed API"
         },
         "authentication": {
@@ -584,20 +248,21 @@
         },
         "description": {
           "type": "string",
-          "description": "Used to provide *meaningful* information about the resource. Remember, in a world of agents, context is king."
+          "description": "Used to provide *meaningul* infimration about the resource. Remember, in a world of agents, context is king."
         },
         "path": {
           "type": "string",
           "description": "Path of the resource (supports {{param}} placeholders)"
         },
         "name": {
-          "$ref": "#/$defs/IdentifierKebab",
-          "description": "Technical name for the resource. It will likely be used for reference"
+          "type": "string",
+          "description": "Technicnal name for the resource. It will likely be used for reference",
+          "pattern": "^[a-zA-Z0-9-]+$"
         },
         "inputParameters": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/ExposedInputParameter"
+            "$ref": "#/$defs/InputParameter"
           }
         },
         "operations": {
@@ -615,7 +280,7 @@
         "description",
         "path"
       ],
-      "anyOf": [
+      "oneOf": [
         {
           "required": [
             "operations"
@@ -631,19 +296,16 @@
     },
     "ExposedOperation": {
       "type": "object",
-      "description": "An operation exposed on a resource.",
+      "description": "An operation exposed on a resource",
       "properties": {
         "name": {
-          "$ref": "#/$defs/IdentifierKebab",
-          "description": "Technical name for the operation. Used for reference."
+          "type": "string",
+          "description": "Technicnal name for the resource. It will likely be used for reference",
+          "pattern": "^[a-zA-Z0-9-]+$"
         },
         "label": {
           "type": "string",
-          "description": "Display name for the operation. Used in UIs."
-        },
-        "description": {
-          "type": "string",
-          "description": "Used to provide *meaningful* information about the operation. Remember, in a world of agents, context is king."
+          "description": "Display name for the resource. It will likely be used in UIs."
         },
         "method": {
           "type": "string",
@@ -659,19 +321,14 @@
         "inputParameters": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/ExposedInputParameter"
+            "$ref": "#/$defs/InputParameter"
           }
         },
-        "call": {
-          "type": "string",
-          "description": "For simple cases, the reference to the consumed operation. Format: {namespace}.{operationId}. E.g.: notion.get-database or github.get-user",
-          "pattern": "^[a-zA-Z0-9-]+\\.[a-zA-Z0-9-]+$"
-        },
-        "with": {
-          "$ref": "#/$defs/WithInjector"
-        },
         "outputParameters": {
-          "type": "array"
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/OutputParameter"
+          }
         },
         "steps": {
           "type": "array",
@@ -679,77 +336,27 @@
             "$ref": "#/$defs/OperationStep"
           },
           "minItems": 1
-        },
-        "mappings": {
-          "type": "array",
-          "description": "Maps step outputs to the operation's output parameters.",
-          "items": {
-            "$ref": "#/$defs/StepOutputMapping"
-          }
         }
       },
       "required": [
-        "method"
-      ],
-      "oneOf": [
-        {
-          "required": [
-            "call"
-          ],
-          "properties": {
-            "outputParameters": {
-              "items": {
-                "$ref": "#/$defs/MappedOutputParameter"
-              }
-            }
-          }
-        },
-        {
-          "required": [
-            "steps",
-            "name"
-          ],
-          "properties": {
-            "mappings": true,
-            "outputParameters": {
-              "items": {
-                "$ref": "#/$defs/OrchestratedOutputParameter"
-              }
-            }
-          }
-        }
+        "method",
+        "name",
+        "steps"
       ],
       "additionalProperties": false
-    },
-    "WithInjector": {
-      "type": "object",
-      "description": "A map of key-value pairs that binds input parameters of the called operation to values or expressions resolved from the execution context.",
-      "additionalProperties": {
-        "oneOf": [
-          {
-            "type": "string"
-          },
-          {
-            "type": "number"
-          }
-        ]
-      }
     },
     "ConsumesHttp": {
       "type": "object",
       "description": "HTTP API consumption configuration",
       "properties": {
         "namespace": {
-          "$ref": "#/$defs/IdentifierKebab",
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9-]+$",
           "description": "Unique identifier for this consumed API"
         },
         "type": {
           "type": "string",
           "const": "http"
-        },
-        "description": {
-          "type": "string",
-          "description": "Used to provide *meaningful* information about the operation. Remember, in a world of agents, context is king."
         },
         "baseUri": {
           "type": "string",
@@ -759,7 +366,7 @@
         "inputParameters": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/ConsumedInputParameter"
+            "$ref": "#/$defs/InputParameter"
           }
         },
         "authentication": {
@@ -783,7 +390,6 @@
       },
       "required": [
         "namespace",
-        "description",
         "type",
         "baseUri",
         "resources"
@@ -795,8 +401,8 @@
       "description": "A consumed HTTP resource",
       "properties": {
         "name": {
-          "$ref": "#/$defs/IdentifierKebab",
-          "description": "Technical name for the resource. It will likely be used for reference"
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9-]+$"
         },
         "label": {
           "type": "string"
@@ -810,7 +416,7 @@
         "inputParameters": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/ConsumedInputParameter"
+            "$ref": "#/$defs/InputParameter"
           }
         },
         "operations": {
@@ -834,15 +440,11 @@
       "description": "An operation on a consumed HTTP resource",
       "properties": {
         "name": {
-          "$ref": "#/$defs/IdentifierKebab",
-          "description": "Technical name for the operation. Used for reference."
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9-]+$"
         },
         "label": {
           "type": "string"
-        },
-        "description": {
-          "type": "string",
-          "description": "Used to provide *meaningful* information about the operation. Remember, in a world of agents, context is king."
         },
         "method": {
           "type": "string",
@@ -858,22 +460,22 @@
         "inputParameters": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/ConsumedInputParameter"
+            "$ref": "#/$defs/InputParameter"
           }
         },
         "outputRawFormat": {
           "type": "string",
           "enum": [
-            "JSON",
+            "json",
             "XML"
           ],
-          "default": "JSON",
-          "description": "The raw format of the response from the consumed API. It is used to determine how to parse the response and extract the output parameters. Default value is json."
+          "default": "json",
+          "description": "The raw format of the response from the consumed API. It is used to determine how to parse the response and extract the output parameters. Defualt value is json."
         },
         "outputParameters": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/ConsumedOutputParameter"
+            "$ref": "#/$defs/OutputParameter"
           }
         },
         "body": {
@@ -886,111 +488,40 @@
       ],
       "additionalProperties": false
     },
-    "OperationStepBase": {
+    "OperationStep": {
       "type": "object",
+      "description": "Describes a single sequence step called in a sequence of calls in order to execute a request",
       "properties": {
-        "type": {
+        "call": {
           "type": "string",
-          "enum": [
-            "call",
-            "lookup"
-          ]
+          "description": "The reference of the source where the consumed request lies. It should follow the syntax {{namespace}}.{{operationId}}. E.g. : notion.get-database or github.get-user",
+          "pattern": "^[a-zA-Z0-9-]+\\.[a-zA-Z0-9-]+$"
         },
-        "name": {
-          "$ref": "#/$defs/IdentifierKebab",
-          "description": "Technical name for the step. Used as namespace for referencing step outputs in mappings and expressions."
+        "inputParameters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/OperationStepParameter"
+          }
+        },
+        "mappings": {
+          "type": "array",
+          "description": "Defines how to map the output parameters of this step to the input parameters of the next steps or to the output parameters of the exposed operation. It is an array of mapping objects with targetName and value properties. The targetName is the name of the parameter to map to, and the value is a JsonPath reference to the value to map from. E.g. {targetName: 'database_id', value: '$.get-database.database_id'}",
+          "items": {
+            "$ref": "#/$defs/StepOutputMapping"
+          }
         }
       },
       "required": [
-        "type",
-        "name"
-      ]
-    },
-    "OperationStepCall": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/OperationStepBase"
-        },
-        {
-          "properties": {
-            "type": {
-              "const": "call"
-            },
-            "name": true,
-            "call": {
-              "type": "string",
-              "description": "Reference to the consumed operation. Format: {namespace}.{operationId}.",
-              "pattern": "^[a-zA-Z0-9-]+\\.[a-zA-Z0-9-]+$"
-            },
-            "with": {
-              "$ref": "#/$defs/WithInjector"
-            }
-          },
-          "required": [
-            "call"
-          ],
-          "unevaluatedProperties": false
-        }
-      ]
-    },
-    "OperationStepLookup": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/OperationStepBase"
-        },
-        {
-          "properties": {
-            "type": {
-              "const": "lookup"
-            },
-            "name": true,
-            "index": {
-              "$ref": "#/$defs/IdentifierKebab",
-              "description": "Name of a previous call step whose output serves as the lookup table."
-            },
-            "match": {
-              "$ref": "#/$defs/IdentifierKebab",
-              "description": "Name of the key field in the index to match against."
-            },
-            "lookupValue": {
-              "type": "string",
-              "description": "JsonPath expression resolving to the value(s) to look up."
-            },
-            "outputParameters": {
-              "type": "array",
-              "description": "List of field names to extract from the matched index entries.",
-              "items": {
-                "type": "string"
-              },
-              "minItems": 1
-            }
-          },
-          "required": [
-            "index",
-            "match",
-            "lookupValue",
-            "outputParameters"
-          ],
-          "unevaluatedProperties": false
-        }
-      ]
-    },
-    "OperationStep": {
-      "oneOf": [
-        {
-          "$ref": "#/$defs/OperationStepCall"
-        },
-        {
-          "$ref": "#/$defs/OperationStepLookup"
-        }
-      ]
+        "call"
+      ],
+      "additionalProperties": false
     },
     "StepOutputMapping": {
       "type": "object",
       "description": "Describes how to map the output of an operation step to the input of another step or to the output of the exposed operation",
       "properties": {
         "targetName": {
-          "$ref": "#/$defs/IdentifierExtended",
+          "type": "string",
           "description": "The name of the parameter to map to. It can be an input parameter of a next step or an output parameter of the exposed operation"
         },
         "value": {
@@ -1000,6 +531,25 @@
       },
       "required": [
         "targetName",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "OperationStepParameter": {
+      "type": "object",
+      "description": "Describes a single parameter in an operation step",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the parameter in the called operation"
+        },
+        "value": {
+          "type": "string",
+          "description": "The value of the parameter. It can be a static value or a reference to a previous step output using JsonPath syntax. E.g. $this.step1.output.data.id"
+        }
+      },
+      "required": [
+        "name",
         "value"
       ],
       "additionalProperties": false
@@ -1121,10 +671,6 @@
       ],
       "additionalProperties": false
     },
-    "RequestBodyRaw": {
-      "type": "string",
-      "description": "A raw body string. When used with a YAML block scalar (|), the string is sent as-is. Interpreted as JSON by default."
-    },
     "RequestBody": {
       "description": "Request body configuration",
       "oneOf": [
@@ -1139,9 +685,6 @@
         },
         {
           "$ref": "#/$defs/RequestBodyMultipartForm"
-        },
-        {
-          "$ref": "#/$defs/RequestBodyRaw"
         }
       ]
     },
@@ -1150,7 +693,8 @@
       "description": "Configuration for forwarding requests to a consumed namespace",
       "properties": {
         "targetNamespace": {
-          "$ref": "#/$defs/IdentifierKebab",
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9-]+$",
           "description": "The namespace to forward requests to"
         },
         "trustedHeaders": {
@@ -1182,6 +726,10 @@
         },
         {
           "$ref": "#/$defs/AuthDigest"
+        },
+        {
+          "type": "string",
+          "const": "inherit"
         }
       ]
     },
