@@ -1,5 +1,5 @@
 ---
-naftiko: "0.3"
+naftiko: "0.4"
 info:
   label: passtru
   description: Example pass tru capability
@@ -20,6 +20,8 @@ capability:
             label: "Get Users"
             steps:
               - call: "github.get-users"
+                type: call
+                name: "fetch-users"
       - path: "/notion"
         label: "Notion API Pass-thru Proxy"
         description: "A proxy to forward requests to the Notion API while the capability is being configured"
@@ -29,6 +31,7 @@ capability:
             - "Notion-Version"
   consumes:
   - namespace: "notion"
+    description: "Notion API integration for accessing project and time tracking data relevant to CIR reporting."
     type: http
     baseUri: "https://api.notion.com/v1/"
     resources:
@@ -40,12 +43,13 @@ capability:
           - name: "get-mock"
             label: "Mock operation for example"
             method: GET
-            outputRawFormat: json
+            outputRawFormat: JSON
     authentication:
       type: "basic"
       username: "scott"
       password: "tiger"
   - namespace: "github"
+    description: "GitHub API integration for accessing user data."
     type: http
     baseUri: "https://api.github.com/v1/"
     resources:

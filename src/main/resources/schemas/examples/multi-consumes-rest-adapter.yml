@@ -1,5 +1,5 @@
 ---
-naftiko: "0.3"
+naftiko: "0.4"
 info:
   label: "Sample Capability"
   description: "This is a sample capability specification to demonstrate the features of Naftiko"
@@ -31,11 +31,14 @@ capability:
               inputParameters:
                 - name: "user_name"
                   in: "path"
+                  type: "string"
+                  description: "Username to retrieve information for"
               steps:
                 - call: "github.get-user"
-                  inputParameters:
-                    - name: "username"
-                      value: "$this.sample.{{user_name}}"
+                  name: "fetch-user"
+                  type: "call"
+                  with:
+                    "username": "$this.sample.{{user_name}}"
                       
                     
 
@@ -45,6 +48,8 @@ capability:
           description: "This is a resource to retrieve and update information about a database"
           inputParameters:
             - name: "database_id"
+              type: "string"
+              description: "ID of the database to retrieve information for"
               in: "path"
           operations:
             - method: "GET"
@@ -52,16 +57,20 @@ capability:
               label: "Get Database"
               outputParameters:
                 - name: "Api-Version"
-                  value: "v1"
+                  type: string
                 - name: "db_name"
+                  type: "string"
               steps:
                 - call: "notion.get-database"
-                  inputParameters:
-                    - name: "database_id"
-                      value: "$this.sample.{{database_id}}"
-                  mappings:
-                    - targetName: "db_name"
-                      value: "$.{{dbName}}"
+                  type: "call"
+                  name: "fetch-db"
+                  with:
+                    "database_id": "$this.sample.{{database_id}}"
+              mappings:
+                  - targetName: "db_name"
+                    value: "$.{{dbName}}"
+                  - targetName: "Api-Version"
+                    value: "v1"
         - path: "/notion/{{path}}"
           label: "Notion API Pass-thru Proxy"
           description: "A proxy to forward requests to the Notion API while the capability is being configured"
@@ -79,6 +88,7 @@ capability:
 
   consumes:
     - type: "http"
+      description: "HTTP API integration for accessing external services."
       namespace: "notion"
       baseUri: "https://api.notion.com/v1/"
       inputParameters:
@@ -105,8 +115,10 @@ capability:
               outputRawFormat: "XML"
               outputParameters:
                 - name: "dbName"
+                  type: "string"
                   value: "$.title[0].text.content"
                 - name: "dbId"
+                  type: "string"
                   value: "$.id"
             - method: "PUT"
               name: "update-database"
@@ -123,6 +135,7 @@ capability:
               label: "Query Database"
 
     - type: "http"
+      description: "HTTP API integration for accessing external services."
       namespace: "github"
       baseUri: "https://api.github.com/v1/"
       resources:

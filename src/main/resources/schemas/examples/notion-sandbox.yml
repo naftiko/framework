@@ -1,5 +1,5 @@
 ---
-naftiko: "0.3"
+naftiko: "0.4"
 info:
   label: "Notion capability"
   description: "This is a capability enabling consumption of Notion API."
@@ -19,6 +19,7 @@ capability:
             targetNamespace: "notion"
   consumes:
     - namespace: "notion"
+      description: "Notion API integration for accessing data stored in Notion."
       type: http
       baseUri: "https://api.notion.com/v1"
       authentication:
