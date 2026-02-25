@@ -10,6 +10,14 @@
       "description": "Version of the Naftiko schema",
       "const": "0.4"
     },
+    "externalRefs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ExternalRef"
+      },
+      "minItems": 1,
+      "description": "List of external references for variable injection and resource linking."
+    },
     "info": {
       "$ref": "#/$defs/Info"
     },
@@ -24,6 +32,68 @@
   ],
   "additionalProperties": false,
   "$defs": {
+    "ExternalRef": {
+      "oneOf": [
+        {
+          "type": "object",
+          "description": "File-resolved external reference",
+          "properties": {
+            "name": {
+              "$ref": "#/$defs/IdentifierKebab"
+            },
+            "description": {
+              "type": "string",
+              "description": "Used to provide *meaningful* information about the external reference. Remember, in a world of agents, context is king."
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "variables"
+              ]
+            },
+            "resolution": {
+              "type": "string",
+              "const": "file"
+            },
+            "uri": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "description",
+            "type",
+            "resolution",
+            "uri"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Runtime-resolved external reference (default)",
+          "properties": {
+            "namespace": {
+              "$ref": "#/$defs/IdentifierKebab"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "variables"
+              ]
+            },
+            "resolution": {
+              "type": "string",
+              "const": "runtime"
+            }
+          },
+          "required": [
+            "namespace",
+            "type"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
     "IdentifierKebab": {
       "type": "string",
       "description": "Kebab-case identifier (alphanumeric and hyphens).",
