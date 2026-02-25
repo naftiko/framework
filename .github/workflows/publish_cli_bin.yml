@@ -1,12 +1,67 @@
-name: Dummy Publish CLI binaries
+name: Publish CLI binaries
 
 on:
+  push:
+    tags:
+      - 'v*'  # Only trigger by new tags starting by "v" (v1.0.0, v2.1.3...). Because the build takes time.
   workflow_dispatch:
 
 jobs:
-  say-hello:
-    runs-on: ubuntu-latest
-
+  build:
+    strategy:
+      matrix:
+        include:
+          # Linux AMD64
+          - os: ubuntu-latest
+            artifact_name: naftiko-cli-linux-amd64
+            
+          # macOS Apple Silicon (ARM64)
+          - os: macos-latest  # macos-14+ uses Mx runners
+            artifact_name: naftiko-cli-macos-arm64
+            
+          # Windows AMD64
+          - os: windows-latest
+            artifact_name: naftiko-cli-windows-amd64.exe
+    
+    runs-on: ${{ matrix.os }}
+    
+    permissions:
+      contents: write
+    
     steps:
-      - name: Print Hello World
-        run: echo "Hello world"
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '21'
+          distribution: 'graalvm-community'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          native-image-job-reports: 'true'
+      
+      - name: Build with Maven
+        run: mvn -B clean package -Pnative
+      
+      - name: Rename artifact (Unix)
+        if: runner.os != 'Windows'
+        run: mv target/naftiko-cli target/${{ matrix.artifact_name }}
+      
+      - name: Rename artifact (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Move-Item target\naftiko-cli.exe target\${{ matrix.artifact_name }}
+      
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: target/${{ matrix.artifact_name }}
+      
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/')  # Only create release when a new tag is pushed (not when action is manually triggered).
+        uses: softprops/action-gh-release@v1
+        with:
+          files: target/${{ matrix.artifact_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
