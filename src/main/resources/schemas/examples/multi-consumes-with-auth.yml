@@ -43,7 +43,7 @@ capability:
           - name: "get-mock"
             label: "Mock operation for example"
             method: GET
-            outputRawFormat: JSON
+            outputRawFormat: json
     authentication:
       type: "basic"
       username: "scott"
