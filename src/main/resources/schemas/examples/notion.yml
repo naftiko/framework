@@ -1,5 +1,11 @@
 ---
 naftiko: "0.4"
+externalRefs:
+  - name: "notion-env"
+    type: "variables"
+    description: "External reference to Notion API for accessing pre-release participant data stored in Notion."
+    resolution: file
+    uri: "file:///path/to/notion_env.json"
 info:
   label: "Sample Capability"
   description: "This is a sample capability specification to demonstrate the features of Naftiko"
@@ -65,7 +71,7 @@ capability:
       baseUri: "https://api.notion.com/v1/"
       authentication:
         type: "bearer"
-        token: ""
+        token: "{{notion-env:NOTION_API_TOKEN}}"
       inputParameters:
         - name: "Notion-Version"
           in: "header"
