@@ -1,2 +1,0 @@
-# Naftiko Roadmap
-@todo

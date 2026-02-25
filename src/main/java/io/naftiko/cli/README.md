@@ -6,53 +6,54 @@ This is the source code of the CLI for Naftiko.
 
 The goal of this CLI is to simplify configuration and validation. While everything can be done manually, the CLI provides helper commands.
 
-## Getting started
-### Prerequisites
-* You must have java installed.
-* You must have mvn installed and use it as package manager.
-  * For MacOS we suggest to use brew installer
-  ```
-  brew install maven
-  ```
-### Dependencies
-* You must install the project dependencies.
+## Installation
+### macOS
+For the moment, CLI is only provided for Apple Silicon (with M chip).
+**Apple Silicon (M1/M2/M3/M4):**
+```bash
+# Download the binary
+curl -L https://github.com/naftiko/framework/releases/latest/download/naftiko-cli-macos-arm64 -o naftiko
+
+# Set binary as executable
+chmod +x naftiko
+
+# Delete the macOS quarantine (temporary step, because the binary is not signed yet)
+xattr -d com.apple.quarantine naftiko
+
+# Install
+sudo mv naftiko /usr/local/bin/
 ```
-mvn clean install
+### Linux
+```bash
+# Download the binary
+curl -L https://github.com/naftiko/framework/releases/latest/download/naftiko-cli-linux-amd64 -o naftiko
+
+# Set binary as executable
+chmod +x naftiko
+
+# Install
+sudo mv naftiko /usr/local/bin/
 ```
-It should generate several jar files in the target folder. One of them should be cli.jar.
-### Execute
-* To compile the source code:
-  ```
-  mvn clean package
-  ```
-* To generate a capability configuration file, execute the following command:
-  ```
-  java -jar target/cli.jar create capability
-  ```
-  It should create a capability configuration file at the root of the project.
-* To validate a capability configuration file from a json schema file:
-  ```
-  java -jar target/cli.jar validate path_to_your_configuratio_file.yaml_or_json path_to_the_json_scheam_file.json
-  ```
-## Execution command and aliases
-* To avoid typing java -jar target/cli.jar a target/appassembler/bin/naftiko script is generated when compiling. If you want this script to be available everywhere, add an alias to your ~/.bashrc or ~/.zshrc file:
-  ```
-  alias naftiko='path_to_your_framework_project_folder/target/appassembler/bin/naftiko'
-  ```
-  Then you can use
-  ```
-  naftiko create capability
-  naftiko validate path_to_your_configuratio_file.yaml_or_json path_to_the_json_scheam_file.json
-  ```
-* Shorter aliases are also available:
-  ```
-  naftiko create capability
-  naftiko c cap
-  naftiko cr cap
-  ```
-  ```
-  naftiko validate path_to_your_configuratio_file.yaml_or_json path_to_the_json_scheam_file.json
-  naftiko v path_to_your_configuratio_file.yaml_or_json path_to_the_json_scheam_file.json
-  naftiko val path_to_your_configuratio_file.yaml_or_json path_to_the_json_scheam_file.json
-  ```
-  
+### Windows
+PowerShell installation is recommended.
+
+**Open PowerShell as admin and execute:**
+```powershell
+# Create installation folder
+New-Item -ItemType Directory -Force -Path "C:\Program Files\Naftiko"
+
+# Download the binary
+Invoke-WebRequest -Uri "https://github.com/naftiko/framework/releases/latest/download/naftiko-cli-windows-amd64.exe" -OutFile "C:\Program Files\Naftiko\naftiko.exe"
+
+# Add to the system PATH
+$oldPath = [Environment]::GetEnvironmentVariable('Path', 'Machine')
+$newPath = $oldPath + ';C:\Program Files\Naftiko'
+[Environment]::SetEnvironmentVariable('Path', $newPath, 'Machine')
+```
+
+## Test
+After installation, you may have to restart your terminal. Then run this command to check the CLI is well installed:
+```bash
+naftiko --help
+```
+You should see the help of the command.
