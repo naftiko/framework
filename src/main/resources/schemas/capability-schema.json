@@ -864,10 +864,14 @@
         "outputRawFormat": {
           "type": "string",
           "enum": [
-            "JSON",
-            "XML"
+            "json",
+            "xml",
+            "avro",
+            "protobuf",
+            "csv",
+            "yaml"
           ],
-          "default": "JSON",
+          "default": "json",
           "description": "The raw format of the response from the consumed API. It is used to determine how to parse the response and extract the output parameters. Default value is json."
         },
         "outputParameters": {
