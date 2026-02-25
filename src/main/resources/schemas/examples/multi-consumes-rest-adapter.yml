@@ -112,7 +112,7 @@ capability:
             - method: "GET"
               name: "get-database"
               label: "Get Database"
-              outputRawFormat: "XML"
+              outputRawFormat: "xml"
               outputParameters:
                 - name: "dbName"
                   type: "string"
