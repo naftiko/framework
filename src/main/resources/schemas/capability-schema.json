@@ -765,13 +765,6 @@
         "authentication": {
           "$ref": "#/$defs/Authentication"
         },
-        "headers": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "pattern": "^[^:]+:\\s*.+$"
-          }
-        },
         "resources": {
           "type": "array",
           "description": "List of consumed resources",
