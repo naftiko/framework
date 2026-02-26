@@ -1,20 +1,22 @@
 # Naftiko Framework
-Declarative integration framework based on capabilities.
 
-Each capability is a coarse grained piece of domain distributed thanks to a port and adapters architecture.
+Tthe first Open Source project for **Spec-Driven Integration** based on capabilities.
 
-## Framework Engine
-To use the framework, you must run it using its engine.\
-Read the [Engine README](/src/main/java/io/naftiko/README.md) for more informations.
+Each integration is a capability, a coarse grained piece of domain that empowers developers to reuse existing HTTP-based APIs, using data formats like JSON, YAML, Protocol Buffer, XML, CSV and Avro, and compose multiple capabilities to enable better API reusability and efficient context engineering for AI applications.
 
-## Capabilities
-The configuration of your capabilities is made according to a schema.\
-Read the [Specifications README](/src/main/resources/schemas/README.md) for more informations.
+The framework itself is easy to install, extensible and polyglot thanks to an hexagonal architecture with port & adapters. Capabilities are declared using YAML files, configuring the engine packaged as a lightweight Docker container.
 
-## CLI tool
-The Naftiko framework provides a CLI tool.\
-Read the [Cli README](/src/main/java/io/naftiko/cli/README.md) for more informations.
+While the framework itself is developed in Java and can be extended to support new protocols, developers just need to know YAML, JSONPath and Mustache templates to take full advantage of it.
 
-## Resources
-To know more about Naftiko please visit our [wiki page](https://github.com/naftiko/framework/wiki).\
-There is also a discussion channel available [here](https://github.com/orgs/naftiko/discussions).
+- :rowboat: [Installation](wiki/1-‐-Installation)
+- :sailboat: [Tutorial](wiki/2-‐-Tutorial)
+- :ship: [Use cases](wiki/3-‐-Use-Cases)
+- :anchor: [Specification](wiki/4-‐-Specification)
+- :mega: [Releases](wiki/5-‐-Releases)
+- :telescope: [Roadmap](wiki/6-‐-Roadmap)
+- :nut_and_bolt: [Contribute](wiki/7-‐-Contribute)
+
+
+Please join the community of users and contributors in [this GitHub Discussion forum!](https://github.com/orgs/naftiko/discussions).
+
+<img src="https://naftiko.github.io/docs/images/navi/navi_hello.svg" width="50">
