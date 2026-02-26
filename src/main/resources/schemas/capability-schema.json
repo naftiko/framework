@@ -10,6 +10,9 @@
       "description": "Version of the Naftiko schema",
       "const": "0.4"
     },
+    "info": {
+      "$ref": "#/$defs/Info"
+    },
     "externalRefs": {
       "type": "array",
       "items": {
@@ -17,9 +20,6 @@
       },
       "minItems": 1,
       "description": "List of external references for variable injection and resource linking."
-    },
-    "info": {
-      "$ref": "#/$defs/Info"
     },
     "capability": {
       "$ref": "#/$defs/Capability"
@@ -39,7 +39,8 @@
           "description": "File-resolved external reference",
           "properties": {
             "name": {
-              "$ref": "#/$defs/IdentifierKebab"
+              "$ref": "#/$defs/IdentifierKebab",
+              "description": "A unique identifier for this external reference."
             },
             "description": {
               "type": "string",
@@ -53,6 +54,7 @@
             },
             "resolution": {
               "type": "string",
+              "description": "The resolution strategy for this external reference. 'file' means that the reference will be resolved from a file at the specified URI during capability loading, and the extracted variables will be injected for use in the capability definition. 'runtime' means that the reference will be resolved at runtime from the execution context (e.g. environment variables, secrets manager, or any other context store), and the extracted variables will be injected for use in the capability definition. Default value is 'runtime'.",
               "const": "file"
             },
             "uri": {
@@ -77,8 +79,9 @@
           "type": "object",
           "description": "Runtime-resolved external reference (default)",
           "properties": {
-            "namespace": {
-              "$ref": "#/$defs/IdentifierKebab"
+            "name": {
+              "$ref": "#/$defs/IdentifierKebab",
+              "description": "A unique identifier for this external reference."
             },
             "type": {
               "type": "string",
@@ -88,6 +91,7 @@
             },
             "resolution": {
               "type": "string",
+              "description": "The resolution strategy for this external reference. 'file' means that the reference will be resolved from a file at the specified URI during capability loading, and the extracted variables will be injected for use in the capability definition. 'runtime' means that the reference will be resolved at runtime from the execution context (e.g. environment variables, secrets manager, or any other context store), and the extracted variables will be injected for use in the capability definition. Default value is 'runtime'.",
               "const": "runtime"
             },
             "keys": {
@@ -96,8 +100,9 @@
             }
           },
           "required": [
-            "namespace",
+            "name",
             "type",
+            "resolution",
             "keys"
           ],
           "additionalProperties": false
