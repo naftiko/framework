@@ -121,6 +121,10 @@ public class ApiOperationsRestlet extends Restlet {
 
                         sendResponse(serverOp, response, found);
                         return true;
+                    } else if (canBuildMockResponse(serverOp)) {
+                        // No HTTP client adapter found, use mock mode with const values
+                        sendMockResponse(serverOp, response);
+                        return true;
                     } else {
                         response.setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
                         response.setEntity("Invalid call format: "
@@ -179,12 +183,174 @@ public class ApiOperationsRestlet extends Restlet {
                         response.setStatus(found.clientResponse.getStatus());
                         sendResponse(serverOp, response, found);
                         return true;
+                    } else if (canBuildMockResponse(serverOp)) {
+                        // No HTTP client adapter found, use mock mode with const values
+                        sendMockResponse(serverOp, response);
+                        return true;
                     }
                 }
             }
         }
 
         return false;
+    }
+
+    /**
+     * Check if an operation can build a mock response using const values from outputParameters.
+     * Returns true if the operation has at least one outputParameter with a const value.
+     */
+    private boolean canBuildMockResponse(ApiServerOperationSpec serverOp) {
+        if (serverOp.getOutputParameters() == null || serverOp.getOutputParameters().isEmpty()) {
+            return false;
+        }
+
+        // Check if at least one output parameter has a const value
+        for (OutputParameterSpec param : serverOp.getOutputParameters()) {
+            if (param.getConstant() != null) {
+                return true;
+            }
+            // Check nested properties for const values
+            if (param.getProperties() != null && !param.getProperties().isEmpty()) {
+                for (OutputParameterSpec prop : param.getProperties()) {
+                    if (hasConstValue(prop)) {
+                        return true;
+                    }
+                }
+            }
+            // Check items for const values
+            if (param.getItems() != null && hasConstValue(param.getItems())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Recursively check if a parameter or its nested structure has any const values.
+     */
+    private boolean hasConstValue(OutputParameterSpec param) {
+        if (param == null) {
+            return false;
+        }
+
+        if (param.getConstant() != null) {
+            return true;
+        }
+
+        if (param.getProperties() != null) {
+            for (OutputParameterSpec prop : param.getProperties()) {
+                if (hasConstValue(prop)) {
+                    return true;
+                }
+            }
+        }
+
+        if (param.getItems() != null) {
+            return hasConstValue(param.getItems());
+        }
+
+        return false;
+    }
+
+    /**
+     * Send a mock response using const values from outputParameters.
+     */
+    private void sendMockResponse(ApiServerOperationSpec serverOp, Response response) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            
+            // Build a JSON response using const values from outputParameters
+            JsonNode mockRoot = buildMockData(serverOp, mapper);
+            
+            if (mockRoot != null) {
+                response.setStatus(Status.SUCCESS_OK);
+                response.setEntity(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(mockRoot), 
+                        MediaType.APPLICATION_JSON);
+            } else {
+                response.setStatus(Status.SUCCESS_NO_CONTENT);
+            }
+        } catch (Exception e) {
+            response.setStatus(Status.SERVER_ERROR_INTERNAL);
+            response.setEntity("Error building mock response: " + e.getMessage(),
+                    MediaType.TEXT_PLAIN);
+        }
+
+        response.commit();
+    }
+
+    /**
+     * Build a JSON object with mock data from outputParameters const values.
+     */
+    private JsonNode buildMockData(ApiServerOperationSpec serverOp, ObjectMapper mapper) {
+        if (serverOp.getOutputParameters() == null || serverOp.getOutputParameters().isEmpty()) {
+            return null;
+        }
+
+        com.fasterxml.jackson.databind.node.ObjectNode result = mapper.createObjectNode();
+
+        for (OutputParameterSpec param : serverOp.getOutputParameters()) {
+            JsonNode paramValue = buildParameterValue(param, mapper);
+            if (paramValue != null && !(paramValue instanceof NullNode)) {
+                // Use the parameter name if available, otherwise use "value"
+                String fieldName = param.getName() != null ? param.getName() : "value";
+                result.set(fieldName, paramValue);
+            }
+        }
+
+        return result.size() > 0 ? result : null;
+    }
+
+    /**
+     * Build a JSON node for a single parameter, using const values or structures.
+     */
+    private JsonNode buildParameterValue(OutputParameterSpec param, ObjectMapper mapper) {
+        if (param == null) {
+            return NullNode.instance;
+        }
+
+        // Handle const values directly
+        if (param.getConstant() != null) {
+            return mapper.getNodeFactory().textNode(param.getConstant());
+        }
+
+        String type = param.getType();
+
+        // Handle array types
+        if ("array".equalsIgnoreCase(type)) {
+            com.fasterxml.jackson.databind.node.ArrayNode arrayNode = mapper.createArrayNode();
+            OutputParameterSpec items = param.getItems();
+
+            if (items != null) {
+                // Create one mock item to demonstrate the structure
+                JsonNode itemValue = buildParameterValue(items, mapper);
+                if (itemValue != null && !(itemValue instanceof NullNode)) {
+                    arrayNode.add(itemValue);
+                }
+            }
+
+            return arrayNode;
+        }
+
+        // Handle object types
+        if ("object".equalsIgnoreCase(type)) {
+            com.fasterxml.jackson.databind.node.ObjectNode objectNode = mapper.createObjectNode();
+
+            if (param.getProperties() != null) {
+                for (OutputParameterSpec prop : param.getProperties()) {
+                    JsonNode propValue = buildParameterValue(prop, mapper);
+                    if (propValue != null && !(propValue instanceof NullNode)) {
+                        String propName = prop.getName() != null ? prop.getName() : "property";
+                        objectNode.set(propName, propValue);
+                    }
+                }
+            }
+
+            return objectNode.size() > 0 ? objectNode : NullNode.instance;
+        }
+
+        // For other types without const values, return null
+        return NullNode.instance;
     }
 
     private void sendResponse(ApiServerOperationSpec serverOp, Response response,
