@@ -13,6 +13,8 @@
  */
 package io.naftiko.spec.exposes;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -27,12 +29,20 @@ public class ApiServerStepSpec {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private volatile ApiServerCallSpec call;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private volatile Map<String, Object> with;
+
     public ApiServerStepSpec() {
-        this(null);
+        this(null, null);
     }
 
     public ApiServerStepSpec(ApiServerCallSpec call) {
+        this(call, null);
+    }
+
+    public ApiServerStepSpec(ApiServerCallSpec call, Map<String, Object> with) {
         this.call = call;
+        this.with = with != null ? new ConcurrentHashMap<>(with) : null;
     }
 
     public ApiServerCallSpec getCall() {
@@ -41,6 +51,14 @@ public class ApiServerStepSpec {
 
     public void setCall(ApiServerCallSpec call) {
         this.call = call;
+    }
+
+    public Map<String, Object> getWith() {
+        return with;
+    }
+
+    public void setWith(Map<String, Object> with) {
+        this.with = with != null ? new ConcurrentHashMap<>(with) : null;
     }
 
 }
