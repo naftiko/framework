@@ -48,7 +48,7 @@
             "type": {
               "type": "string",
               "enum": [
-                "variables"
+                "environment"
               ]
             },
             "resolution": {
@@ -57,6 +57,10 @@
             },
             "uri": {
               "type": "string"
+            },
+            "keys": {
+              "$ref": "#/$defs/ExternalRefKeys",
+              "description": "Map of key-value pairs that define the variables to be injected from the resolved external reference. Each key is the variable name used for injection, each value is the corresponding key in the resolved file content. E.g. {\"notion_token\": \"NOTION_INTEGRATION_TOKEN\"} means that the value of the NOTION_INTEGRATION_TOKEN field in the resolved JSON file will be injected as {{notion_token}} in the capability definition."
             }
           },
           "required": [
@@ -64,7 +68,8 @@
             "description",
             "type",
             "resolution",
-            "uri"
+            "uri",
+            "keys"
           ],
           "additionalProperties": false
         },
@@ -84,15 +89,27 @@
             "resolution": {
               "type": "string",
               "const": "runtime"
+            },
+            "keys": {
+              "$ref": "#/$defs/ExternalRefKeys",
+              "description": "Map of key-value pairs that define the variables to be injected from the external reference at runtime. Each key is the variable name used for injection, each value is the corresponding key in the runtime context. E.g. {\"notion_token\": \"NOTION_INTEGRATION_TOKEN\"} means that the value of the NOTION_INTEGRATION_TOKEN field in the runtime context will be injected as {{notion_token}} in the capability definition."
             }
           },
           "required": [
             "namespace",
-            "type"
+            "type",
+            "keys"
           ],
           "additionalProperties": false
         }
       ]
+    },
+    "ExternalRefKeys": {
+      "type": "object",
+      "description": "Map of key-value pairs that define the variables to be injected from the external reference. Each key is the variable name used for injection, each value is the corresponding key in the resolved file content or runtime context. E.g. {\"notion_token\": \"NOTION_INTEGRATION_TOKEN\"} means that the value of the NOTION_INTEGRATION_TOKEN field in the resolved JSON file or runtime context will be injected as {{notion_token}} in the capability definition.",
+      "additionalProperties": {
+        "type": "string"
+      }
     },
     "IdentifierKebab": {
       "type": "string",
