@@ -27,9 +27,10 @@ capability:
           description: "This is a resource to retrieve the list of pre-release participants stored in Notion"
           operations:
             - method: "GET"
-              call: "notion.query-db"
-              with:
-                datasource_id: "2fe4adce-3d02-8028-bec8-000bfb5cafa2"
+              steps:
+                - call: "notion.query-db"
+                  with:
+                    datasource_id: "2fe4adce-3d02-8028-bec8-000bfb5cafa2"
               outputParameters:
                 - type: "array"
                   mapping: "$.results"
