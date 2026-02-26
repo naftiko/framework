@@ -57,10 +57,6 @@ public class Capability {
             }
         }
 
-        if (spec.getCapability().getConsumes().isEmpty()) {
-            throw new IllegalArgumentException("Capability must consume at least one endpoint.");
-        }
-
         for (ClientSpec clientSpec : spec.getCapability().getConsumes()) {
             if ("http".equals(clientSpec.getType())) {
                 this.clientAdapters.add(new HttpClientAdapter(this, (HttpClientSpec) clientSpec));
