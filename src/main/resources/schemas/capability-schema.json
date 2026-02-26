@@ -112,8 +112,11 @@
     "ExternalRefKeys": {
       "type": "object",
       "description": "Map of key-value pairs that define the variables to be injected from the external reference. Each key is the variable name used for injection, each value is the corresponding key in the resolved file content or runtime context. E.g. {\"notion_token\": \"NOTION_INTEGRATION_TOKEN\"} means that the value of the NOTION_INTEGRATION_TOKEN field in the resolved JSON file or runtime context will be injected as {{notion_token}} in the capability definition.",
+      "propertyNames": {
+        "$ref": "#/$defs/IdentifierExtended"
+      },
       "additionalProperties": {
-        "type": "string"
+        "$ref": "#/$defs/IdentifierExtended"
       }
     },
     "IdentifierKebab": {
