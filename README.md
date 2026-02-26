@@ -3,95 +3,18 @@ Declarative integration framework based on capabilities.
 
 Each capability is a coarse grained piece of domain distributed thanks to a port and adapters architecture.
 
-## Usage
-There are 3 ways to use the Naftiko Framework, depending on your goal.
-* If you want to simply use it as is: use a Docker instance. No environment configuration is required.
-* If you want to integrate it to your project: use a maven dependency. Add the dependency, and use the library seamlessly in your Java project.
-* If you want to contribute to the source code: pull the repository and access the source code directly.
+## Framework Engine
+To use the framework, you must run it using its engine.\
+Read the [Engine README](/src/main/java/io/naftiko/README.md) for more informations.
 
-### Docker usage
-#### Prerequisites
-* You need Docker or, if you are on macOS or Windows their Docker Desktop version. To do so, follow the official documentation:
-  * [For Mac](https://docs.docker.com/desktop/setup/install/mac-install/)
-  * [For Linux](https://docs.docker.com/desktop/setup/install/linux/)
-  * [For Windows](https://docs.docker.com/desktop/setup/install/windows-install/)
-
-* Be sure that Docker (or Docker Desktop) is running
-
-#### Pull the Naftiko Framework docker image
-* Naftiko provides a docker image hosted in GitHub packages plateform. It is public, so you can easily pull it locally.
-  ```bash
-  docker pull ghcr.io/naftiko/framework:latest
-  ```
-  Then, you should see the image 'ghcr.io/naftiko/framework' in your Docker Desktop with the tag 'latest'. You can also display local images with this command:
-  ```bash
-  docker image ls
-  ```
-
-#### Configure your own capability
-* Create your capability configuration file.\
-  The Naftiko Framework runs capabilities. For that, it uses a capability configuration file. You first have to create this file locally according to the [specification](https://github.com/naftiko/framework/wiki/3-%E2%80%90-Specifications). This file must be a yaml or json file (yaml, yml, and json extensions are supported).
-
-* Local hosts in your capability configuration file.\
-  If your capability reffers to some local hosts, be carefull to not use 'localhost', but 'host.docker.internal' instead. This is because your capability will run into an isolated docker container, so 'localhost' will reffer to the container and not your local machine.
-  For example:
-  ```bash
-  baseUri: "http://host.docker.internal:8080/api/"
-  ```
-
-#### Run the Naftiko Framework as a docker container
-* Use a docker volume.\
-  As you have to provide your local capability configuration file to the docker container, you must use a volume. This will be done using the '-v' option of the docker run command.
-
-* Use port formwarding.\
-  According to your configuration file, your capability will be exposed on a given port. Keep in mind that the framework runs in a container context, so this port won't be accessible from your local machine. You must use the port forwarding. This will be done using the '-p' option of the docker run command.
-
-* Run Naftiko Framework using your capability.\
-  Given a capability configuration file 'test.capability.yaml' and an exposition on port 8081, here is the command you have to execute to run the naftiko Framework:
-  ```bash
-  docker run -p 8081:8081 -v full_path_to_your_capability_folder/test.capability.yaml:/app/test.capability.yaml ghcr.io/naftiko/framework:latest /app/test.capability.yaml
-  ```
-  Then you should be able to request your capability at http://localhost:8081
-
-### Maven dependency usage
-@todo
-
-### Source code usage
-#### Prerequisites
-* You must have java installed.
-* You must have maven installed.
-* You must have git installed.
-
-#### Pull the Naftiko Framework source code
-```bash
-git clone https://github.com/naftiko/framework.git
-```
-
-#### Install dependencies
-* Be sure to be at the root of the project you cloned.
-  ```bash
-  cd framework
-  ```
-* You must install the project dependencies.
-  ```bash
-  mvn clean install
-  ```
-  It should generate several jar files in the target folder. One of them should be capability.jar.
-
-#### Create your capability
-* Create your capability configuration file according to the [specification](https://github.com/naftiko/framework/wiki/3-%E2%80%90-Specifications). This file must be a yaml or json file (yaml, yml, and json extensions are supported).
-
-#### Run the Naftiko Framework
-```bash
-java -jar path_to_your_jar_folder/capability.jar path_to_your_capability_folder/test.capability.yaml
-```
-Then you should be able to request your capability at http://localhost:your_exposed_port
+## Capabilities
+The configuration of your capabilities is made according to a schema.\
+Read the [Specifications README](/src/main/resources/schemas/README.md) for more informations.
 
 ## CLI tool
-The Naftiko framework provides a CLI tool.
-Read [Cli tool README](./src/main/java/io/naftiko/cli/README.md) for more informations.
+The Naftiko framework provides a CLI tool.\
+Read the [Cli README](/src/main/java/io/naftiko/cli/README.md) for more informations.
 
 ## Resources
-To know more about Naftiko please visit our [wiki page](https://github.com/naftiko/framework/wiki).
-
+To know more about Naftiko please visit our [wiki page](https://github.com/naftiko/framework/wiki).\
 There is also a discussion channel available [here](https://github.com/orgs/naftiko/discussions).

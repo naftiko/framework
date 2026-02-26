@@ -1,4 +1,4 @@
-name: Build and Push Docker Image to Github packages
+name: Publish Engine docker image
 
 on:
   push:
