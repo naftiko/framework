@@ -258,6 +258,26 @@
         "mapping": {
           "type": "string",
           "description": "JsonPath expression to extract the value. E.g. $.properties.Name.title[0].text.content"
+        },
+        "const": {
+          "description": "Optional constant value. If provided, it will override the mapping and the value will be injected as-is.",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "array"
+            },
+            {
+              "type": "object"
+            }
+          ]
         }
       },
       "required": [
@@ -274,10 +294,20 @@
             "type": {
               "const": "string"
             },
-            "mapping": true
+            "mapping": true,
+            "const": true
           },
-          "required": [
-            "mapping"
+          "oneOf": [
+            {
+              "required": [
+                "mapping"
+              ]
+            },
+            {
+              "required": [
+                "const"
+              ]
+            }
           ],
           "unevaluatedProperties": false
         }
@@ -293,10 +323,20 @@
             "type": {
               "const": "number"
             },
-            "mapping": true
+            "mapping": true,
+            "const": true
           },
-          "required": [
-            "mapping"
+          "oneOf": [
+            {
+              "required": [
+                "mapping"
+              ]
+            },
+            {
+              "required": [
+                "const"
+              ]
+            }
           ],
           "unevaluatedProperties": false
         }
@@ -312,10 +352,20 @@
             "type": {
               "const": "boolean"
             },
-            "mapping": true
+            "mapping": true,
+            "const": true
           },
-          "required": [
-            "mapping"
+          "oneOf": [
+            {
+              "required": [
+                "mapping"
+              ]
+            },
+            {
+              "required": [
+                "const"
+              ]
+            }
           ],
           "unevaluatedProperties": false
         }
@@ -332,6 +382,7 @@
               "const": "object"
             },
             "mapping": true,
+            "const": true,
             "properties": {
               "type": "object",
               "description": "A map of named properties. Each key is a property name, each value is a typed output parameter.",
@@ -358,6 +409,7 @@
               "const": "array"
             },
             "mapping": true,
+            "const": true,
             "items": {
               "$ref": "#/$defs/MappedItemArray"
             }
@@ -623,9 +675,23 @@
           "minItems": 1
         }
       },
-      "required": [
-        "exposes",
-        "consumes"
+      "anyOf": [
+        {
+          "required": [
+            "exposes"
+          ]
+        },
+        {
+          "required": [
+            "consumes"
+          ]
+        },
+        {
+          "required": [
+            "exposes",
+            "consumes"
+          ]
+        }
       ],
       "additionalProperties": false
     },
@@ -786,11 +852,8 @@
       "required": [
         "method"
       ],
-      "oneOf": [
+      "anyOf": [
         {
-          "required": [
-            "call"
-          ],
           "properties": {
             "outputParameters": {
               "items": {
