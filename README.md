@@ -4,17 +4,17 @@ Tthe first Open Source project for **Spec-Driven Integration** based on capabili
 
 Each integration is a capability, a coarse grained piece of domain that empowers developers to reuse existing HTTP-based APIs, using data formats like JSON, YAML, Protocol Buffer, XML, CSV and Avro, and compose multiple capabilities to enable better API reusability and efficient context engineering for AI applications.
 
-The framework itself is easy to install, extensible and polyglot thanks to an hexagonal architecture with port & adapters. Capabilities are declared using YAML files, configuring the engine packaged as a lightweight Docker container.
+The framework itself is easy to install, extensible and polyglot thanks to an hexagonal architecture with port & adapters. Capabilities are declared using YAML files, configuring the engine packaged as a Docker container.
 
 While the framework itself is developed in Java and can be extended to support new protocols, developers just need to know YAML, JSONPath and Mustache templates to take full advantage of it.
 
-- :rowboat: [Installation](wiki/1-‐-Installation)
-- :sailboat: [Tutorial](wiki/2-‐-Tutorial)
-- :ship: [Use cases](wiki/3-‐-Use-Cases)
-- :anchor: [Specification](wiki/4-‐-Specification)
-- :mega: [Releases](wiki/5-‐-Releases)
-- :telescope: [Roadmap](wiki/6-‐-Roadmap)
-- :nut_and_bolt: [Contribute](wiki/7-‐-Contribute)
+- :rowboat: [Installation](https://github.com/naftiko/framework/wiki/1-‐-Installation)
+- :sailboat: [Tutorial](https://github.com/naftiko/framework/wiki/2-‐-Tutorial)
+- :ship: [Use cases](https://github.com/naftiko/framework/wiki/3-‐-Use-Cases)
+- :anchor: [Specification](https://github.com/naftiko/framework/wiki/4-‐-Specification)
+- :mega: [Releases](https://github.com/naftiko/framework/wiki/5-‐-Releases)
+- :telescope: [Roadmap](https://github.com/naftiko/framework/wiki/6-‐-Roadmap)
+- :nut_and_bolt: [Contribute](https://github.com/naftiko/framework/wiki/7-‐-Contribute)
 
 
 Please join the community of users and contributors in [this GitHub Discussion forum!](https://github.com/orgs/naftiko/discussions).
