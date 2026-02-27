@@ -20,7 +20,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.naftiko.Capability;
-import io.naftiko.engine.exposes.ApiOperationsRestlet;
+import io.naftiko.engine.exposes.ApiResourceRestlet;
 import io.naftiko.engine.exposes.ApiServerAdapter;
 import io.naftiko.spec.NaftikoSpec;
 import io.naftiko.spec.exposes.ApiServerCallSpec;
@@ -69,11 +69,11 @@ public class CapabilityHttpBodyIntegrationTest {
         req.setEntity(incomingJson, MediaType.APPLICATION_JSON);
 
         // Create restlet instance
-        ApiOperationsRestlet restlet =
-                new ApiOperationsRestlet(capability, serverSpec, resourceSpec);
+        ApiResourceRestlet restlet =
+                new ApiResourceRestlet(capability, serverSpec, resourceSpec);
 
         // Use reflection to call private prepareInputParameters and findClientRequestFor
-        java.lang.reflect.Method buildMethod = ApiOperationsRestlet.class
+        java.lang.reflect.Method buildMethod = ApiResourceRestlet.class
                 .getDeclaredMethod("resolveInputParametersFromRequest", Request.class, ApiServerOperationSpec.class);
         buildMethod.setAccessible(true);
         @SuppressWarnings("unchecked")
@@ -87,7 +87,7 @@ public class CapabilityHttpBodyIntegrationTest {
                 "userName should be extracted from body");
 
         // Now call findClientRequestFor(ApiCallSpec, Map) reflectively to get HandlingContext
-        java.lang.reflect.Method findMethod = ApiOperationsRestlet.class.getDeclaredMethod(
+        java.lang.reflect.Method findMethod = ApiResourceRestlet.class.getDeclaredMethod(
                 "findClientRequestFor", ApiServerCallSpec.class, Map.class);
         findMethod.setAccessible(true);
         Object handlingCtx = findMethod.invoke(restlet, serverOp.getCall(), params);

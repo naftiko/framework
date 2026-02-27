@@ -43,15 +43,15 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Restlet that handles structured API operations.
+ * Restlet that handles calls to an API resource
  */
-public class ApiOperationsRestlet extends Restlet {
+public class ApiResourceRestlet extends Restlet {
 
     private final Capability capability;
     private final ApiServerSpec serverSpec;
     private final ApiServerResourceSpec resourceSpec;
 
-    public ApiOperationsRestlet(Capability capability, ApiServerSpec serverSpec,
+    public ApiResourceRestlet(Capability capability, ApiServerSpec serverSpec,
             ApiServerResourceSpec resourceSpec) {
         this.capability = capability;
         this.serverSpec = serverSpec;
@@ -407,7 +407,7 @@ public class ApiOperationsRestlet extends Restlet {
 
                     // Set any authentication needed on the client request
                     Response clientResponse = new Response(clientRequest);
-                    httpAdapter.setChallengeResponse(clientRequest,
+                    httpAdapter.setChallengeResponse(request, clientRequest,
                             clientRequest.getResourceRef().toString(), parameters);
                     httpAdapter.setHeaders(clientRequest);
 
@@ -515,7 +515,7 @@ public class ApiOperationsRestlet extends Restlet {
                         }
 
                         // Set any authentication needed on the client request
-                        ctx.clientAdapter.setChallengeResponse(ctx.clientRequest,
+                        ctx.clientAdapter.setChallengeResponse(null, ctx.clientRequest,
                                 ctx.clientRequest.getResourceRef().toString(), parameters);
                         ctx.clientAdapter.setHeaders(ctx.clientRequest);
                         return ctx;
