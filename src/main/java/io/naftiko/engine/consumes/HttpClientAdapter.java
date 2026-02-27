@@ -82,7 +82,7 @@ public class HttpClientAdapter extends ClientAdapter {
     /**
      * Set the appropriate authentication headers on the client request based on the specification
      */
-    public void setChallengeResponse(Request request, String targetRef,
+    public void setChallengeResponse(Request serverRequest, Request clientRequest, String targetRef,
             Map<String, Object> parameters) {
         AuthenticationSpec authenticationSpec = getHttpClientSpec().getAuthentication();
 
@@ -101,7 +101,7 @@ public class HttpClientAdapter extends ClientAdapter {
                     challengeResponse.setSecret(Resolver
                             .resolveMustacheTemplate(basicAuth.getPassword().toString(), parameters)
                             .toCharArray());
-                    request.setChallengeResponse(challengeResponse);
+                    clientRequest.setChallengeResponse(challengeResponse);
                     break;
 
                 case "digest":
@@ -112,7 +112,7 @@ public class HttpClientAdapter extends ClientAdapter {
                             Resolver.resolveMustacheTemplate(digestAuth.getUsername(), parameters));
                     challengeResponse.setSecret(Resolver.resolveMustacheTemplate(
                             digestAuth.getPassword().toString(), parameters).toCharArray());
-                    request.setChallengeResponse(challengeResponse);
+                    clientRequest.setChallengeResponse(challengeResponse);
                     break;
 
                 case "bearer":
@@ -121,7 +121,7 @@ public class HttpClientAdapter extends ClientAdapter {
                     challengeResponse = new ChallengeResponse(ChallengeScheme.HTTP_OAUTH_BEARER);
                     challengeResponse.setRawValue(
                             Resolver.resolveMustacheTemplate(bearerAuth.getToken(), parameters));
-                    request.setChallengeResponse(challengeResponse);
+                    clientRequest.setChallengeResponse(challengeResponse);
                     break;
 
                 case "apikey":
@@ -133,17 +133,20 @@ public class HttpClientAdapter extends ClientAdapter {
                     String placement = apiKeyAuth.getPlacement();
 
                     if (placement.equals("header")) {
-                        request.getHeaders().add(key, value);
+                        clientRequest.getHeaders().add(key, value);
                     } else if (placement.equals("query")) {
                         String separator = targetRef.contains("?") ? "&" : "?";
                         String newTargetRef = targetRef + separator + key + "=" + value;
-                        request.setResourceRef(newTargetRef);
+                        clientRequest.setResourceRef(newTargetRef);
                     }
                     break;
 
                 default:
                     break;
             }
+        } else if(serverRequest != null && serverRequest.getChallengeResponse() != null) {
+            // Use existing challenge response if present
+            clientRequest.setChallengeResponse(serverRequest.getChallengeResponse());
         }
     }
 

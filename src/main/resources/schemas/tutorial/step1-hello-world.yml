@@ -1,0 +1,31 @@
+---
+naftiko: "0.4"
+info:
+  label: "Tutorial - Step 1 - Hello, World!"
+  description: "This is a sample capability specification to demonstrate the features of Naftiko"
+  tags:
+    - Naftiko
+    - Tutorial
+  created: "2026-02-26"
+  modified: "2026-02-26"
+  stakeholders:
+    - role: "editor"
+      fullName: "Navi"
+      email: "navi@naftiko.io"
+
+capability:
+  exposes:
+    - type: "api"
+      address: "localhost"
+      port: 9090
+      namespace: "tutorial"
+      resources:
+        - path: "/hello"
+          name: "hello"
+          label: "My first resource"
+          description: "This is a resource to demonstrate a simple Hello, World! API endpoint"
+          operations:
+            - method: "GET"
+              outputParameters:
+                - type: "string"
+                  const: "Hello, World!"

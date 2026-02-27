@@ -31,7 +31,7 @@ public class ApiServerAdapter extends ServerAdapter {
 
         for (ApiServerResourceSpec res : getApiServerSpec().getResources()) {
             String pathTemplate = toUriTemplate(res.getPath());
-            Restlet resourceRestlet = new ApiOperationsRestlet(capability, serverSpec, res);
+            Restlet resourceRestlet = new ApiResourceRestlet(capability, serverSpec, res);
             TemplateRoute route = getRouter().attach(pathTemplate, resourceRestlet);
             route.getTemplate().getVariables().put("path", new Variable(Variable.TYPE_URI_PATH));
         }

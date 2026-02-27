@@ -1,17 +1,17 @@
 ---
 naftiko: "0.4"
 info:
-  label: "Sample Capability"
+  label: "Tutorial - Step 3b - Forwarding API Resource"
   description: "This is a sample capability specification to demonstrate the features of Naftiko"
   tags:
     - Naftiko
-    - Sample
-  created: "2026-01-01"
-  modified: "2026-02-12"
+    - Tutorial
+  created: "2026-02-26"
+  modified: "2026-02-26"
   stakeholders:
     - role: "editor"
-      fullName: "John Doe"
-      email: "john.doe@example.com"
+      fullName: "Navi"
+      email: "navi@naftiko.io"
 
 capability:
   exposes:
@@ -19,7 +19,6 @@ capability:
       address: "localhost"
       port: 9090
       namespace: "sample"
-
       resources:
         - path: "/notion/pre-release"
           name: "pr"
@@ -31,33 +30,11 @@ capability:
                 - call: "notion.query-db"
                   with:
                     datasource_id: "2fe4adce-3d02-8028-bec8-000bfb5cafa2"
-              outputParameters:
-                - type: "array"
-                  mapping: "$.results"
-                  items:
-                    - type: "object"
-                      properties:
-                        name:
-                          type: "string"
-                          mapping: "$.properties.Name.title[0].text.content"
-                        company:
-                          type: "string"
-                          mapping: "$.properties.Company.rich_text[0].text.content"
-                        title:
-                          type: "string"
-                          mapping: "$.properties.Title.rich_text[0].text.content"
-                        location:
-                          type: "string"
-                          mapping: "$.properties.Location.rich_text[0].text.content"
-                        owner:
-                          type: "string"
-                          mapping: "$.properties.Owner.people[0].name"
-                        participation_status:
-                          type: "string"
-                          mapping: "$.properties.Participation Status.select.name"
-                        comments:
-                          type: "string"
-                          mapping: "$.properties.Comments.rich_text[0].text.content"
+        - path: "/notion/{{path}}"
+          forward:
+            targetNamespace: notion
+            trustedHeaders:
+            - Notion-Version
 
   consumes:
     - type: "http"
@@ -72,7 +49,6 @@ capability:
         - name: "Notion-Version"
           in: "header"
           const: "2025-09-03"
-
       resources:
         - path: "data_sources/{{datasource_id}}/query"
           name: "query"
