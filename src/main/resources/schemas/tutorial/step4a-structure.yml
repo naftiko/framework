@@ -1,5 +1,6 @@
 ---
 naftiko: "0.4"
+
 info:
   label: "Tutorial - Step 3b - Forwarding API Resource"
   description: "This is a sample capability specification to demonstrate the features of Naftiko"
@@ -12,6 +13,16 @@ info:
     - role: "editor"
       fullName: "Navi"
       email: "navi@naftiko.io"
+
+externalRefs:
+  - name: "notion-env"
+    type: "environment"
+    description: "External reference to Notion API for accessing pre-release participant data stored in Notion."
+    resolution: file
+    uri: "file:///path/to/notion_env.json"
+    keys:
+      notion_token: "NOTION_API_TOKEN"
+      notion_projects_db_id: "PROJECTS_DATABASE_ID"
 
 capability:
   exposes:
@@ -26,6 +37,38 @@ capability:
           description: "This is a resource to retrieve the list of pre-release participants stored in Notion"
           operations:
             - method: "GET"
+<<<<<<<< HEAD:notion.yml
+              call: "notion.query-db"
+              with:
+                datasource_id: "2fe4adce-3d02-8028-bec8-000bfb5cafa2"
+              outputParameters:
+                - type: "array"
+                  mapping: "$.results"
+                  items:
+                    - type: "object"
+                      properties:
+                        name:
+                          type: "string"
+                          mapping: "$.properties.Name.title[0].text.content"
+                        company:
+                          type: "string"
+                          mapping: "$.properties.Company.rich_text[0].text.content"
+                        title:
+                          type: "string"
+                          mapping: "$.properties.Title.rich_text[0].text.content"
+                        location:
+                          type: "string"
+                          mapping: "$.properties.Location.rich_text[0].text.content"
+                        owner:
+                          type: "string"
+                          mapping: "$.properties.Owner.people[0].name"
+                        participation_status:
+                          type: "string"
+                          mapping: "$.properties.Participation Status.select.name"
+                        comments:
+                          type: "string"
+                          mapping: "$.properties.Comments.rich_text[0].text.content"
+========
               steps:
                 - name: "fetch-committed-participants"
                   type: call
@@ -38,10 +81,55 @@ capability:
             targetNamespace: notion
             trustedHeaders:
             - Notion-Version
+>>>>>>>> 07b7c5c03a0e6ab897f33fe08b0ab3d9c057a94c:src/main/resources/schemas/tutorial/step4a-structure.yml
+
+    - type: "mcp"
+      address: "localhost"
+      port: 9091
+      namespace: "notion-mcp"
+      description: "MCP server exposing Notion database query capabilities for pre-release participant management."
+
+      tools:
+        - name: "query-database"
+          description: "Query the Notion pre-release participants database to retrieve committed participants with their name, company, title, location, owner, participation status and comments."
+          call: "notion.query-db"
+          with:
+            datasource_id: "2fe4adce-3d02-8028-bec8-000bfb5cafa2"
+          outputParameters:
+            - type: "array"
+              mapping: "$.results"
+              items:
+                - type: "object"
+                  properties:
+                    name:
+                      type: "string"
+                      mapping: "$.properties.Name.title[0].text.content"
+                    company:
+                      type: "string"
+                      mapping: "$.properties.Company.rich_text[0].text.content"
+                    title:
+                      type: "string"
+                      mapping: "$.properties.Title.rich_text[0].text.content"
+                    location:
+                      type: "string"
+                      mapping: "$.properties.Location.rich_text[0].text.content"
+                    owner:
+                      type: "string"
+                      mapping: "$.properties.Owner.people[0].name"
+                    participation_status:
+                      type: "string"
+                      mapping: "$.properties.Participation Status.select.name"
+                    comments:
+                      type: "string"
+                      mapping: "$.properties.Comments.rich_text[0].text.content"
 
   consumes:
     - type: "http"
+<<<<<<<< HEAD:notion.yml
+      description: "Notion API integration for accessing pre-release participant data stored in Notion."
+========
       description: "Forwarded requests from the /notion/{path} resource, to be sent to the Notion API"
+>>>>>>>> 07b7c5c03a0e6ab897f33fe08b0ab3d9c057a94c:src/main/resources/schemas/tutorial/step4a-structure.yml
       namespace: "notion"
       baseUri: "https://api.notion.com/v1/"
       authentication:
