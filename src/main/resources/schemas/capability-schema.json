@@ -145,7 +145,8 @@
             "header",
             "path",
             "cookie",
-            "body"
+            "body",
+            "environment"
           ]
         },
         "value": {
@@ -730,8 +731,7 @@
       "required": [
         "type",
         "port",
-        "namespace",
-        "resources"
+        "namespace"
       ],
       "additionalProperties": false
     },
@@ -936,8 +936,7 @@
         "namespace",
         "description",
         "type",
-        "baseUri",
-        "resources"
+        "baseUri"
       ],
       "additionalProperties": false
     },
@@ -1318,8 +1317,7 @@
         }
       },
       "required": [
-        "targetNamespace",
-        "trustedHeaders"
+        "targetNamespace"
       ],
       "additionalProperties": false
     },
