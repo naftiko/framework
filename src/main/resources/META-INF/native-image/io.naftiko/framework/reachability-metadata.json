@@ -1,0 +1,368 @@
+{
+  "reflection": [
+    {
+      "type": "com.fasterxml.jackson.databind.ext.Java7SupportImpl",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.networknt.schema.AdditionalPropertiesValidator",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.String",
+            "com.fasterxml.jackson.databind.JsonNode",
+            "com.networknt.schema.JsonSchema",
+            "com.networknt.schema.ValidationContext"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.networknt.schema.AnyOfValidator",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.String",
+            "com.fasterxml.jackson.databind.JsonNode",
+            "com.networknt.schema.JsonSchema",
+            "com.networknt.schema.ValidationContext"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.networknt.schema.ConstValidator",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.String",
+            "com.fasterxml.jackson.databind.JsonNode",
+            "com.networknt.schema.JsonSchema",
+            "com.networknt.schema.ValidationContext"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.networknt.schema.EnumValidator",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.String",
+            "com.fasterxml.jackson.databind.JsonNode",
+            "com.networknt.schema.JsonSchema",
+            "com.networknt.schema.ValidationContext"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.networknt.schema.ItemsValidator202012",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.String",
+            "com.fasterxml.jackson.databind.JsonNode",
+            "com.networknt.schema.JsonSchema",
+            "com.networknt.schema.ValidationContext"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.networknt.schema.MaximumValidator",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.String",
+            "com.fasterxml.jackson.databind.JsonNode",
+            "com.networknt.schema.JsonSchema",
+            "com.networknt.schema.ValidationContext"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.networknt.schema.MinItemsValidator",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.String",
+            "com.fasterxml.jackson.databind.JsonNode",
+            "com.networknt.schema.JsonSchema",
+            "com.networknt.schema.ValidationContext"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.networknt.schema.MinimumValidator",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.String",
+            "com.fasterxml.jackson.databind.JsonNode",
+            "com.networknt.schema.JsonSchema",
+            "com.networknt.schema.ValidationContext"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.networknt.schema.OneOfValidator",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.String",
+            "com.fasterxml.jackson.databind.JsonNode",
+            "com.networknt.schema.JsonSchema",
+            "com.networknt.schema.ValidationContext"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.networknt.schema.PatternValidator",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.String",
+            "com.fasterxml.jackson.databind.JsonNode",
+            "com.networknt.schema.JsonSchema",
+            "com.networknt.schema.ValidationContext"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.networknt.schema.PropertiesValidator",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.String",
+            "com.fasterxml.jackson.databind.JsonNode",
+            "com.networknt.schema.JsonSchema",
+            "com.networknt.schema.ValidationContext"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.networknt.schema.RefValidator",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.String",
+            "com.fasterxml.jackson.databind.JsonNode",
+            "com.networknt.schema.JsonSchema",
+            "com.networknt.schema.ValidationContext"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.networknt.schema.RequiredValidator",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.String",
+            "com.fasterxml.jackson.databind.JsonNode",
+            "com.networknt.schema.JsonSchema",
+            "com.networknt.schema.ValidationContext"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.networknt.schema.TypeValidator",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.String",
+            "com.fasterxml.jackson.databind.JsonNode",
+            "com.networknt.schema.JsonSchema",
+            "com.networknt.schema.ValidationContext"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "groovy.lang.Closure"
+    },
+    {
+      "type": "io.naftiko.Cli"
+    },
+    {
+      "type": "io.naftiko.cli.CreateCapabilityCommand"
+    },
+    {
+      "type": "io.naftiko.cli.CreateCommand"
+    },
+    {
+      "type": "io.naftiko.cli.ValidateCommand",
+      "fields": [
+        {
+          "name": "filePath"
+        },
+        {
+          "name": "schemaVersion"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "java.lang.Class"
+    },
+    {
+      "type": "java.lang.Object"
+    },
+    {
+      "type": "java.nio.file.Path"
+    },
+    {
+      "type": "java.nio.file.Paths"
+    },
+    {
+      "type": "java.sql.Connection"
+    },
+    {
+      "type": "java.sql.Date"
+    },
+    {
+      "type": "java.sql.Driver"
+    },
+    {
+      "type": "java.sql.DriverManager"
+    },
+    {
+      "type": "java.sql.Time"
+    },
+    {
+      "type": "java.sql.Timestamp"
+    },
+    {
+      "type": "java.time.Duration"
+    },
+    {
+      "type": "java.time.Instant"
+    },
+    {
+      "type": "java.time.LocalDate"
+    },
+    {
+      "type": "java.time.LocalDateTime"
+    },
+    {
+      "type": "java.time.LocalTime"
+    },
+    {
+      "type": "java.time.MonthDay"
+    },
+    {
+      "type": "java.time.OffsetDateTime"
+    },
+    {
+      "type": "java.time.OffsetTime"
+    },
+    {
+      "type": "java.time.Period"
+    },
+    {
+      "type": "java.time.Year"
+    },
+    {
+      "type": "java.time.YearMonth"
+    },
+    {
+      "type": "java.time.ZoneId"
+    },
+    {
+      "type": "java.time.ZoneOffset"
+    },
+    {
+      "type": "java.time.ZonedDateTime"
+    },
+    {
+      "type": "org.eclipse.jetty.logging.JettyLoggingServiceProvider"
+    },
+    {
+      "type": "picocli.CommandLine$AutoHelpMixin",
+      "fields": [
+        {
+          "name": "helpRequested"
+        },
+        {
+          "name": "versionRequested"
+        }
+      ]
+    },
+    {
+      "type": "sun.text.resources.cldr.FormatData"
+    },
+    {
+      "type": "sun.text.resources.cldr.FormatData_en"
+    },
+    {
+      "type": "sun.text.resources.cldr.FormatData_en_US"
+    },
+    {
+      "type": "sun.util.resources.cldr.CalendarData"
+    }
+  ],
+  "resources": [
+    {
+      "glob": "META-INF/services/java.time.zone.ZoneRulesProvider"
+    },
+    {
+      "glob": "META-INF/services/java.util.spi.ResourceBundleControlProvider"
+    },
+    {
+      "glob": "META-INF/services/org.slf4j.spi.SLF4JServiceProvider"
+    },
+    {
+      "glob": "jetty-logging-mac-os-x.properties"
+    },
+    {
+      "glob": "jetty-logging.properties"
+    },
+    {
+      "glob": "jsv-messages.properties"
+    },
+    {
+      "glob": "jsv-messages_fr.properties"
+    },
+    {
+      "glob": "jsv-messages_fr_FR.properties"
+    },
+    {
+      "glob": "schemas/capability-schema.json"
+    },
+    {
+      "bundle": "jsv-messages"
+    }
+  ]
+}

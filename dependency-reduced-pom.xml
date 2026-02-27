@@ -112,7 +112,6 @@
               <mainClass>io.naftiko.Cli</mainClass>
               <buildArgs>
                 <buildArg>--no-fallback</buildArg>
-                <buildArg>--initialize-at-build-time=org.slf4j</buildArg>
               </buildArgs>
             </configuration>
           </plugin>
@@ -149,11 +148,14 @@
     </dependency>
   </dependencies>
   <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.target>21</maven.compiler.target>
     <restlet.version>2.7.0-m2</restlet.version>
-    <jackson.version>2.20.2</jackson.version>
     <java.version>21</java.version>
     <maven.compiler.source>21</maven.compiler.source>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <avro.version>1.11.4</avro.version>
+    <jetty.version>12.0.25</jetty.version>
+    <jackson.version>2.20.2</jackson.version>
+    <json-smart.version>2.5.2</json-smart.version>
   </properties>
 </project>

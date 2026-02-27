@@ -46,7 +46,7 @@
         <dependency>
             <groupId>com.networknt</groupId>
             <artifactId>json-schema-validator</artifactId>
-            <version>1.0.87</version>
+            <version>1.0.82</version>
         </dependency>
         <dependency>
             <groupId>org.restlet</groupId>
@@ -118,11 +118,6 @@
             <groupId>org.json-structure</groupId>
             <artifactId>json-structure</artifactId>
             <version>0.5.5</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>2.0.9</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -248,7 +243,6 @@
                             <mainClass>io.naftiko.Cli</mainClass>
                             <buildArgs>
                                 <buildArg>--no-fallback</buildArg>
-                                <buildArg>--initialize-at-build-time=org.slf4j</buildArg>
                             </buildArgs>
                         </configuration>
                     </plugin>
