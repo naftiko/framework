@@ -31,10 +31,10 @@ public class OutputMappingExtensionTest {
     private ObjectMapper mapper = new ObjectMapper();
 
     private JsonNode invokeBuild(OutputParameterSpec spec, JsonNode root) throws Exception {
-        Method m = ApiOperationsRestlet.class.getDeclaredMethod("buildMappedFromSpec",
+        Method m = ApiResourceRestlet.class.getDeclaredMethod("buildMappedFromSpec",
                 OutputParameterSpec.class, JsonNode.class, ObjectMapper.class);
         m.setAccessible(true);
-        ApiOperationsRestlet restlet = new ApiOperationsRestlet(null, null, null);
+        ApiResourceRestlet restlet = new ApiResourceRestlet(null, null, null);
         return (JsonNode) m.invoke(restlet, spec, root, mapper);
     }
 
