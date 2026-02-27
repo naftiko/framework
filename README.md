@@ -8,13 +8,13 @@ The framework itself is easy to install, extensible and polyglot thanks to an he
 
 While the framework itself is developed in Java and can be extended to support new protocols, developers just need to know YAML, JSONPath and Mustache templates to take full advantage of it.
 
-- :rowboat: [Installation](https://github.com/naftiko/framework/wiki/1-‐-Installation)
-- :sailboat: [Tutorial](https://github.com/naftiko/framework/wiki/2-‐-Tutorial)
-- :ship: [Use cases](https://github.com/naftiko/framework/wiki/3-‐-Use-Cases)
-- :anchor: [Specification](https://github.com/naftiko/framework/wiki/4-‐-Specification)
-- :mega: [Releases](https://github.com/naftiko/framework/wiki/5-‐-Releases)
-- :telescope: [Roadmap](https://github.com/naftiko/framework/wiki/6-‐-Roadmap)
-- :nut_and_bolt: [Contribute](https://github.com/naftiko/framework/wiki/7-‐-Contribute)
+- :rowboat: [Installation](https://github.com/naftiko/framework/wiki/Installation)
+- :sailboat: [Tutorial](https://github.com/naftiko/framework/wiki/Tutorial)
+- :ship: [Use cases](https://github.com/naftiko/framework/wiki/Use-Cases)
+- :anchor: [Specification](https://github.com/naftiko/framework/wiki/Specification)
+- :mega: [Releases](https://github.com/naftiko/framework/wiki/Releases)
+- :telescope: [Roadmap](https://github.com/naftiko/framework/wiki/Roadmap)
+- :nut_and_bolt: [Contribute](https://github.com/naftiko/framework/wiki/Contribute)
 
 
 Please join the community of users and contributors in [this GitHub Discussion forum!](https://github.com/orgs/naftiko/discussions).
