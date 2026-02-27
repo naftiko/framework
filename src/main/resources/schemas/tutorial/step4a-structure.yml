@@ -27,10 +27,13 @@ capability:
           operations:
             - method: "GET"
               steps:
-                - call: "notion.query-db"
+                - name: "fetch-committed-participants"
+                  type: call
+                  call: "notion.query-db"
                   with:
                     datasource_id: "2fe4adce-3d02-8028-bec8-000bfb5cafa2"
         - path: "/notion/{{path}}"
+          description: "This resource forwards requests to the Notion API, allowing access to any Notion endpoint by specifying the path parameter. For example, a request to /notion/pages would be forwarded to https://api.notion.com/v1/pages."
           forward:
             targetNamespace: notion
             trustedHeaders:
@@ -38,6 +41,7 @@ capability:
 
   consumes:
     - type: "http"
+      description: "Forwarded requests from the /notion/{path} resource, to be sent to the Notion API"
       namespace: "notion"
       baseUri: "https://api.notion.com/v1/"
       authentication:
@@ -48,7 +52,7 @@ capability:
           in: "environment"
         - name: "Notion-Version"
           in: "header"
-          const: "2025-09-03"
+          value: "2025-09-03"
       resources:
         - path: "data_sources/{{datasource_id}}/query"
           name: "query"
