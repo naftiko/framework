@@ -1,6 +1,6 @@
 # Naftiko Framework
 
-Tthe first Open Source project for **Spec-Driven Integration** based on capabilities.
+The first Open Source project for **Spec-Driven Integration** based on capabilities.
 
 Each integration is a capability, a coarse grained piece of domain that empowers developers to reuse existing HTTP-based APIs, using data formats like JSON, YAML, Protocol Buffer, XML, CSV and Avro, and compose multiple capabilities to enable better API reusability and efficient context engineering for AI applications.
 
