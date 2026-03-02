@@ -57,6 +57,8 @@ public class McpServerAdapter extends ServerAdapter {
         String address = serverSpec.getAddress() != null ? serverSpec.getAddress() : "localhost";
         connector.setHost(address);
         connector.setPort(serverSpec.getPort());
+
+        // TODO: Make idle timeout configurable
         connector.setIdleTimeout(120000); // 2 minutes — tool calls may involve upstream HTTP requests
         jettyServer.addConnector(connector);
 
