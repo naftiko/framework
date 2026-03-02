@@ -837,8 +837,10 @@
           "required": [
             "call"
           ],
+          "type": "object",
           "properties": {
             "outputParameters": {
+              "type": "array",
               "items": {
                 "$ref": "#/$defs/MappedOutputParameter"
               }
@@ -849,9 +851,11 @@
           "required": [
             "steps"
           ],
+          "type": "object",
           "properties": {
             "mappings": true,
             "outputParameters": {
+              "type": "array",
               "items": {
                 "$ref": "#/$defs/OrchestratedOutputParameter"
               }
