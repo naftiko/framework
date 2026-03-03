@@ -1,0 +1,31 @@
+naftiko: "0.4"
+info:
+  label: "HTTP Forward with Value Field Test"
+  description: "Test capability for forward spec with value field supporting Mustache templates"
+  created: "2026-03-03"
+  modified: "2026-03-03"
+
+capability:
+  exposes:
+    - type: api
+      address: localhost
+      port: 0
+      namespace: sample
+      resources:
+        - path: "/forward/{{path}}"
+          description: "Forward requests with value field parameter"
+          forward:
+            targetNamespace: external
+
+  consumes:
+    - type: http
+      description: "External API endpoint"
+      namespace: external
+      baseUri: "https://api.example.com/v1/"
+      inputParameters:
+        - name: "X-API-Version"
+          in: "header"
+          value: "2026-03-03"
+        - name: "X-API-Key"
+          in: "header"
+          const: "secret-key-123"
