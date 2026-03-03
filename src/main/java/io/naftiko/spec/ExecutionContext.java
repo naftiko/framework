@@ -14,18 +14,18 @@
 package io.naftiko.spec;
 
 /**
- * Runtime-resolved External Reference Specification Element.
- * Variables are resolved at runtime from the execution context (environment variables, secrets manager, etc.).
- * This is the default resolution strategy.
+ * Provides runtime variables for external reference resolution.
+ * Implementations can source variables from environment variables, secrets managers,
+ * or other context stores.
  */
-public class RuntimeExternalRefSpec extends ExternalRefSpec {
+public interface ExecutionContext {
 
-    public RuntimeExternalRefSpec() {
-        super(null, null, null, "runtime");
-    }
-
-    public RuntimeExternalRefSpec(String name, String description, String type) {
-        super(name, description, type, "runtime");
-    }
+    /**
+     * Retrieves a variable value from the execution context.
+     * 
+     * @param key The variable key to look up
+     * @return The variable value, or null if not found
+     */
+    String getVariable(String key);
 
 }

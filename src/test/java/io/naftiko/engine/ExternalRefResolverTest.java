@@ -25,8 +25,10 @@ import java.util.List;
 import java.util.Map;
 
 import io.naftiko.spec.ExternalRefSpec;
-import io.naftiko.spec.FileExternalRefSpec;
-import io.naftiko.spec.RuntimeExternalRefSpec;
+import io.naftiko.spec.FileResolvedExternalRefSpec;
+import io.naftiko.spec.RuntimeResolvedExternalRefSpec;
+import io.naftiko.spec.ExecutionContext;
+import io.naftiko.spec.ExternalRefKeysSpec;
 
 import static org.junit.jupiter.api.Assertions.*;
 

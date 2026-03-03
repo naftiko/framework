@@ -14,6 +14,7 @@
 package io.naftiko;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -21,6 +22,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.naftiko.engine.ExternalRefResolver;
+import io.naftiko.spec.ExecutionContext;
 import io.naftiko.engine.consumes.ClientAdapter;
 import io.naftiko.engine.consumes.HttpClientAdapter;
 import io.naftiko.engine.exposes.ApiServerAdapter;
@@ -59,9 +61,17 @@ public class Capability {
 
         // Resolve external references early for injection into adapters
         ExternalRefResolver refResolver = new ExternalRefResolver();
-        this.externalRefVariables = refResolver.resolveExternalRefs(
+        ExecutionContext context = new ExecutionContext() {
+            @Override
+            public String getVariable(String key) {
+                return System.getenv(key);
+            }
+        };
+        Map<String, String> resolvedRefs = refResolver.resolve(
                 spec.getExternalRefs(),
-                capabilityDir != null ? capabilityDir : ".");
+                context);
+        // Convert Map<String, String> to Map<String, Object> for compatibility
+        this.externalRefVariables = new HashMap<>(resolvedRefs);
 
         // Initialize client adapters first
         this.clientAdapters = new CopyOnWriteArrayList<>();
