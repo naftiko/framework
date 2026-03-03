@@ -13,24 +13,32 @@
  */
 package io.naftiko.spec;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-
 /**
- * File-resolved External Reference Specification Element.
- * Variables are extracted from a file at the specified URI during capability loading.
+ * File-Resolved External Reference Specification Element.
+ * Loads variables from a local file. Intended for local development only.
  */
-public class FileExternalRefSpec extends ExternalRefSpec {
+public class FileResolvedExternalRefSpec extends ExternalRefSpec {
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private volatile String description;
+
     private volatile String uri;
 
-    public FileExternalRefSpec() {
-        super(null, null, null, "file");
+    public FileResolvedExternalRefSpec() {
+        super("environment-file", "environment", "file", null);
     }
 
-    public FileExternalRefSpec(String name, String description, String type, String uri) {
-        super(name, description, type, "file");
+    public FileResolvedExternalRefSpec(String name, String description, String uri, ExternalRefKeysSpec keys) {
+        super(name, "environment", "file", keys);
+        this.description = description;
         this.uri = uri;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public String getUri() {

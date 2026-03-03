@@ -13,8 +13,6 @@
  */
 package io.naftiko.spec;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
@@ -25,34 +23,31 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonTypeInfo(
     use = JsonTypeInfo.Id.NAME,
     include = JsonTypeInfo.As.PROPERTY,
-    property = "resolution"
+    property = "type"
 )
 @JsonSubTypes({
-    @JsonSubTypes.Type(value = FileExternalRefSpec.class, name = "file"),
-    @JsonSubTypes.Type(value = RuntimeExternalRefSpec.class, name = "runtime")
+    @JsonSubTypes.Type(value = FileResolvedExternalRefSpec.class, name = "environment"),
+    @JsonSubTypes.Type(value = RuntimeResolvedExternalRefSpec.class, name = "variables")
 })
 public abstract class ExternalRefSpec {
 
-    private volatile String name;
+    protected volatile String name;
 
-    private volatile String description;
+    protected volatile String type;
 
-    private volatile String type;
+    protected volatile String resolution;
 
-    private volatile String resolution;
-
-    private final Map<String, String> keys;
+    protected volatile ExternalRefKeysSpec keys;
 
     public ExternalRefSpec() {
         this(null, null, null, null);
     }
 
-    public ExternalRefSpec(String name, String description, String type, String resolution) {
+    public ExternalRefSpec(String name, String type, String resolution, ExternalRefKeysSpec keys) {
         this.name = name;
-        this.description = description;
         this.type = type;
         this.resolution = resolution;
-        this.keys = new ConcurrentHashMap<>();
+        this.keys = keys;
     }
 
     public String getName() {
@@ -61,14 +56,6 @@ public abstract class ExternalRefSpec {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     public String getType() {
@@ -87,8 +74,12 @@ public abstract class ExternalRefSpec {
         this.resolution = resolution;
     }
 
-    public Map<String, String> getKeys() {
+    public ExternalRefKeysSpec getKeys() {
         return keys;
+    }
+
+    public void setKeys(ExternalRefKeysSpec keys) {
+        this.keys = keys;
     }
 
 }

@@ -68,6 +68,6 @@ public class NaftikoSpec {
 
     public void setCapability(CapabilitySpec capability) {
         this.capability = capability;
-    }   
+    }
 
 }
