@@ -20,7 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import io.naftiko.spec.exposes.ApiServerStepSpec;
-import io.naftiko.spec.exposes.ApiServerCallSpec;
+import io.naftiko.spec.exposes.ServerCallSpec;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -41,7 +41,7 @@ public class DescriptionMetadataRoundTripTest {
 
     @Test
     public void testApiServerStepSpecDescriptionYamlRoundTrip() throws Exception {
-        ApiServerCallSpec call = new ApiServerCallSpec("users.fetch", null, "Retrieves user data");
+        ServerCallSpec call = new ServerCallSpec("users.fetch", null, "Retrieves user data");
         ApiServerStepSpec step = new ApiServerStepSpec(call, null, "Fetch user information");
         
         // Serialize to YAML string
@@ -58,13 +58,13 @@ public class DescriptionMetadataRoundTripTest {
 
     @Test
     public void testApiServerCallSpecDescriptionYamlRoundTrip() throws Exception {
-        ApiServerCallSpec call = new ApiServerCallSpec("users.delete", null, "Remove a user permanently");
+        ServerCallSpec call = new ServerCallSpec("users.delete", null, "Remove a user permanently");
         
         // Serialize to YAML string
         String yaml = yamlMapper.writeValueAsString(call);
         
         // Deserialize back
-        ApiServerCallSpec restored = yamlMapper.readValue(yaml, ApiServerCallSpec.class);
+        ServerCallSpec restored = yamlMapper.readValue(yaml, ServerCallSpec.class);
         
         assertEquals("users.delete", restored.getOperation());
         assertEquals("Remove a user permanently", restored.getDescription());
@@ -72,7 +72,7 @@ public class DescriptionMetadataRoundTripTest {
 
     @Test
     public void testApiServerStepSpecDescriptionJsonRoundTrip() throws Exception {
-        ApiServerCallSpec call = new ApiServerCallSpec("logs.write", null);
+        ServerCallSpec call = new ServerCallSpec("logs.write", null);
         ApiServerStepSpec step = new ApiServerStepSpec(call, null, "Write audit log");
         
         // Serialize to JSON string
@@ -87,13 +87,13 @@ public class DescriptionMetadataRoundTripTest {
 
     @Test
     public void testApiServerCallSpecWithoutDescriptionYamlRoundTrip() throws Exception {
-        ApiServerCallSpec call = new ApiServerCallSpec("users.get");
+        ServerCallSpec call = new ServerCallSpec("users.get");
         
         // Serialize to YAML string
         String yaml = yamlMapper.writeValueAsString(call);
         
         // Deserialize back
-        ApiServerCallSpec restored = yamlMapper.readValue(yaml, ApiServerCallSpec.class);
+        ServerCallSpec restored = yamlMapper.readValue(yaml, ServerCallSpec.class);
         
         assertEquals("users.get", restored.getOperation());
         assertNull(restored.getDescription());
@@ -101,7 +101,7 @@ public class DescriptionMetadataRoundTripTest {
 
     @Test
     public void testDescriptionExcludedWhenNullInSerialization() throws Exception {
-        ApiServerStepSpec step = new ApiServerStepSpec(new ApiServerCallSpec("test"), null, null);
+        ApiServerStepSpec step = new ApiServerStepSpec(new ServerCallSpec("test"), null, null);
         
         // Serialize to YAML
         String yaml = yamlMapper.writeValueAsString(step);
@@ -113,7 +113,7 @@ public class DescriptionMetadataRoundTripTest {
 
     @Test
     public void testDescriptionIncludedWhenPresentInSerialization() throws Exception {
-        ApiServerStepSpec step = new ApiServerStepSpec(new ApiServerCallSpec("test"), null, "Test operation");
+        ApiServerStepSpec step = new ApiServerStepSpec(new ServerCallSpec("test"), null, "Test operation");
         
         // Serialize to YAML
         String yaml = yamlMapper.writeValueAsString(step);

@@ -19,13 +19,13 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * API Call Specification Element
+ * Server Call Specification Element
  * 
  * Represents a call to another operation with associated input parameters.
  * The "with" field contains key-value pairs that provide values to the input parameters
  * of the target operation.
  */
-public class ApiServerCallSpec {
+public class ServerCallSpec {
 
     private volatile String operation;
 
@@ -35,20 +35,20 @@ public class ApiServerCallSpec {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private volatile String description;
 
-    public ApiServerCallSpec() {
+    public ServerCallSpec() {
         this(null, null, null);
     }
 
     @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
-    public ApiServerCallSpec(String operation) {
+    public ServerCallSpec(String operation) {
         this(operation, null, null);
     }
 
-    public ApiServerCallSpec(String operation, Map<String, Object> with) {
+    public ServerCallSpec(String operation, Map<String, Object> with) {
         this(operation, with, null);
     }
 
-    public ApiServerCallSpec(String operation, Map<String, Object> with, String description) {
+    public ServerCallSpec(String operation, Map<String, Object> with, String description) {
         this.operation = operation;
         this.with = with != null ? new ConcurrentHashMap<>(with) : new ConcurrentHashMap<>();
         this.description = description;

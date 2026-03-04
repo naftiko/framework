@@ -18,45 +18,36 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.restlet.Request;
-import org.restlet.Response;
-import org.restlet.data.MediaType;
-import org.restlet.data.Method;
-import org.restlet.data.Reference;
+import java.util.logging.Logger;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.NullNode;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.naftiko.Capability;
 import io.naftiko.engine.Resolver;
-import io.naftiko.engine.consumes.ClientAdapter;
-import io.naftiko.engine.consumes.HttpClientAdapter;
 import io.naftiko.spec.OutputParameterSpec;
-import io.naftiko.spec.consumes.HttpClientOperationSpec;
-import io.naftiko.spec.exposes.ApiServerCallSpec;
-import io.naftiko.spec.exposes.OperationStepSpec;
-import io.naftiko.spec.exposes.OperationStepCallSpec;
-import io.naftiko.spec.exposes.OperationStepLookupSpec;
 import io.naftiko.spec.exposes.McpServerToolSpec;
 
 /**
  * Handles MCP tool calls by delegating to consumed HTTP operations.
  * 
- * Mirrors the logic in ApiOperationsRestlet but adapted for MCP tool invocations:
- * - Input parameters come from MCP CallToolRequest arguments (not HTTP request)
- * - Supports both simple call mode and full step orchestration
- * - Returns McpSchema.CallToolResult (not HTTP response)
+ * Mirrors the logic in ApiOperationsRestlet but adapted for MCP tool invocations: - Input
+ * parameters come from MCP CallToolRequest arguments (not HTTP request) - Supports both simple call
+ * mode and full step orchestration - Returns McpSchema.CallToolResult (not HTTP response)
  */
 public class McpToolHandler {
 
+    private static final Logger logger = Logger.getLogger(McpToolHandler.class.getName());
     private final Capability capability;
     private final Map<String, McpServerToolSpec> toolSpecs;
     private final ObjectMapper mapper;
+    private final OperationStepExecutor stepExecutor;
 
     public McpToolHandler(Capability capability, List<McpServerToolSpec> tools) {
         this.capability = capability;
         this.toolSpecs = new ConcurrentHashMap<>();
         this.mapper = new ObjectMapper();
+        this.stepExecutor = new OperationStepExecutor(capability);
 
         for (McpServerToolSpec tool : tools) {
             toolSpecs.put(tool.getName(), tool);
@@ -87,16 +78,17 @@ public class McpToolHandler {
             parameters.putAll(toolSpec.getWith());
         }
 
-        HandlingContext found = null;
+        OperationStepExecutor.HandlingContext found = null;
 
         if (toolSpec.getCall() != null) {
             // Simple call mode
-            found = findClientRequestFor(toolSpec.getCall(), parameters);
+            found = stepExecutor.findClientRequestFor(toolSpec.getCall(), parameters);
 
             if (found != null) {
                 try {
                     found.handle();
                 } catch (Exception e) {
+                    logger.warning("Error during HTTP client call for tool '" + toolName + "': " + e);
                     return new McpSchema.CallToolResult(
                             List.of(new McpSchema.TextContent(
                                     "Error during HTTP client call: " + e.getMessage())),
@@ -104,40 +96,14 @@ public class McpToolHandler {
                 }
             } else {
                 throw new IllegalArgumentException("Invalid call format: "
-                        + (toolSpec.getCall() != null ? toolSpec.getCall().getOperation() : "null"));
+                        + (toolSpec.getCall() != null ? toolSpec.getCall().getOperation()
+                                : "null"));
             }
         } else if (toolSpec.getSteps() != null && !toolSpec.getSteps().isEmpty()) {
             // Step orchestration mode
-            for (OperationStepSpec step : toolSpec.getSteps()) {
-                if (step instanceof OperationStepCallSpec) {
-                    OperationStepCallSpec callStep = (OperationStepCallSpec) step;
-                    Map<String, Object> stepParams = new ConcurrentHashMap<>(parameters);
-
-                    // Merge step-level 'with' parameters
-                    if (callStep.getWith() != null) {
-                        stepParams.putAll(callStep.getWith());
-                    }
-
-                    if (callStep.getCall() != null) {
-                        String[] tokens = callStep.getCall().split("\\.");
-                        if (tokens.length == 2) {
-                            found = findClientRequestFor(tokens[0], tokens[1], stepParams);
-                        }
-                    }
-
-                    if (found != null) {
-                        found.handle();
-                    } else {
-                        throw new IllegalArgumentException("Invalid call format in step: "
-                                + (callStep.getCall() != null ? callStep.getCall() : "null"));
-                    }
-                } else if (step instanceof OperationStepLookupSpec) {
-                    // Lookup steps will be handled in a future implementation
-                    throw new UnsupportedOperationException("Lookup steps are not yet supported in MCP tools");
-                } else {
-                    throw new IllegalArgumentException("Unknown step type: " + step.getClass().getName());
-                }
-            }
+            OperationStepExecutor.StepExecutionResult stepResult =
+                    stepExecutor.executeSteps(toolSpec.getSteps(), parameters);
+            found = stepResult.lastContext;
         } else {
             throw new IllegalArgumentException(
                     "Tool '" + toolName + "' has neither call nor steps defined");
@@ -151,17 +117,18 @@ public class McpToolHandler {
      * Build an MCP CallToolResult from the HTTP client response.
      */
     private McpSchema.CallToolResult buildToolResult(McpServerToolSpec toolSpec,
-            HandlingContext found) throws IOException {
+            OperationStepExecutor.HandlingContext found) throws IOException {
 
         if (found == null) {
             return new McpSchema.CallToolResult(
-                    List.of(new McpSchema.TextContent("No response received: no matching client adapter found")),
+                    List.of(new McpSchema.TextContent(
+                            "No response received: no matching client adapter found")),
                     true, null, null);
         }
 
         if (found.clientResponse == null) {
-            return new McpSchema.CallToolResult(
-                    List.of(new McpSchema.TextContent("No response received: client response is null")),
+            return new McpSchema.CallToolResult(List
+                    .of(new McpSchema.TextContent("No response received: client response is null")),
                     true, null, null);
         }
 
@@ -185,8 +152,8 @@ public class McpToolHandler {
                 && responseText != null && !responseText.isEmpty()) {
             String mapped = mapOutputParameters(toolSpec, responseText);
             if (mapped != null) {
-                return new McpSchema.CallToolResult(
-                        List.of(new McpSchema.TextContent(mapped)), isError, null, null);
+                return new McpSchema.CallToolResult(List.of(new McpSchema.TextContent(mapped)),
+                        isError, null, null);
             }
         }
 
@@ -219,120 +186,8 @@ public class McpToolHandler {
         return null;
     }
 
-    /**
-     * Find and construct a client request context for a call specification.
-     */
-    private HandlingContext findClientRequestFor(ApiServerCallSpec call,
-            Map<String, Object> requestParams) {
-
-        if (call == null) {
-            return null;
-        }
-
-        Map<String, Object> merged = new HashMap<>();
-
-        if (requestParams != null) {
-            merged.putAll(requestParams);
-        }
-        
-        if (call.getWith() != null) {
-            merged.putAll(call.getWith());
-        }
-
-        if (call.getOperation() != null) {
-            String[] tokens = call.getOperation().split("\\.");
-            
-            if (tokens.length == 2) {
-                return findClientRequestFor(tokens[0], tokens[1], merged);
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Find and construct a client request context for a given namespace, operation name,
-     * and parameters.
-     */
-    private HandlingContext findClientRequestFor(String clientNamespace, String clientOpName,
-            Map<String, Object> parameters) {
-
-        for (ClientAdapter adapter : capability.getClientAdapters()) {
-            if (adapter instanceof HttpClientAdapter) {
-                HttpClientAdapter clientAdapter = (HttpClientAdapter) adapter;
-
-                if (clientAdapter.getHttpClientSpec().getNamespace().equals(clientNamespace)) {
-                    HttpClientOperationSpec clientOp = clientAdapter.getOperationSpec(clientOpName);
-
-                    if (clientOp != null) {
-                        String clientResUri = clientAdapter.getHttpClientSpec().getBaseUri()
-                                + clientOp.getParentResource().getPath();
-
-                        // Resolve Mustache templates
-                        clientResUri = Resolver.resolveMustacheTemplate(clientResUri, parameters);
-
-                        // Validate all templates are resolved
-                        if (clientResUri.contains("{{") && clientResUri.contains("}}")) {
-                            throw new IllegalArgumentException(
-                                    "Unresolved template parameters in URI: " + clientResUri
-                                            + ". Available parameters: "
-                                            + (parameters != null ? parameters.keySet() : "none"));
-                        }
-
-                        HandlingContext ctx = new HandlingContext();
-                        ctx.clientRequest = new Request();
-                        ctx.clientAdapter = clientAdapter;
-                        ctx.clientResponse = new Response(ctx.clientRequest);
-
-                        // Apply client-level and operation-level input parameters
-                        Resolver.resolveInputParametersToRequest(ctx.clientRequest,
-                                clientAdapter.getHttpClientSpec().getInputParameters(), parameters);
-                        Resolver.resolveInputParametersToRequest(ctx.clientRequest,
-                                clientOp.getInputParameters(), parameters);
-
-                        ctx.clientRequest.setMethod(Method.valueOf(clientOp.getMethod()));
-                        ctx.clientRequest.setResourceRef(new Reference(
-                                Resolver.resolveMustacheTemplate(clientResUri, parameters)));
-
-                        if (clientOp.getBody() != null) {
-                            String resolvedBody = Resolver
-                                    .resolveMustacheTemplate(clientOp.getBody(), parameters);
-
-                            if (resolvedBody.contains("{{") && resolvedBody.contains("}}")) {
-                                throw new IllegalArgumentException(
-                                        "Unresolved template parameters in body: " + resolvedBody
-                                                + ". Available parameters: "
-                                                + (parameters != null ? parameters.keySet()
-                                                        : "none"));
-                            }
-
-                            ctx.clientRequest.setEntity(resolvedBody, MediaType.APPLICATION_JSON);
-                        }
-
-                        // Set authentication and headers
-                        ctx.clientAdapter.setChallengeResponse(null, ctx.clientRequest,
-                                ctx.clientRequest.getResourceRef().toString(), parameters);
-                        ctx.clientAdapter.setHeaders(ctx.clientRequest);
-                        return ctx;
-                    }
-                }
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Internal context for managing an HTTP client request-response pair.
-     */
-    private static class HandlingContext {
-        HttpClientAdapter clientAdapter;
-        Request clientRequest;
-        Response clientResponse;
-
-        void handle() {
-            clientAdapter.getHttpClient().handle(clientRequest, clientResponse);
-        }
+    public Capability getCapability() {
+        return capability;
     }
 
 }
