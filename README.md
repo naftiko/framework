@@ -10,9 +10,9 @@ Capabilities are declared using **YAML** files, configuring the Naftiko Engine p
 
 While the framework itself is developed in Java and can be extended to support new protocols, developers just need to know YAML, JSONPath and Mustache templates to take full advantage of it. 
 
+- :ship: [Use cases](https://github.com/naftiko/framework/wiki/Use-Cases)
 - :rowboat: [Installation](https://github.com/naftiko/framework/wiki/Installation)
 - :sailboat: [Tutorial](https://github.com/naftiko/framework/wiki/Tutorial)
-- :ship: [Use cases](https://github.com/naftiko/framework/wiki/Use-Cases)
 - :anchor: [Specification](https://github.com/naftiko/framework/wiki/Specification)
 - :mega: [Releases](https://github.com/naftiko/framework/wiki/Releases)
 - :telescope: [Roadmap](https://github.com/naftiko/framework/wiki/Roadmap)
