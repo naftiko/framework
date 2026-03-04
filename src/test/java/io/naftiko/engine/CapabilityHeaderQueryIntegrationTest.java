@@ -21,10 +21,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.naftiko.Capability;
 import io.naftiko.engine.consumes.HttpClientAdapter;
-import io.naftiko.engine.exposes.ApiResourceRestlet;
+import io.naftiko.engine.exposes.OperationStepExecutor;
 import io.naftiko.engine.exposes.ApiServerAdapter;
 import io.naftiko.spec.NaftikoSpec;
-import io.naftiko.spec.exposes.ApiServerCallSpec;
 import io.naftiko.spec.exposes.ApiServerOperationSpec;
 import io.naftiko.spec.exposes.ApiServerResourceSpec;
 import io.naftiko.spec.exposes.ApiServerSpec;
@@ -33,7 +32,6 @@ import org.restlet.Request;
 import org.restlet.data.Method;
 import org.restlet.data.MediaType;
 import java.io.File;
-import java.lang.reflect.Field;
 import java.util.Map;
 
 public class CapabilityHeaderQueryIntegrationTest {
@@ -68,36 +66,20 @@ public class CapabilityHeaderQueryIntegrationTest {
         Request req = new Request(Method.POST, "/search");
         req.setEntity(incomingJson, MediaType.APPLICATION_JSON);
 
-        ApiResourceRestlet restlet =
-                new ApiResourceRestlet(capability, serverSpec, resourceSpec);
-
-        java.lang.reflect.Method buildMethod = ApiResourceRestlet.class
-                .getDeclaredMethod("resolveInputParametersFromRequest", Request.class, ApiServerOperationSpec.class);
-        buildMethod.setAccessible(true);
-        @SuppressWarnings("unchecked")
-        Map<String, Object> params =
-                (Map<String, Object>) buildMethod.invoke(restlet, req, serverOp);
-
-        java.lang.reflect.Method findMethod = ApiResourceRestlet.class.getDeclaredMethod(
-                "findClientRequestFor", ApiServerCallSpec.class, Map.class);
-        findMethod.setAccessible(true);
-        Object handlingCtx = findMethod.invoke(restlet, serverOp.getCall(), params);
+        OperationStepExecutor executor = new OperationStepExecutor(capability);
+        Map<String, Object> params = executor.resolveInputParametersFromRequest(req, serverSpec,
+                resourceSpec, serverOp);
+        OperationStepExecutor.HandlingContext handlingCtx =
+                executor.findClientRequestFor(serverOp.getCall(), params);
 
         assertNotNull(handlingCtx, "HandlingContext should not be null");
 
-        Field clientRequestField = handlingCtx.getClass().getDeclaredField("clientRequest");
-        clientRequestField.setAccessible(true);
-        Request clientRequest =
-                (Request) clientRequestField.get(handlingCtx);
+        Request clientRequest = handlingCtx.clientRequest;
 
         assertNotNull(clientRequest, "Client request should be constructed");
 
-        // Also ensure the client adapter has the expected inputParameters configured
-        Field clientAdapterField =
-                handlingCtx.getClass().getDeclaredField("clientAdapter");
-        clientAdapterField.setAccessible(true);
-        HttpClientAdapter clientAdapter =
-                (HttpClientAdapter) clientAdapterField.get(handlingCtx);
+        // Ensure the client adapter has expected inputParameters configured
+        HttpClientAdapter clientAdapter = handlingCtx.clientAdapter;
         assertNotNull(clientAdapter, "Client adapter should be present");
         assertFalse(clientAdapter.getHttpClientSpec().getInputParameters().isEmpty(),
                 "Client spec should have inputParameters");
@@ -109,7 +91,7 @@ public class CapabilityHeaderQueryIntegrationTest {
                 "First client input parameter name should be X-API-Key");
         assertEquals("ABC123", firstSpec.getConstant(),
                 "First client input parameter constant should be ABC123");
-        // Also directly test the helper by applying client-level inputParameters to a fresh request
+        // Apply client-level inputParameters to a fresh request
         Request helperReq =
                 new Request(Method.POST, "http://example.com/items");
         

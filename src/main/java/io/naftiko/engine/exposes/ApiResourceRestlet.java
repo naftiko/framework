@@ -17,32 +17,21 @@ import org.restlet.Request;
 import org.restlet.Response;
 import org.restlet.Restlet;
 import org.restlet.data.MediaType;
-import org.restlet.data.Method;
-import org.restlet.data.Reference;
 import org.restlet.data.Status;
 import io.naftiko.Capability;
 import io.naftiko.engine.Converter;
-import io.naftiko.engine.LookupExecutor;
 import io.naftiko.engine.Resolver;
-import io.naftiko.engine.StepExecutionContext;
 import io.naftiko.engine.consumes.ClientAdapter;
 import io.naftiko.engine.consumes.HttpClientAdapter;
-import io.naftiko.spec.InputParameterSpec;
 import io.naftiko.spec.OutputParameterSpec;
-import io.naftiko.spec.consumes.HttpClientOperationSpec;
-import io.naftiko.spec.exposes.ApiServerCallSpec;
-import io.naftiko.spec.exposes.OperationStepCallSpec;
-import io.naftiko.spec.exposes.OperationStepLookupSpec;
 import io.naftiko.spec.exposes.ApiServerForwardSpec;
 import io.naftiko.spec.exposes.ApiServerOperationSpec;
 import io.naftiko.spec.exposes.ApiServerResourceSpec;
 import io.naftiko.spec.exposes.ApiServerSpec;
-import io.naftiko.spec.exposes.OperationStepSpec;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.NullNode;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -54,12 +43,14 @@ public class ApiResourceRestlet extends Restlet {
     private final Capability capability;
     private final ApiServerSpec serverSpec;
     private final ApiServerResourceSpec resourceSpec;
+    private final OperationStepExecutor stepExecutor;
 
     public ApiResourceRestlet(Capability capability, ApiServerSpec serverSpec,
             ApiServerResourceSpec resourceSpec) {
         this.capability = capability;
         this.serverSpec = serverSpec;
         this.resourceSpec = resourceSpec;
+        this.stepExecutor = new OperationStepExecutor(capability);
     }
 
     @Override
@@ -85,7 +76,7 @@ public class ApiResourceRestlet extends Restlet {
      * response to indicate a bad request and marks the context as handled.
      */
     private boolean handleFromOperationSpec(Request request, Response response) {
-        HandlingContext found = null;
+        OperationStepExecutor.HandlingContext found = null;
 
         for (ApiServerOperationSpec serverOp : getResourceSpec().getOperations()) {
 
@@ -93,7 +84,8 @@ public class ApiResourceRestlet extends Restlet {
 
                 // Build request-scoped input parameter map (resource + operation)
                 Map<String, Object> inputParameters =
-                        resolveInputParametersFromRequest(request, serverOp);
+                    stepExecutor.resolveInputParametersFromRequest(request, getServerSpec(),
+                        getResourceSpec(), serverOp);
 
                 // Include operation-level 'with' parameters for template resolution
                 if (serverOp.getWith() != null) {
@@ -102,8 +94,10 @@ public class ApiResourceRestlet extends Restlet {
 
                 if (serverOp.getCall() != null) {
                     try {
-                        found = findClientRequestFor(serverOp.getCall(), inputParameters);
+                        found = stepExecutor.findClientRequestFor(serverOp.getCall(),
+                                inputParameters);
                     } catch (IllegalArgumentException e) {
+                        getContext().getLogger().warning("Error resolving request parameters: " + e);
                         response.setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
                         response.setEntity("Error resolving request parameters: " + e.getMessage(),
                                 MediaType.TEXT_PLAIN);
@@ -116,6 +110,7 @@ public class ApiResourceRestlet extends Restlet {
                             found.handle();
                             response.setStatus(found.clientResponse.getStatus());
                         } catch (Exception e) {
+                            getContext().getLogger().warning("Error while handling HTTP client call in call mode: " + e);
                             response.setStatus(Status.SERVER_ERROR_INTERNAL);
                             response.setEntity(
                                     "Error while handling an HTTP client call\n\n" + e.toString(),
@@ -139,103 +134,22 @@ public class ApiResourceRestlet extends Restlet {
                     }
                 } else {
                     // Orchestrated mode - execute steps in sequence
-                    StepExecutionContext stepContext = new StepExecutionContext();
-                    ObjectMapper mapper = new ObjectMapper();
-
-                    for (OperationStepSpec step : serverOp.getSteps()) {
-                        switch (step) {
-                            case OperationStepCallSpec callStep -> {
-                                // Merge step-level 'with' parameters if present
-                                Map<String, Object> stepParams =
-                                        new ConcurrentHashMap<>(inputParameters);
-
-                                // First merge step-level 'with' parameters
-                                if (callStep.getWith() != null) {
-                                    stepParams.putAll(callStep.getWith());
-                                }
-
-                                try {
-                                    if (callStep.getCall() != null) {
-                                        String[] tokens = callStep.getCall().split("\\.");
-                                        if (tokens.length == 2) {
-                                            found = findClientRequestFor(tokens[0], tokens[1],
-                                                    stepParams);
-                                        }
-                                    }
-                                } catch (IllegalArgumentException e) {
-                                    response.setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
-                                    response.setEntity(
-                                            "Error resolving request parameters: " + e.getMessage(),
-                                            MediaType.TEXT_PLAIN);
-                                    return true;
-                                }
-
-                                if (found != null) {
-                                    try {
-                                        // Send the request to the target endpoint
-                                        found.handle();
-
-                                        // Store the call step output for lookup references
-                                        if (found.clientResponse != null
-                                                && found.clientResponse.getEntity() != null) {
-                                            try {
-                                                JsonNode stepOutput = mapper.readTree(
-                                                        found.clientResponse.getEntity().getText());
-                                                stepContext.storeStepOutput(callStep.getName(),
-                                                        stepOutput);
-                                            } catch (Exception ignoreJsonParseError) {
-                                                // If response is not JSON, store as null
-                                            }
-                                        }
-                                    } catch (Exception e) {
-                                        response.setStatus(Status.SERVER_ERROR_INTERNAL);
-                                        response.setEntity(
-                                                "Error while handling an HTTP client call\n\n"
-                                                        + e.toString(),
-                                                MediaType.TEXT_PLAIN);
-                                        return true;
-                                    }
-                                } else {
-                                    response.setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
-                                    response.setEntity("Invalid call format: "
-                                            + (callStep.getCall() != null ? callStep.getCall()
-                                                    : "null"),
-                                            MediaType.TEXT_PLAIN);
-                                    return true;
-                                }
-                            }
-                            case OperationStepLookupSpec lookupStep -> {
-                                // Get the output from the previous (index) step
-                                JsonNode indexData =
-                                        stepContext.getStepOutput(lookupStep.getIndex());
-                                if (indexData == null) {
-                                    response.setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
-                                    response.setEntity("Lookup step references non-existent step: "
-                                            + lookupStep.getIndex(), MediaType.TEXT_PLAIN);
-                                    return true;
-                                }
-
-                                // Resolve the lookup value (may contain template expressions)
-                                String resolvedLookupValue = Resolver.resolveMustacheTemplate(
-                                        lookupStep.getLookupValue(), inputParameters);
-
-                                // Execute lookup operation
-                                JsonNode lookupResult = LookupExecutor.executeLookup(indexData,
-                                        lookupStep.getMatch(), resolvedLookupValue,
-                                        lookupStep.getOutputParameters());
-
-                                if (lookupResult != null) {
-                                    // Store lookup result for subsequent references
-                                    stepContext.storeStepOutput(lookupStep.getName(), lookupResult);
-                                } else {
-                                    // Lookup returned no match - store null
-                                    stepContext.storeStepOutput(lookupStep.getName(), null);
-                                }
-                            }
-                            default -> {
-                                // Handle unknown step types
-                            }
-                        }
+                    try {
+                        OperationStepExecutor.StepExecutionResult stepResult =
+                                stepExecutor.executeSteps(serverOp.getSteps(), inputParameters);
+                        found = stepResult.lastContext;
+                    } catch (IllegalArgumentException e) {
+                        getContext().getLogger().warning("Invalid argument in orchestrated steps: " + e);
+                        response.setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
+                        response.setEntity(e.getMessage(), MediaType.TEXT_PLAIN);
+                        return true;
+                    } catch (RuntimeException e) {
+                        getContext().getLogger().warning("Error while handling orchestrated steps: " + e);
+                        response.setStatus(Status.SERVER_ERROR_INTERNAL);
+                        response.setEntity(
+                                "Error while handling an HTTP client call\n\n" + e.toString(),
+                                MediaType.TEXT_PLAIN);
+                        return true;
                     }
 
                     if (found != null) {
@@ -332,6 +246,7 @@ public class ApiResourceRestlet extends Restlet {
                 response.setStatus(Status.SUCCESS_NO_CONTENT);
             }
         } catch (Exception e) {
+            getContext().getLogger().warning("Error building mock response: " + e);
             response.setStatus(Status.SERVER_ERROR_INTERNAL);
             response.setEntity("Error building mock response: " + e.getMessage(),
                     MediaType.TEXT_PLAIN);
@@ -415,7 +330,7 @@ public class ApiResourceRestlet extends Restlet {
     }
 
     private void sendResponse(ApiServerOperationSpec serverOp, Response response,
-            HandlingContext found) {
+            OperationStepExecutor.HandlingContext found) {
         // Apply output mappings if present or forward the raw entity
         if (serverOp.getOutputParameters() != null && !serverOp.getOutputParameters().isEmpty()) {
             try {
@@ -427,6 +342,7 @@ public class ApiResourceRestlet extends Restlet {
                     response.setEntity(found.clientResponse.getEntity());
                 }
             } catch (Exception e) {
+                getContext().getLogger().warning("Failed to map output parameters: " + e);
                 response.setStatus(Status.SERVER_ERROR_INTERNAL);
                 response.setEntity("Failed to map output parameters: " + e.getMessage(),
                         MediaType.TEXT_PLAIN);
@@ -483,6 +399,7 @@ public class ApiResourceRestlet extends Restlet {
                         response.commit();
                         return true;
                     } catch (Exception e) {
+                        getContext().getLogger().warning("Error while handling HTTP client call in forward mode: " + e);
                         response.setStatus(Status.SERVER_ERROR_INTERNAL);
                         response.setEntity(
                                 "Error while handling an HTTP client call\n\n" + e.toString(),
@@ -494,164 +411,6 @@ public class ApiResourceRestlet extends Restlet {
         }
 
         return false;
-    }
-
-    /**
-     * Variant that merges incoming request parameters with call-level 'with' values.
-     */
-    private HandlingContext findClientRequestFor(ApiServerCallSpec call,
-            Map<String, Object> requestParams) {
-
-        if (call == null) {
-            return null;
-        }
-
-        Map<String, Object> merged = new HashMap<>();
-
-        if (requestParams != null) {
-            merged.putAll(requestParams);
-        }
-
-        if (call.getWith() != null) {
-            merged.putAll(call.getWith());
-        }
-
-        if (call.getOperation() != null) {
-            String[] tokens = call.getOperation().split("\\.");
-            if (tokens.length == 2) {
-                return findClientRequestFor(tokens[0], tokens[1], merged);
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Find and construct a client request context for a given client namespace, operation name, and
-     * optional parameters. Returns null if no matching adapter/operation is found.
-     */
-    private HandlingContext findClientRequestFor(String clientNamespace, String clientOpName,
-            Map<String, Object> parameters) {
-
-        for (ClientAdapter adapter : getCapability().getClientAdapters()) {
-            if (adapter instanceof HttpClientAdapter) {
-                HttpClientAdapter clientAdapter = (HttpClientAdapter) adapter;
-
-                if (clientAdapter.getHttpClientSpec().getNamespace().equals(clientNamespace)) {
-                    HttpClientOperationSpec clientOp = clientAdapter.getOperationSpec(clientOpName);
-
-                    if (clientOp != null) {
-                        String clientResUri = clientAdapter.getHttpClientSpec().getBaseUri()
-                                + clientOp.getParentResource().getPath();
-
-                        // Resolve any Mustache templates in the URI using parameters
-                        clientResUri = Resolver.resolveMustacheTemplate(clientResUri, parameters);
-
-                        // Validate that all templates have been resolved
-                        if (clientResUri.contains("{{") && clientResUri.contains("}}")) {
-                            throw new IllegalArgumentException(
-                                    "Unresolved template parameters in URI: " + clientResUri
-                                            + ". Available parameters: "
-                                            + (parameters != null ? parameters.keySet() : "none"));
-                        }
-
-                        HandlingContext ctx = new HandlingContext();
-                        ctx.clientRequest = new Request();
-                        ctx.clientAdapter = clientAdapter;
-                        ctx.clientResponse = new Response(ctx.clientRequest);
-
-                        // Apply client-level and operation-level input parameters
-                        Resolver.resolveInputParametersToRequest(ctx.clientRequest,
-                                clientAdapter.getHttpClientSpec().getInputParameters(), parameters);
-                        Resolver.resolveInputParametersToRequest(ctx.clientRequest,
-                                clientOp.getInputParameters(), parameters);
-
-                        ctx.clientRequest.setMethod(Method.valueOf(clientOp.getMethod()));
-                        ctx.clientRequest.setResourceRef(new Reference(
-                                Resolver.resolveMustacheTemplate(clientResUri, parameters)));
-
-                        if (clientOp.getBody() != null) {
-                            String resolvedBody = Resolver
-                                    .resolveMustacheTemplate(clientOp.getBody(), parameters);
-
-                            // Validate resolved body doesn't have unresolved templates
-                            if (resolvedBody.contains("{{") && resolvedBody.contains("}}")) {
-                                throw new IllegalArgumentException(
-                                        "Unresolved template parameters in body: " + resolvedBody
-                                                + ". Available parameters: "
-                                                + (parameters != null ? parameters.keySet()
-                                                        : "none"));
-                            }
-
-                            ctx.clientRequest.setEntity(resolvedBody, MediaType.APPLICATION_JSON);
-                        }
-
-                        // Set any authentication needed on the client request
-                        ctx.clientAdapter.setChallengeResponse(null, ctx.clientRequest,
-                                ctx.clientRequest.getResourceRef().toString(), parameters);
-                        ctx.clientAdapter.setHeaders(ctx.clientRequest);
-                        return ctx;
-                    }
-                }
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Build a map of input parameter values for a given request and operation by evaluating
-     * resource-level and operation-level InputParameterSpec entries.
-     */
-    private Map<String, Object> resolveInputParametersFromRequest(Request request,
-            ApiServerOperationSpec serverOp) {
-        Map<String, Object> params = new ConcurrentHashMap<>();
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode tmpRoot = null;
-
-        // Read request body once (may be null)
-        try {
-            if ((request.getEntity() != null) && !request.getEntity().isEmpty()) {
-                tmpRoot = mapper.readTree(request.getEntity().getReader());
-            }
-        } catch (Exception e) {
-            tmpRoot = null;
-        }
-
-        final JsonNode root = tmpRoot;
-
-        // Server-level input parameters
-        if (getServerSpec().getInputParameters() != null) {
-            for (InputParameterSpec spec : getServerSpec().getInputParameters()) {
-                Object val = Resolver.resolveInputParameterFromRequest(spec, request, root, mapper);
-
-                if (val != null) {
-                    params.put(spec.getName(), val);
-                }
-            }
-        }
-
-        // Resource-level input parameters
-        if (getResourceSpec().getInputParameters() != null) {
-            for (InputParameterSpec spec : getResourceSpec().getInputParameters()) {
-                Object v = Resolver.resolveInputParameterFromRequest(spec, request, root, mapper);
-                if (v != null) {
-                    params.put(spec.getName(), v);
-                }
-            }
-        }
-
-        // Operation-level input parameters override resource-level
-        if (serverOp.getInputParameters() != null) {
-            for (InputParameterSpec spec : serverOp.getInputParameters()) {
-                Object v = Resolver.resolveInputParameterFromRequest(spec, request, root, mapper);
-                if (v != null) {
-                    params.put(spec.getName(), v);
-                }
-            }
-        }
-
-        return params;
     }
 
     /**
@@ -678,8 +437,8 @@ public class ApiResourceRestlet extends Restlet {
      * 
      * Handles conversion to JSON if outputRawFormat is specified.
      */
-    private String mapOutputParameters(ApiServerOperationSpec serverOp, HandlingContext found)
-            throws IOException {
+    private String mapOutputParameters(ApiServerOperationSpec serverOp,
+            OperationStepExecutor.HandlingContext found) throws IOException {
         if (found == null || found.clientResponse == null
                 || found.clientResponse.getEntity() == null) {
             return null;
@@ -710,16 +469,6 @@ public class ApiResourceRestlet extends Restlet {
             return "body";
         String in = spec.getIn();
         return in == null ? "body" : in;
-    }
-
-    private static class HandlingContext {
-        HttpClientAdapter clientAdapter;
-        Request clientRequest;
-        Response clientResponse;
-
-        void handle() {
-            clientAdapter.getHttpClient().handle(clientRequest, clientResponse);
-        }
     }
 
     public Capability getCapability() {

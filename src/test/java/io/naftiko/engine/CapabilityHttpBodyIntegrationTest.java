@@ -20,10 +20,9 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.naftiko.Capability;
-import io.naftiko.engine.exposes.ApiResourceRestlet;
+import io.naftiko.engine.exposes.OperationStepExecutor;
 import io.naftiko.engine.exposes.ApiServerAdapter;
 import io.naftiko.spec.NaftikoSpec;
-import io.naftiko.spec.exposes.ApiServerCallSpec;
 import io.naftiko.spec.exposes.ApiServerOperationSpec;
 import io.naftiko.spec.exposes.ApiServerResourceSpec;
 import io.naftiko.spec.exposes.ApiServerSpec;
@@ -31,7 +30,6 @@ import org.restlet.Request;
 import org.restlet.data.Method;
 import org.restlet.data.MediaType;
 import java.io.File;
-import java.lang.reflect.Field;
 import java.util.Map;
 
 public class CapabilityHttpBodyIntegrationTest {
@@ -63,22 +61,14 @@ public class CapabilityHttpBodyIntegrationTest {
     public void testClientRequestBodyTemplating() throws Exception {
         ApiServerOperationSpec serverOp = resourceSpec.getOperations().get(0);
 
-        // Build a fake incoming request with JSON body
+        // Build incoming request body
         String incomingJson = "{\"user\":{\"id\":\"123\",\"name\":\"Alice\"}}";
         Request req = new Request(Method.POST, "/users");
         req.setEntity(incomingJson, MediaType.APPLICATION_JSON);
 
-        // Create restlet instance
-        ApiResourceRestlet restlet =
-                new ApiResourceRestlet(capability, serverSpec, resourceSpec);
-
-        // Use reflection to call private prepareInputParameters and findClientRequestFor
-        java.lang.reflect.Method buildMethod = ApiResourceRestlet.class
-                .getDeclaredMethod("resolveInputParametersFromRequest", Request.class, ApiServerOperationSpec.class);
-        buildMethod.setAccessible(true);
-        @SuppressWarnings("unchecked")
-        Map<String, Object> params =
-                (Map<String, Object>) buildMethod.invoke(restlet, req, serverOp);
+        OperationStepExecutor executor = new OperationStepExecutor(capability);
+        Map<String, Object> params = executor.resolveInputParametersFromRequest(req, serverSpec,
+                resourceSpec, serverOp);
 
         assertNotNull(params, "Params map should be built");
         assertEquals("123", params.get("userId").toString(),
@@ -86,19 +76,11 @@ public class CapabilityHttpBodyIntegrationTest {
         assertEquals("Alice", params.get("userName").toString(),
                 "userName should be extracted from body");
 
-        // Now call findClientRequestFor(ApiCallSpec, Map) reflectively to get HandlingContext
-        java.lang.reflect.Method findMethod = ApiResourceRestlet.class.getDeclaredMethod(
-                "findClientRequestFor", ApiServerCallSpec.class, Map.class);
-        findMethod.setAccessible(true);
-        Object handlingCtx = findMethod.invoke(restlet, serverOp.getCall(), params);
+        OperationStepExecutor.HandlingContext handlingCtx =
+                executor.findClientRequestFor(serverOp.getCall(), params);
 
-        // HandlingContext is package-private inner class; inspect its clientRequest entity via
-        // reflection
         assertNotNull(handlingCtx, "HandlingContext should not be null");
-        Field clientRequestField =
-                handlingCtx.getClass().getDeclaredField("clientRequest");
-        clientRequestField.setAccessible(true);
-        Request clientRequest = (Request) clientRequestField.get(handlingCtx);
+        Request clientRequest = handlingCtx.clientRequest;
 
         assertNotNull(clientRequest, "Client Request should be constructed");
         assertNotNull(clientRequest.getEntity(), "Client request entity should be set");

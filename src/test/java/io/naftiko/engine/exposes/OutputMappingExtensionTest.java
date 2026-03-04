@@ -15,31 +15,24 @@ package io.naftiko.engine.exposes;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.naftiko.engine.Resolver;
 import io.naftiko.spec.OutputParameterSpec;
-
-import java.lang.reflect.Method;
 
 public class OutputMappingExtensionTest {
 
     private ObjectMapper mapper = new ObjectMapper();
 
     private JsonNode invokeBuild(OutputParameterSpec spec, JsonNode root) throws Exception {
-        Method m = ApiResourceRestlet.class.getDeclaredMethod("buildMappedFromSpec",
-                OutputParameterSpec.class, JsonNode.class, ObjectMapper.class);
-        m.setAccessible(true);
-        ApiResourceRestlet restlet = new ApiResourceRestlet(null, null, null);
-        return (JsonNode) m.invoke(restlet, spec, root, mapper);
+        return Resolver.resolveOutputMappings(spec, root, mapper);
     }
 
     @Test
-    @Disabled("buildMappedFromSpec method was removed from ApiOperationsRestlet during refactoring")
     public void testConstTakesPrecedence() throws Exception {
         OutputParameterSpec spec = new OutputParameterSpec();
         spec.setType("string");
@@ -51,7 +44,6 @@ public class OutputMappingExtensionTest {
     }
 
     @Test
-    @Disabled("buildMappedFromSpec method was removed from ApiOperationsRestlet during refactoring")
     public void testArrayItemsObjectMapping() throws Exception {
         // Build the sample JSON programmatically to avoid escaping issues
         ObjectNode root = mapper.createObjectNode();
@@ -117,7 +109,6 @@ public class OutputMappingExtensionTest {
     }
 
     @Test
-    @Disabled("buildMappedFromSpec method was removed from ApiOperationsRestlet during refactoring")
     public void testValuesMapMapping() throws Exception {
         String json = "{\"data\":{\"a\":{\"id\":1,\"v\":\"x\"},\"b\":{\"id\":2}}}";
         JsonNode root = mapper.readTree(json);
@@ -138,7 +129,6 @@ public class OutputMappingExtensionTest {
     }
 
     @Test
-    @Disabled("buildMappedFromSpec method was removed from ApiOperationsRestlet during refactoring")
     public void testMaxLengthTruncation() throws Exception {
         String json = "{\"long\":\"abcdefghijkl\"}";
         JsonNode root = mapper.readTree(json);

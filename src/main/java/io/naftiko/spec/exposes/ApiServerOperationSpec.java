@@ -26,7 +26,7 @@ import io.naftiko.spec.OperationSpec;
 public class ApiServerOperationSpec extends OperationSpec {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    private volatile ApiServerCallSpec call;
+    private volatile ServerCallSpec call;
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private final List<OperationStepSpec> steps;
@@ -42,15 +42,15 @@ public class ApiServerOperationSpec extends OperationSpec {
         this(parentResource, method, name, label, null, null, null, null, null);
     }
 
-    public ApiServerOperationSpec(ApiServerResourceSpec parentResource, String method, String name, String label, String description, String outputRawFormat, ApiServerCallSpec call) {
+    public ApiServerOperationSpec(ApiServerResourceSpec parentResource, String method, String name, String label, String description, String outputRawFormat, ServerCallSpec call) {
         this(parentResource, method, name, label, description, outputRawFormat, null, call, null);
     }
 
-    public ApiServerOperationSpec(ApiServerResourceSpec parentResource, String method, String name, String label, String description, String outputRawFormat, String outputSchema, ApiServerCallSpec call) {
+    public ApiServerOperationSpec(ApiServerResourceSpec parentResource, String method, String name, String label, String description, String outputRawFormat, String outputSchema, ServerCallSpec call) {
         this(parentResource, method, name, label, description, outputRawFormat, outputSchema, call, null);
     }
 
-    public ApiServerOperationSpec(ApiServerResourceSpec parentResource, String method, String name, String label, String description, String outputRawFormat, String outputSchema, ApiServerCallSpec call, Map<String, Object> with) {
+    public ApiServerOperationSpec(ApiServerResourceSpec parentResource, String method, String name, String label, String description, String outputRawFormat, String outputSchema, ServerCallSpec call, Map<String, Object> with) {
         super(parentResource, method, name, label, description, outputRawFormat, outputSchema);
         this.call = call;
         this.with = with != null ? new ConcurrentHashMap<>(with) : null;
@@ -61,11 +61,11 @@ public class ApiServerOperationSpec extends OperationSpec {
         return steps;
     }
 
-    public ApiServerCallSpec getCall() {
+    public ServerCallSpec getCall() {
         return call;
     }
 
-    public void setCall(ApiServerCallSpec call) {
+    public void setCall(ServerCallSpec call) {
         this.call = call;
     }
 

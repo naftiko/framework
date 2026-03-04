@@ -37,7 +37,7 @@ public class McpServerToolSpec {
     private final List<InputParameterSpec> inputParameters;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    private volatile ApiServerCallSpec call;
+    private volatile ServerCallSpec call;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private volatile Map<String, Object> with;
@@ -80,11 +80,11 @@ public class McpServerToolSpec {
         return inputParameters;
     }
 
-    public ApiServerCallSpec getCall() {
+    public ServerCallSpec getCall() {
         return call;
     }
 
-    public void setCall(ApiServerCallSpec call) {
+    public void setCall(ServerCallSpec call) {
         this.call = call;
     }
 

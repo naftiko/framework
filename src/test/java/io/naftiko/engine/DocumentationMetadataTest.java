@@ -26,7 +26,7 @@ import io.naftiko.spec.OutputParameterSpec;
 import io.naftiko.spec.exposes.ApiServerOperationSpec;
 import io.naftiko.spec.exposes.ApiServerResourceSpec;
 import io.naftiko.spec.exposes.ApiServerStepSpec;
-import io.naftiko.spec.exposes.ApiServerCallSpec;
+import io.naftiko.spec.exposes.ServerCallSpec;
 import io.naftiko.spec.exposes.OperationStepCallSpec;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -110,11 +110,11 @@ public class DocumentationMetadataTest {
     public void testExtractStepDocumentation() {
         List<ApiServerStepSpec> steps = new ArrayList<>();
         
-        ApiServerCallSpec call1 = new ApiServerCallSpec("users.get", null, "Fetch user details");
+        ServerCallSpec call1 = new ServerCallSpec("users.get", null, "Fetch user details");
         ApiServerStepSpec step1 = new ApiServerStepSpec(call1, null, "Retrieve user information");
         steps.add(step1);
         
-        ApiServerCallSpec call2 = new ApiServerCallSpec("users.audit", null);
+        ServerCallSpec call2 = new ServerCallSpec("users.audit", null);
         ApiServerStepSpec step2 = new ApiServerStepSpec(call2, null, "Log the access");
         steps.add(step2);
         
@@ -152,7 +152,7 @@ public class DocumentationMetadataTest {
 
     @Test
     public void testApiServerStepSpecWithDescription() {
-        ApiServerCallSpec call = new ApiServerCallSpec("getUser");
+        ServerCallSpec call = new ServerCallSpec("getUser");
         ApiServerStepSpec step = new ApiServerStepSpec(call, null, "Fetch user by ID");
         
         assertEquals("Fetch user by ID", step.getDescription());
@@ -168,7 +168,7 @@ public class DocumentationMetadataTest {
 
     @Test
     public void testApiServerCallSpecWithDescription() {
-        ApiServerCallSpec call = new ApiServerCallSpec("users.get", new HashMap<>(), "Retrieve a user");
+        ServerCallSpec call = new ServerCallSpec("users.get", new HashMap<>(), "Retrieve a user");
         
         assertEquals("Retrieve a user", call.getDescription());
     }

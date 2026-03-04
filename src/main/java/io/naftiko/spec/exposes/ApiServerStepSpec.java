@@ -27,7 +27,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public class ApiServerStepSpec {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    private volatile ApiServerCallSpec call;
+    private volatile ServerCallSpec call;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private volatile Map<String, Object> with;
@@ -39,25 +39,25 @@ public class ApiServerStepSpec {
         this(null, null, null);
     }
 
-    public ApiServerStepSpec(ApiServerCallSpec call) {
+    public ApiServerStepSpec(ServerCallSpec call) {
         this(call, null, null);
     }
 
-    public ApiServerStepSpec(ApiServerCallSpec call, Map<String, Object> with) {
+    public ApiServerStepSpec(ServerCallSpec call, Map<String, Object> with) {
         this(call, with, null);
     }
 
-    public ApiServerStepSpec(ApiServerCallSpec call, Map<String, Object> with, String description) {
+    public ApiServerStepSpec(ServerCallSpec call, Map<String, Object> with, String description) {
         this.call = call;
         this.with = with != null ? new ConcurrentHashMap<>(with) : null;
         this.description = description;
     }
 
-    public ApiServerCallSpec getCall() {
+    public ServerCallSpec getCall() {
         return call;
     }
 
-    public void setCall(ApiServerCallSpec call) {
+    public void setCall(ServerCallSpec call) {
         this.call = call;
     }
 
