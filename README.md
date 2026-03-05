@@ -1,5 +1,10 @@
 # Naftiko Framework
 
+![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/farah-t-trigui/50bfcb34f6512cbad2dd4f460bfc6526/raw/framework-coverage.json)
+![Bugs](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/farah-t-trigui/50bfcb34f6512cbad2dd4f460bfc6526/raw/framework-bugs.json)
+![Trivy](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/farah-t-trigui/50bfcb34f6512cbad2dd4f460bfc6526/raw/framework-trivy.json)
+![Gitleaks](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/farah-t-trigui/50bfcb34f6512cbad2dd4f460bfc6526/raw/framework-gitleaks.json)
+
 Welcome to Naftiko Framework, the first Open Source project for **Spec-Driven Integration**. It reinvents API integration for the AI era with a governed and versatile platform based on capabilities that streamlines API sprawl created by the massive SaaS growth and microservices.
 
 Each capability is a coarse piece of domain that consumes existing HTTP-based APIs, converts into JSON data formats like Protocol Buffer, XML, YAML, CSV and Avro, enabling better Context Engineering and API reusability critical to AI integration.
