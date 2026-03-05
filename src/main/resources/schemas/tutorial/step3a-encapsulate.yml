@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=../capability-schema.json
 ---
-naftiko: "0.4"
+naftiko: "0.5"
 info:
   label: "Tutorial - Step 3a - Encapsulating HTTP source"
   description: "This is a sample capability specification to demonstrate the features of Naftiko"
