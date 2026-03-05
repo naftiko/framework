@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=../capability-schema.json
 ---
-naftiko: "0.4"
+naftiko: "0.5"
 info:
   label: "Tutorial - Step 5b - API Server Authentication (API Key)"
   description: "This sample demonstrates server-side API key authentication on an exposed API adapter."
