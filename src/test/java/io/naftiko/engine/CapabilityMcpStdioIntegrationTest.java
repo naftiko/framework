@@ -104,7 +104,7 @@ public class CapabilityMcpStdioIntegrationTest {
         ObjectMapper mapper = new ObjectMapper();
 
         String initRequest = "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\","
-                + "\"params\":{\"protocolVersion\":\"2025-03-26\","
+                + "\"params\":{\"protocolVersion\":\"2025-11-25\","
                 + "\"clientInfo\":{\"name\":\"test\",\"version\":\"1.0\"},"
                 + "\"capabilities\":{}}}";
 
@@ -117,7 +117,7 @@ public class CapabilityMcpStdioIntegrationTest {
 
         JsonNode result = response.get("result");
         assertNotNull(result, "Should have a result");
-        assertEquals("2025-03-26", result.path("protocolVersion").asText());
+        assertEquals("2025-11-25", result.path("protocolVersion").asText());
         assertEquals("test-mcp-stdio",
                 result.path("serverInfo").path("name").asText());
     }
@@ -177,7 +177,7 @@ public class CapabilityMcpStdioIntegrationTest {
 
         // Build a multi-line input: initialize + tools/list + ping
         String input = "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\","
-                + "\"params\":{\"protocolVersion\":\"2025-03-26\","
+                + "\"params\":{\"protocolVersion\":\"2025-11-25\","
                 + "\"clientInfo\":{\"name\":\"test\",\"version\":\"1.0\"},"
                 + "\"capabilities\":{}}}\n"
                 + "{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\"}\n"
@@ -203,7 +203,7 @@ public class CapabilityMcpStdioIntegrationTest {
         // Verify initialize response
         JsonNode initResponse = mapper.readTree(lines[0]);
         assertEquals(1, initResponse.path("id").asInt());
-        assertEquals("2025-03-26",
+        assertEquals("2025-11-25",
                 initResponse.path("result").path("protocolVersion").asText());
 
         // Verify tools/list response

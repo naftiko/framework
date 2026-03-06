@@ -13,6 +13,7 @@
  */
 package io.naftiko.engine.exposes;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
@@ -22,18 +23,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.modelcontextprotocol.spec.McpSchema;
+import io.naftiko.spec.exposes.McpPromptArgumentSpec;
+import io.naftiko.spec.exposes.McpServerPromptSpec;
+import io.naftiko.spec.exposes.McpServerResourceSpec;
 
 /**
  * Transport-agnostic MCP JSON-RPC protocol dispatcher.
  * 
- * Handles MCP protocol methods (initialize, tools/list, tools/call, ping)
+ * Handles MCP protocol methods (initialize, tools/list, tools/call, resources/list,
+ * resources/read, resources/templates/list, prompts/list, prompts/get, ping)
  * and produces JSON-RPC response envelopes. Used by both the Streamable HTTP
  * handler and the stdio handler.
  */
 public class McpProtocolDispatcher {
 
     static final String JSONRPC_VERSION = "2.0";
-    static final String MCP_PROTOCOL_VERSION = "2025-03-26";
+    static final String MCP_PROTOCOL_VERSION = "2025-11-25";
 
     private final McpServerAdapter adapter;
     private final ObjectMapper mapper;
@@ -75,6 +80,21 @@ public class McpProtocolDispatcher {
                 case "tools/call":
                     return handleToolsCall(idNode, params);
 
+                case "resources/list":
+                    return handleResourcesList(idNode);
+
+                case "resources/read":
+                    return handleResourcesRead(idNode, params);
+
+                case "resources/templates/list":
+                    return handleResourcesTemplatesList(idNode);
+
+                case "prompts/list":
+                    return handlePromptsList(idNode);
+
+                case "prompts/get":
+                    return handlePromptsGet(idNode, params);
+
                 case "ping":
                     return buildJsonRpcResult(idNode, mapper.createObjectNode());
 
@@ -95,9 +115,15 @@ public class McpProtocolDispatcher {
         ObjectNode result = mapper.createObjectNode();
         result.put("protocolVersion", MCP_PROTOCOL_VERSION);
 
-        // Server capabilities — we support tools
+        // Conditionally advertise capabilities based on what is declared in the spec
         ObjectNode capabilities = mapper.createObjectNode();
         capabilities.putObject("tools");
+        if (!adapter.getMcpServerSpec().getResources().isEmpty()) {
+            capabilities.putObject("resources");
+        }
+        if (!adapter.getMcpServerSpec().getPrompts().isEmpty()) {
+            capabilities.putObject("prompts");
+        }
         result.set("capabilities", capabilities);
 
         // Server info
@@ -120,11 +146,17 @@ public class McpProtocolDispatcher {
     private ObjectNode handleToolsList(JsonNode id) {
         ObjectNode result = mapper.createObjectNode();
         ArrayNode toolsArray = result.putArray("tools");
+        Map<String, String> labels = adapter.getToolLabels();
 
         for (McpSchema.Tool tool : adapter.getTools()) {
             ObjectNode toolNode = mapper.createObjectNode();
             toolNode.put("name", tool.name());
-            
+
+            String title = labels.get(tool.name());
+            if (title != null) {
+                toolNode.put("title", title);
+            }
+
             if (tool.description() != null) {
                 toolNode.put("description", tool.description());
             }
@@ -172,6 +204,180 @@ public class McpProtocolDispatcher {
             textContent.put("text", "Error: " + e.getMessage());
             result.put("isError", true);
             return buildJsonRpcResult(id, result);
+        }
+    }
+
+    /**
+     * Handle resources/list request.
+     */
+    private ObjectNode handleResourcesList(JsonNode id) {
+        ObjectNode result = mapper.createObjectNode();
+        ArrayNode resourcesArray = result.putArray("resources");
+
+        for (Map<String, String> entry : adapter.getResourceHandler().listAll()) {
+            ObjectNode node = mapper.createObjectNode();
+            node.put("uri", entry.get("uri"));
+            node.put("name", entry.get("name"));
+            String title = entry.get("label");
+            if (title != null) {
+                node.put("title", title);
+            }
+            String description = entry.get("description");
+            if (description != null) {
+                node.put("description", description);
+            }
+            String mimeType = entry.get("mimeType");
+            if (mimeType != null) {
+                node.put("mimeType", mimeType);
+            }
+            resourcesArray.add(node);
+        }
+
+        return buildJsonRpcResult(id, result);
+    }
+
+    /**
+     * Handle resources/read request.
+     */
+    private ObjectNode handleResourcesRead(JsonNode id, JsonNode params) {
+        if (params == null) {
+            return buildJsonRpcError(id, -32602, "Invalid params: missing params");
+        }
+        String uri = params.path("uri").asText("");
+        if (uri.isEmpty()) {
+            return buildJsonRpcError(id, -32602, "Invalid params: uri is required");
+        }
+
+        try {
+            List<McpResourceHandler.ResourceContent> contents =
+                    adapter.getResourceHandler().read(uri);
+            ObjectNode result = mapper.createObjectNode();
+            ArrayNode contentsArray = result.putArray("contents");
+            for (McpResourceHandler.ResourceContent c : contents) {
+                ObjectNode contentNode = mapper.createObjectNode();
+                contentNode.put("uri", c.uri);
+                if (c.mimeType != null) {
+                    contentNode.put("mimeType", c.mimeType);
+                }
+                if (c.blob != null) {
+                    contentNode.put("blob", c.blob);
+                } else {
+                    contentNode.put("text", c.text != null ? c.text : "");
+                }
+                contentsArray.add(contentNode);
+            }
+            return buildJsonRpcResult(id, result);
+        } catch (IllegalArgumentException e) {
+            Context.getCurrentLogger().log(Level.SEVERE, "Error handling resources/read", e);
+            return buildJsonRpcError(id, -32602, "Invalid params: " + e.getMessage());
+        } catch (Exception e) {
+            Context.getCurrentLogger().log(Level.SEVERE, "Error handling resources/read", e);
+            return buildJsonRpcError(id, -32603, "Internal error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Handle resources/templates/list request.
+     */
+    private ObjectNode handleResourcesTemplatesList(JsonNode id) {
+        ObjectNode result = mapper.createObjectNode();
+        ArrayNode templatesArray = result.putArray("resourceTemplates");
+
+        for (McpServerResourceSpec spec : adapter.getResourceHandler().listTemplates()) {
+            ObjectNode node = mapper.createObjectNode();
+            node.put("uriTemplate", spec.getUri());
+            node.put("name", spec.getName());
+            if (spec.getLabel() != null) {
+                node.put("title", spec.getLabel());
+            }
+            if (spec.getDescription() != null) {
+                node.put("description", spec.getDescription());
+            }
+            if (spec.getMimeType() != null) {
+                node.put("mimeType", spec.getMimeType());
+            }
+            templatesArray.add(node);
+        }
+
+        return buildJsonRpcResult(id, result);
+    }
+
+    /**
+     * Handle prompts/list request.
+     */
+    private ObjectNode handlePromptsList(JsonNode id) {
+        ObjectNode result = mapper.createObjectNode();
+        ArrayNode promptsArray = result.putArray("prompts");
+
+        for (McpServerPromptSpec spec : adapter.getPromptHandler().listAll()) {
+            ObjectNode promptNode = mapper.createObjectNode();
+            promptNode.put("name", spec.getName());
+            if (spec.getLabel() != null) {
+                promptNode.put("title", spec.getLabel());
+            }
+            if (spec.getDescription() != null) {
+                promptNode.put("description", spec.getDescription());
+            }
+            if (!spec.getArguments().isEmpty()) {
+                ArrayNode argsArray = promptNode.putArray("arguments");
+                for (McpPromptArgumentSpec arg : spec.getArguments()) {
+                    ObjectNode argNode = mapper.createObjectNode();
+                    argNode.put("name", arg.getName());
+                    if (arg.getLabel() != null) {
+                        argNode.put("title", arg.getLabel());
+                    }
+                    if (arg.getDescription() != null) {
+                        argNode.put("description", arg.getDescription());
+                    }
+                    argNode.put("required", arg.isRequired());
+                    argsArray.add(argNode);
+                }
+            }
+            promptsArray.add(promptNode);
+        }
+
+        return buildJsonRpcResult(id, result);
+    }
+
+    /**
+     * Handle prompts/get request — render a prompt with the provided arguments.
+     */
+    @SuppressWarnings("unchecked")
+    private ObjectNode handlePromptsGet(JsonNode id, JsonNode params) {
+        if (params == null) {
+            return buildJsonRpcError(id, -32602, "Invalid params: missing params");
+        }
+        String name = params.path("name").asText("");
+        if (name.isEmpty()) {
+            return buildJsonRpcError(id, -32602, "Invalid params: name is required");
+        }
+
+        try {
+            JsonNode argumentsNode = params.get("arguments");
+            Map<String, Object> arguments = argumentsNode != null
+                    ? mapper.treeToValue(argumentsNode, Map.class)
+                    : new java.util.HashMap<>();
+
+            List<McpPromptHandler.RenderedMessage> messages =
+                    adapter.getPromptHandler().render(name, arguments);
+
+            ObjectNode result = mapper.createObjectNode();
+            ArrayNode messagesArray = result.putArray("messages");
+            for (McpPromptHandler.RenderedMessage msg : messages) {
+                ObjectNode msgNode = mapper.createObjectNode();
+                msgNode.put("role", msg.role);
+                ObjectNode contentNode = msgNode.putObject("content");
+                contentNode.put("type", "text");
+                contentNode.put("text", msg.text);
+                messagesArray.add(msgNode);
+            }
+            return buildJsonRpcResult(id, result);
+        } catch (IllegalArgumentException e) {
+            Context.getCurrentLogger().log(Level.SEVERE, "Error handling prompts/get", e);
+            return buildJsonRpcError(id, -32602, "Invalid params: " + e.getMessage());
+        } catch (Exception e) {
+            Context.getCurrentLogger().log(Level.SEVERE, "Error handling prompts/get", e);
+            return buildJsonRpcError(id, -32603, "Internal error: " + e.getMessage());
         }
     }
 
