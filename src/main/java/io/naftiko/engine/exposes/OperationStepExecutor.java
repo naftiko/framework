@@ -127,6 +127,11 @@ public class OperationStepExecutor {
             Map<String, Object> baseParameters) {
         HandlingContext lastContext = null;
         StepExecutionContext stepContext = new StepExecutionContext();
+        Map<String, Object> runtimeParameters = new ConcurrentHashMap<>();
+
+        if (baseParameters != null) {
+            runtimeParameters.putAll(baseParameters);
+        }
 
         if (steps == null || steps.isEmpty()) {
             return new StepExecutionResult(lastContext, stepContext);
@@ -135,7 +140,7 @@ public class OperationStepExecutor {
         for (OperationStepSpec step : steps) {
             switch (step) {
                 case OperationStepCallSpec callStep -> {
-                    lastContext = executeCallStep(callStep, baseParameters);
+                    lastContext = executeCallStep(callStep, runtimeParameters);
 
                     if (lastContext == null) {
                         throw new IllegalArgumentException("Invalid call format: "
@@ -155,6 +160,8 @@ public class OperationStepExecutor {
                             JsonNode stepOutput = mapper
                                     .readTree(lastContext.clientResponse.getEntity().getText());
                             stepContext.storeStepOutput(callStep.getName(), stepOutput);
+                            addStepOutputToParameters(runtimeParameters, callStep.getName(),
+                                    stepOutput);
                         } catch (Exception ignoreJsonParseError) {
                             // Ignore non-JSON call output for lookup indexing
                         }
@@ -170,7 +177,7 @@ public class OperationStepExecutor {
                     }
 
                     String resolvedLookupValue = Resolver.resolveMustacheTemplate(
-                            lookupStep.getLookupValue(), baseParameters);
+                            lookupStep.getLookupValue(), runtimeParameters);
 
                     JsonNode lookupResult = LookupExecutor.executeLookup(indexData,
                             lookupStep.getMatch(), resolvedLookupValue,
@@ -198,7 +205,15 @@ public class OperationStepExecutor {
         Map<String, Object> stepParams = new ConcurrentHashMap<>(baseParameters);
 
         if (callStep.getWith() != null) {
-            stepParams.putAll(callStep.getWith());
+            for (Map.Entry<String, Object> entry : callStep.getWith().entrySet()) {
+                Object rawValue = entry.getValue();
+                if (rawValue instanceof String rawStringValue) {
+                    stepParams.put(entry.getKey(),
+                            Resolver.resolveMustacheTemplate(rawStringValue, stepParams));
+                } else {
+                    stepParams.put(entry.getKey(), rawValue);
+                }
+            }
         }
 
         if (callStep.getCall() != null) {
@@ -214,6 +229,20 @@ public class OperationStepExecutor {
         }
 
         return null;
+    }
+
+    /**
+     * Expose each step JSON output under the step name so downstream templates can reference
+     * fields with syntax like {{step-name.field}}.
+     */
+    private void addStepOutputToParameters(Map<String, Object> runtimeParameters, String stepName,
+            JsonNode stepOutput) {
+        if (runtimeParameters == null || stepName == null || stepOutput == null) {
+            return;
+        }
+
+        Object converted = mapper.convertValue(stepOutput, Object.class);
+        runtimeParameters.put(stepName, converted);
     }
 
     /**
