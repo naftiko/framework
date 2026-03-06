@@ -1,6 +1,6 @@
 # Naftiko Framework
 
-Welcome to Naftiko Framework, the first Open Source project for **Spec-Driven Integration**. It reinvents API integration for the AI era with a governed and versatile platform based on capabilities that streamlines API sprawl created by the massive SaaS growth and microservices.
+Welcome to Naftiko Framework, the first Open Source project for **Spec-Driven AI Integration**. It reinvents API integration for the AI era with a governed and versatile platform based on capabilities that streamlines API sprawl created by the massive SaaS growth and microservices.
 
 Each capability is a coarse piece of domain that consumes existing HTTP-based APIs, converts into JSON data formats like Protocol Buffer, XML, YAML, CSV and Avro, enabling better Context Engineering and API reusability critical to AI integration.
 
