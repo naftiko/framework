@@ -19,13 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.NullNode;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.naftiko.Capability;
-import io.naftiko.engine.Resolver;
-import io.naftiko.spec.OutputParameterSpec;
 import io.naftiko.spec.exposes.McpServerToolSpec;
 
 /**
@@ -40,13 +35,11 @@ public class McpToolHandler {
     private static final Logger logger = Logger.getLogger(McpToolHandler.class.getName());
     private final Capability capability;
     private final Map<String, McpServerToolSpec> toolSpecs;
-    private final ObjectMapper mapper;
     private final OperationStepExecutor stepExecutor;
 
     public McpToolHandler(Capability capability, List<McpServerToolSpec> tools) {
         this.capability = capability;
         this.toolSpecs = new ConcurrentHashMap<>();
-        this.mapper = new ObjectMapper();
         this.stepExecutor = new OperationStepExecutor(capability);
 
         for (McpServerToolSpec tool : tools) {
@@ -78,35 +71,18 @@ public class McpToolHandler {
             parameters.putAll(toolSpec.getWith());
         }
 
-        OperationStepExecutor.HandlingContext found = null;
-
-        if (toolSpec.getCall() != null) {
-            // Simple call mode
-            found = stepExecutor.findClientRequestFor(toolSpec.getCall(), parameters);
-
-            if (found != null) {
-                try {
-                    found.handle();
-                } catch (Exception e) {
-                    logger.warning("Error during HTTP client call for tool '" + toolName + "': " + e);
-                    return new McpSchema.CallToolResult(
-                            List.of(new McpSchema.TextContent(
-                                    "Error during HTTP client call: " + e.getMessage())),
-                            true, null, null);
-                }
-            } else {
-                throw new IllegalArgumentException("Invalid call format: "
-                        + (toolSpec.getCall() != null ? toolSpec.getCall().getOperation()
-                                : "null"));
-            }
-        } else if (toolSpec.getSteps() != null && !toolSpec.getSteps().isEmpty()) {
-            // Step orchestration mode
-            OperationStepExecutor.StepExecutionResult stepResult =
-                    stepExecutor.executeSteps(toolSpec.getSteps(), parameters);
-            found = stepResult.lastContext;
-        } else {
-            throw new IllegalArgumentException(
-                    "Tool '" + toolName + "' has neither call nor steps defined");
+        OperationStepExecutor.HandlingContext found;
+        try {
+            found = stepExecutor.execute(toolSpec.getCall(), toolSpec.getSteps(), parameters,
+                    "Tool '" + toolName + "'");
+        } catch (IllegalArgumentException e) {
+            throw e;
+        } catch (Exception e) {
+            logger.warning("Error during HTTP client call for tool '" + toolName + "': " + e);
+            return new McpSchema.CallToolResult(
+                    List.of(new McpSchema.TextContent(
+                            "Error during HTTP client call: " + e.getMessage())),
+                    true, null, null);
         }
 
         // Map the response to MCP CallToolResult
@@ -148,42 +124,16 @@ public class McpToolHandler {
         String responseText = found.clientResponse.getEntity().getText();
 
         // Apply output parameter mappings if defined
-        if (toolSpec.getOutputParameters() != null && !toolSpec.getOutputParameters().isEmpty()
-                && responseText != null && !responseText.isEmpty()) {
-            String mapped = mapOutputParameters(toolSpec, responseText);
-            if (mapped != null) {
-                return new McpSchema.CallToolResult(List.of(new McpSchema.TextContent(mapped)),
-                        isError, null, null);
-            }
+        String mapped = stepExecutor.applyOutputMappings(responseText, toolSpec.getOutputParameters());
+        if (mapped != null) {
+            return new McpSchema.CallToolResult(List.of(new McpSchema.TextContent(mapped)),
+                    isError, null, null);
         }
 
         // Fall back to raw response
         return new McpSchema.CallToolResult(
                 List.of(new McpSchema.TextContent(responseText != null ? responseText : "")),
                 isError, null, null);
-    }
-
-    /**
-     * Map pre-buffered response text to the tool's declared outputParameters and return a JSON
-     * string. Returns null when mapping could not be applied.
-     */
-    private String mapOutputParameters(McpServerToolSpec toolSpec, String responseText)
-            throws IOException {
-        if (responseText == null || responseText.isEmpty()) {
-            return null;
-        }
-
-        JsonNode root = mapper.readTree(responseText);
-
-        for (OutputParameterSpec outputParameter : toolSpec.getOutputParameters()) {
-            JsonNode mapped = Resolver.resolveOutputMappings(outputParameter, root, mapper);
-
-            if (mapped != null && !(mapped instanceof NullNode)) {
-                return mapper.writeValueAsString(mapped);
-            }
-        }
-
-        return null;
     }
 
     public Capability getCapability() {

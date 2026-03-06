@@ -51,20 +51,33 @@ public class McpServerAdapter extends ServerAdapter {
 
     private final McpToolHandler toolHandler;
     private final List<McpSchema.Tool> tools;
+    private final Map<String, String> toolLabels;
+    private final McpResourceHandler resourceHandler;
+    private final McpPromptHandler promptHandler;
 
     public McpServerAdapter(Capability capability, McpServerSpec serverSpec) {
         super(capability, serverSpec);
 
         // Build MCP Tool definitions from the spec
         this.tools = new ArrayList<>();
+        this.toolLabels = new HashMap<>();
         Context.getCurrentLogger().log(Level.INFO, "Building MCP Tool definitions from the spec");
 
         for (McpServerToolSpec toolSpec : serverSpec.getTools()) {
             this.tools.add(buildMcpTool(toolSpec));
+            if (toolSpec.getLabel() != null) {
+                this.toolLabels.put(toolSpec.getName(), toolSpec.getLabel());
+            }
         }
 
         // Create the tool handler (transport-agnostic)
         this.toolHandler = new McpToolHandler(capability, serverSpec.getTools());
+
+        // Create the resource handler (transport-agnostic)
+        this.resourceHandler = new McpResourceHandler(capability, serverSpec.getResources());
+
+        // Create the prompt handler (transport-agnostic)
+        this.promptHandler = new McpPromptHandler(serverSpec.getPrompts());
 
         if (serverSpec.isStdio()) {
             initStdioTransport();
@@ -144,8 +157,20 @@ public class McpServerAdapter extends ServerAdapter {
         return toolHandler;
     }
 
+    public McpResourceHandler getResourceHandler() {
+        return resourceHandler;
+    }
+
+    public McpPromptHandler getPromptHandler() {
+        return promptHandler;
+    }
+
     public List<McpSchema.Tool> getTools() {
         return tools;
+    }
+
+    public Map<String, String> getToolLabels() {
+        return toolLabels;
     }
 
     @Override
