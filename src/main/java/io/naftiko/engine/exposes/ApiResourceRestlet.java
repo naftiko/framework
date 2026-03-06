@@ -13,6 +13,7 @@
  */
 package io.naftiko.engine.exposes;
 
+import org.restlet.Context;
 import org.restlet.Request;
 import org.restlet.Response;
 import org.restlet.Restlet;
@@ -97,7 +98,7 @@ public class ApiResourceRestlet extends Restlet {
                         found = stepExecutor.findClientRequestFor(serverOp.getCall(),
                                 inputParameters);
                     } catch (IllegalArgumentException e) {
-                        getContext().getLogger().warning("Error resolving request parameters: " + e);
+                        Context.getCurrentLogger().warning("Error resolving request parameters: " + e);
                         response.setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
                         response.setEntity("Error resolving request parameters: " + e.getMessage(),
                                 MediaType.TEXT_PLAIN);
@@ -110,7 +111,7 @@ public class ApiResourceRestlet extends Restlet {
                             found.handle();
                             response.setStatus(found.clientResponse.getStatus());
                         } catch (Exception e) {
-                            getContext().getLogger().warning("Error while handling HTTP client call in call mode: " + e);
+                            Context.getCurrentLogger().warning("Error while handling HTTP client call in call mode: " + e);
                             response.setStatus(Status.SERVER_ERROR_INTERNAL);
                             response.setEntity(
                                     "Error while handling an HTTP client call\n\n" + e.toString(),
@@ -139,12 +140,12 @@ public class ApiResourceRestlet extends Restlet {
                                 stepExecutor.executeSteps(serverOp.getSteps(), inputParameters);
                         found = stepResult.lastContext;
                     } catch (IllegalArgumentException e) {
-                        getContext().getLogger().warning("Invalid argument in orchestrated steps: " + e);
+                        Context.getCurrentLogger().warning("Invalid argument in orchestrated steps: " + e);
                         response.setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
                         response.setEntity(e.getMessage(), MediaType.TEXT_PLAIN);
                         return true;
                     } catch (RuntimeException e) {
-                        getContext().getLogger().warning("Error while handling orchestrated steps: " + e);
+                        Context.getCurrentLogger().warning("Error while handling orchestrated steps: " + e);
                         response.setStatus(Status.SERVER_ERROR_INTERNAL);
                         response.setEntity(
                                 "Error while handling an HTTP client call\n\n" + e.toString(),
