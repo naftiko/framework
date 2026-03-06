@@ -488,7 +488,7 @@ Add two optional arrays to the existing `ExposesMcp` definition:
     "description": "An MCP resource definition. Exposes data that agents can read. Either dynamic (backed by consumed HTTP operations via call/steps) or static (served from local files via location).",
     "properties": {
       "name": {
-        "$ref": "#/$defs/IdentifierKebab",
+        "$ref": "#/$defs/IdentifierExtended",
         "description": "Technical name for the resource. Used as identifier in MCP resource listings."
       },
       "uri": {
@@ -501,7 +501,13 @@ Add two optional arrays to the existing `ExposesMcp` definition:
       },
       "mimeType": {
         "type": "string",
-        "description": "MIME type of the resource content (e.g. application/json, text/markdown, text/plain)."
+        "description": "MIME type of the resource content per RFC 6838 (e.g. application/json, text/markdown, text/plain). Optional parameters are supported (e.g. charset=utf-8).",
+        "pattern": "^[a-zA-Z0-9!#$&^_.+-]+\\/[a-zA-Z0-9!#$&^_.+-]+(?:\\s*;\\s*[a-zA-Z0-9!#$&^_.+-]+=(?:[a-zA-Z0-9!#$&^_.+-]+|\\\"[^\\\"]*\\\"))*$",
+        "examples": [
+          "application/json",
+          "text/markdown; charset=utf-8",
+          "application/vnd.api+json"
+        ]
       },
       "call": {
         "type": "string",
@@ -602,7 +608,7 @@ Add two optional arrays to the existing `ExposesMcp` definition:
     "description": "An MCP prompt template definition. Prompts are reusable templates with typed arguments that agents can discover and render.",
     "properties": {
       "name": {
-        "$ref": "#/$defs/IdentifierKebab",
+        "$ref": "#/$defs/IdentifierExtended",
         "description": "Technical name for the prompt. Used as identifier in MCP prompt listings."
       },
       "description": {
