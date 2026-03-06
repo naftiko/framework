@@ -42,6 +42,12 @@ public class McpServerSpec extends ServerSpec {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private final List<McpServerToolSpec> tools;
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private final List<McpServerResourceSpec> resources;
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private final List<McpServerPromptSpec> prompts;
+
     public McpServerSpec() {
         this(null, 0, null, null);
     }
@@ -51,6 +57,8 @@ public class McpServerSpec extends ServerSpec {
         this.namespace = namespace;
         this.description = description;
         this.tools = new CopyOnWriteArrayList<>();
+        this.resources = new CopyOnWriteArrayList<>();
+        this.prompts = new CopyOnWriteArrayList<>();
     }
 
     /**
@@ -86,6 +94,14 @@ public class McpServerSpec extends ServerSpec {
 
     public List<McpServerToolSpec> getTools() {
         return tools;
+    }
+
+    public List<McpServerResourceSpec> getResources() {
+        return resources;
+    }
+
+    public List<McpServerPromptSpec> getPrompts() {
+        return prompts;
     }
 
 }

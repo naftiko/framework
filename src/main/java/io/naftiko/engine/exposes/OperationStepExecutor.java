@@ -13,6 +13,7 @@
  */
 package io.naftiko.engine.exposes;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,8 +23,11 @@ import org.restlet.Response;
 import org.restlet.data.MediaType;
 import org.restlet.data.Method;
 import org.restlet.data.Reference;
+import org.restlet.representation.StringRepresentation;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.NullNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.naftiko.Capability;
 import io.naftiko.engine.LookupExecutor;
 import io.naftiko.engine.Resolver;
@@ -31,6 +35,7 @@ import io.naftiko.engine.StepExecutionContext;
 import io.naftiko.engine.consumes.ClientAdapter;
 import io.naftiko.engine.consumes.HttpClientAdapter;
 import io.naftiko.spec.InputParameterSpec;
+import io.naftiko.spec.OutputParameterSpec;
 import io.naftiko.spec.consumes.HttpClientOperationSpec;
 import io.naftiko.spec.exposes.ServerCallSpec;
 import io.naftiko.spec.exposes.ApiServerOperationSpec;
@@ -157,8 +162,16 @@ public class OperationStepExecutor {
                     if (lastContext.clientResponse != null
                             && lastContext.clientResponse.getEntity() != null) {
                         try {
-                            JsonNode stepOutput = mapper
-                                    .readTree(lastContext.clientResponse.getEntity().getText());
+                            if (!(lastContext.clientResponse
+                                    .getEntity() instanceof StringRepresentation)) {
+                                lastContext.clientResponse.setEntity(new StringRepresentation(
+                                        lastContext.clientResponse.getEntity().getText(),
+                                        lastContext.clientResponse.getEntity().getMediaType()));
+                            }
+
+                            JsonNode rawOutput = mapper
+                                    .readTree(lastContext.clientResponse.getEntity().getReader());
+                            JsonNode stepOutput = resolveStepOutput(lastContext, rawOutput);
                             stepContext.storeStepOutput(callStep.getName(), stepOutput);
                             addStepOutputToParameters(runtimeParameters, callStep.getName(),
                                     stepOutput);
@@ -246,6 +259,47 @@ public class OperationStepExecutor {
     }
 
     /**
+     * Resolve the output visible to subsequent steps.
+     *
+     * When consumed operation output parameters are defined, expose the projected object so
+     * templates can reference declared names like {{step-name.userid}}.
+     */
+    private JsonNode resolveStepOutput(HandlingContext context, JsonNode rawOutput) {
+        if (rawOutput == null) {
+            return NullNode.instance;
+        }
+
+        if (context == null || context.clientOperation == null
+                || context.clientOperation.getOutputParameters() == null
+                || context.clientOperation.getOutputParameters().isEmpty()) {
+            return rawOutput;
+        }
+
+        ObjectNode projected = mapper.createObjectNode();
+        JsonNode unnamed = null;
+
+        for (OutputParameterSpec outputParameter : context.clientOperation.getOutputParameters()) {
+            JsonNode mapped = Resolver.resolveOutputMappings(outputParameter, rawOutput, mapper);
+
+            if (mapped == null) {
+                mapped = NullNode.instance;
+            }
+
+            if (outputParameter.getName() != null && !outputParameter.getName().isBlank()) {
+                projected.set(outputParameter.getName(), mapped);
+            } else if (unnamed == null) {
+                unnamed = mapped;
+            }
+        }
+
+        if (!projected.isEmpty()) {
+            return projected;
+        }
+
+        return unnamed != null ? unnamed : rawOutput;
+    }
+
+    /**
      * Find and construct a client request context for a call specification.
      */
     public HandlingContext findClientRequestFor(ServerCallSpec call,
@@ -308,6 +362,7 @@ public class OperationStepExecutor {
                         HandlingContext ctx = new HandlingContext();
                         ctx.clientRequest = new Request();
                         ctx.clientAdapter = clientAdapter;
+                        ctx.clientOperation = clientOp;
                         ctx.clientResponse = new Response(ctx.clientRequest);
 
                         // Apply client-level and operation-level input parameters
@@ -349,10 +404,75 @@ public class OperationStepExecutor {
     }
 
     /**
+     * Execute either a simple call or a sequence of steps, returning the last HandlingContext.
+     *
+     * <p>When {@code call} is non-null the matching client adapter is located, the request is
+     * built and {@link HandlingContext#handle()} is invoked. When {@code steps} is non-empty the
+     * full step-orchestration path runs instead. Throws {@link IllegalArgumentException} when the
+     * call reference cannot be resolved or neither {@code call} nor {@code steps} is defined.</p>
+     *
+     * @param call        the simple call spec, or {@code null}
+     * @param steps       the step list, or {@code null}/empty
+     * @param parameters  resolved parameters available for template substitution
+     * @param entityLabel human-readable label used in error messages (e.g. {@code "Tool 'my-tool'"})
+     * @return the resulting {@link HandlingContext}
+     * @throws IllegalArgumentException when the call reference is invalid or neither mode is
+     *         defined
+     * @throws Exception when the underlying HTTP request fails
+     */
+    public HandlingContext execute(ServerCallSpec call, List<OperationStepSpec> steps,
+            Map<String, Object> parameters, String entityLabel) throws Exception {
+        if (call != null) {
+            HandlingContext found = findClientRequestFor(call, parameters);
+            if (found == null) {
+                throw new IllegalArgumentException(
+                        "Invalid call for " + entityLabel + ": " + call.getOperation());
+            }
+            found.handle();
+            return found;
+        } else if (steps != null && !steps.isEmpty()) {
+            return executeSteps(steps, parameters).lastContext;
+        } else {
+            throw new IllegalArgumentException(
+                    entityLabel + " has neither call nor steps defined");
+        }
+    }
+
+    /**
+     * Apply output parameter mappings to a JSON response string.
+     *
+     * <p>Parses {@code responseText} as JSON and evaluates each {@link OutputParameterSpec} in
+     * order, returning the first non-null mapped value serialised back to JSON. Returns
+     * {@code null} when no mapping matches (callers should fall back to the raw response).</p>
+     *
+     * @param responseText     the raw HTTP response body
+     * @param outputParameters the list of output parameter specs to try
+     * @return the first mapped JSON string, or {@code null} if none matched
+     */
+    public String applyOutputMappings(String responseText,
+            List<OutputParameterSpec> outputParameters) throws IOException {
+        if (responseText == null || responseText.isEmpty()) {
+            return null;
+        }
+        if (outputParameters == null || outputParameters.isEmpty()) {
+            return null;
+        }
+        JsonNode root = mapper.readTree(responseText);
+        for (OutputParameterSpec outputParam : outputParameters) {
+            JsonNode mapped = Resolver.resolveOutputMappings(outputParam, root, mapper);
+            if (mapped != null && !(mapped instanceof NullNode)) {
+                return mapper.writeValueAsString(mapped);
+            }
+        }
+        return null;
+    }
+
+    /**
      * Internal context for managing an HTTP client request-response pair.
      */
     public static class HandlingContext {
         public HttpClientAdapter clientAdapter;
+        public HttpClientOperationSpec clientOperation;
         public Request clientRequest;
         public Response clientResponse;
 
