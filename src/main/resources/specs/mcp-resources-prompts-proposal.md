@@ -208,9 +208,9 @@ resources:
         call: "analytics-api.get-stats"
     mappings:
       - targetName: users
-        value: "$.fetch-users.data"
+        value: "{{$.fetch-users.data}}"
       - targetName: stats
-        value: "$.fetch-stats.summary"
+        value: "{{$.fetch-stats.summary}}"
     outputParameters:
       - name: users
         type: array
