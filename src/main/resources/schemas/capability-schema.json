@@ -746,7 +746,7 @@
     },
     "ExposesMcp": {
       "type": "object",
-      "description": "MCP Server exposition configuration. Exposes tools over MCP transport (Streamable HTTP or stdio).",
+      "description": "MCP Server exposition configuration. Exposes tools, resources and prompts over MCP transport (Streamable HTTP or stdio).",
       "properties": {
         "type": {
           "type": "string",
@@ -782,6 +782,22 @@
           "description": "List of MCP tools exposed by this server",
           "items": {
             "$ref": "#/$defs/McpTool"
+          },
+          "minItems": 1
+        },
+        "resources": {
+          "type": "array",
+          "description": "List of MCP resources exposed by this server. Resources provide data that agents can read.",
+          "items": {
+            "$ref": "#/$defs/McpResource"
+          },
+          "minItems": 1
+        },
+        "prompts": {
+          "type": "array",
+          "description": "List of MCP prompt templates exposed by this server. Prompts are reusable templates with typed arguments.",
+          "items": {
+            "$ref": "#/$defs/McpPrompt"
           },
           "minItems": 1
         }
@@ -827,6 +843,10 @@
         "name": {
           "$ref": "#/$defs/IdentifierKebab",
           "description": "Technical name for the tool. Used as the MCP tool name."
+        },
+        "label": {
+          "type": "string",
+          "description": "Human-readable display name of the tool. Mapped to MCP 'title' in tools/list responses."
         },
         "description": {
           "type": "string",
@@ -937,6 +957,210 @@
         "type",
         "description"
       ],
+      "additionalProperties": false
+    },
+    "McpResource": {
+      "type": "object",
+      "description": "An MCP resource definition. Exposes data that agents can read. Either dynamic (backed by consumed HTTP operations via call/steps) or static (served from local files via location).",
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/IdentifierExtended",
+          "description": "Technical name for the resource. Used as identifier in MCP resource listings."
+        },
+        "label": {
+          "type": "string",
+          "description": "Human-readable display name of the resource. Mapped to MCP 'title' in protocol responses."
+        },
+        "uri": {
+          "type": "string",
+          "description": "The URI that identifies this resource in MCP. Can use any scheme (e.g. config://, docs://, data://). For resource templates, use {param} placeholders."
+        },
+        "description": {
+          "type": "string",
+          "description": "A meaningful description of the resource. Used for agent discovery. In a world of agents, context is king."
+        },
+        "mimeType": {
+          "type": "string",
+          "description": "MIME type of the resource content per RFC 6838 (e.g. application/json, text/markdown, text/plain).",
+          "pattern": "^[a-zA-Z0-9!#$&^_.+-]+\\/[a-zA-Z0-9!#$&^_.+-]+(?:\\s*;\\s*[a-zA-Z0-9!#$&^_.+-]+=(?:[a-zA-Z0-9!#$&^_.+-]+|\"[^\"]*\"))*$"
+        },
+        "call": {
+          "type": "string",
+          "description": "For dynamic resources: reference to the consumed operation. Format: {namespace}.{operationId}.",
+          "pattern": "^[a-zA-Z0-9-]+\\.[a-zA-Z0-9-]+$"
+        },
+        "with": {
+          "$ref": "#/$defs/WithInjector"
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/OperationStep"
+          },
+          "minItems": 1
+        },
+        "mappings": {
+          "type": "array",
+          "description": "Maps step outputs to the resource content.",
+          "items": {
+            "$ref": "#/$defs/StepOutputMapping"
+          }
+        },
+        "outputParameters": {
+          "type": "array"
+        },
+        "location": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^file:///",
+          "description": "For static resources: file:/// URI pointing to a directory whose files are served as MCP resources."
+        }
+      },
+      "required": [
+        "name",
+        "label",
+        "uri",
+        "description"
+      ],
+      "oneOf": [
+        {
+          "required": ["call"],
+          "type": "object",
+          "properties": {
+            "outputParameters": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/MappedOutputParameter"
+              }
+            }
+          },
+          "not": { "required": ["location"] }
+        },
+        {
+          "required": ["steps"],
+          "type": "object",
+          "properties": {
+            "mappings": true,
+            "outputParameters": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/OrchestratedOutputParameter"
+              }
+            }
+          },
+          "not": { "required": ["location"] }
+        },
+        {
+          "required": ["location"],
+          "not": {
+            "anyOf": [
+              { "required": ["call"] },
+              { "required": ["steps"] }
+            ]
+          }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "McpPrompt": {
+      "type": "object",
+      "description": "An MCP prompt template definition. Prompts are reusable templates with typed arguments that agents can discover and render.",
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/IdentifierExtended",
+          "description": "Technical name for the prompt. Used as identifier in MCP prompt listings."
+        },
+        "label": {
+          "type": "string",
+          "description": "Human-readable display name of the prompt. Mapped to MCP 'title' in protocol responses."
+        },
+        "description": {
+          "type": "string",
+          "description": "A meaningful description of the prompt and when to use it. Used for agent discovery."
+        },
+        "arguments": {
+          "type": "array",
+          "description": "Typed arguments for this prompt template. Arguments are substituted into the template via {{arg}} placeholders.",
+          "items": {
+            "$ref": "#/$defs/McpPromptArgument"
+          },
+          "minItems": 1
+        },
+        "template": {
+          "type": "array",
+          "description": "Inline prompt template as an array of messages. Each message has a role and content with {{arg}} placeholders.",
+          "items": {
+            "$ref": "#/$defs/McpPromptMessage"
+          },
+          "minItems": 1
+        },
+        "location": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^file:///",
+          "description": "File-based prompt: file:/// URI pointing to a file containing the prompt template with {{arg}} placeholders. Content becomes a single 'user' message."
+        }
+      },
+      "required": [
+        "name",
+        "label",
+        "description"
+      ],
+      "oneOf": [
+        {
+          "required": ["template"],
+          "not": { "required": ["location"] }
+        },
+        {
+          "required": ["location"],
+          "not": { "required": ["template"] }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "McpPromptArgument": {
+      "type": "object",
+      "description": "An argument for an MCP prompt template. Arguments are always strings per MCP spec.",
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/IdentifierExtended",
+          "description": "Argument name. Becomes a {{name}} placeholder in the template."
+        },
+        "label": {
+          "type": "string",
+          "description": "The display name of the argument. Used for agent discovery."
+        },
+        "description": {
+          "type": "string",
+          "description": "A meaningful description of the argument. Used for agent discovery."
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether the argument is required. Defaults to true.",
+          "default": true
+        }
+      },
+      "required": [
+        "name",
+        "description"
+      ],
+      "additionalProperties": false
+    },
+    "McpPromptMessage": {
+      "type": "object",
+      "description": "A message in an inline MCP prompt template. Supports {{arg}} placeholders for argument substitution.",
+      "properties": {
+        "role": {
+          "type": "string",
+          "enum": ["user", "assistant"],
+          "description": "The role of the message sender."
+        },
+        "content": {
+          "type": "string",
+          "description": "The message content. Supports {{arg}} placeholders for argument substitution."
+        }
+      },
+      "required": ["role", "content"],
       "additionalProperties": false
     },
     "ExposedResource": {

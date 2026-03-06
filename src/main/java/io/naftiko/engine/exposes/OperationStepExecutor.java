@@ -13,6 +13,7 @@
  */
 package io.naftiko.engine.exposes;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -399,6 +400,70 @@ public class OperationStepExecutor {
             }
         }
 
+        return null;
+    }
+
+    /**
+     * Execute either a simple call or a sequence of steps, returning the last HandlingContext.
+     *
+     * <p>When {@code call} is non-null the matching client adapter is located, the request is
+     * built and {@link HandlingContext#handle()} is invoked. When {@code steps} is non-empty the
+     * full step-orchestration path runs instead. Throws {@link IllegalArgumentException} when the
+     * call reference cannot be resolved or neither {@code call} nor {@code steps} is defined.</p>
+     *
+     * @param call        the simple call spec, or {@code null}
+     * @param steps       the step list, or {@code null}/empty
+     * @param parameters  resolved parameters available for template substitution
+     * @param entityLabel human-readable label used in error messages (e.g. {@code "Tool 'my-tool'"})
+     * @return the resulting {@link HandlingContext}
+     * @throws IllegalArgumentException when the call reference is invalid or neither mode is
+     *         defined
+     * @throws Exception when the underlying HTTP request fails
+     */
+    public HandlingContext execute(ServerCallSpec call, List<OperationStepSpec> steps,
+            Map<String, Object> parameters, String entityLabel) throws Exception {
+        if (call != null) {
+            HandlingContext found = findClientRequestFor(call, parameters);
+            if (found == null) {
+                throw new IllegalArgumentException(
+                        "Invalid call for " + entityLabel + ": " + call.getOperation());
+            }
+            found.handle();
+            return found;
+        } else if (steps != null && !steps.isEmpty()) {
+            return executeSteps(steps, parameters).lastContext;
+        } else {
+            throw new IllegalArgumentException(
+                    entityLabel + " has neither call nor steps defined");
+        }
+    }
+
+    /**
+     * Apply output parameter mappings to a JSON response string.
+     *
+     * <p>Parses {@code responseText} as JSON and evaluates each {@link OutputParameterSpec} in
+     * order, returning the first non-null mapped value serialised back to JSON. Returns
+     * {@code null} when no mapping matches (callers should fall back to the raw response).</p>
+     *
+     * @param responseText     the raw HTTP response body
+     * @param outputParameters the list of output parameter specs to try
+     * @return the first mapped JSON string, or {@code null} if none matched
+     */
+    public String applyOutputMappings(String responseText,
+            List<OutputParameterSpec> outputParameters) throws IOException {
+        if (responseText == null || responseText.isEmpty()) {
+            return null;
+        }
+        if (outputParameters == null || outputParameters.isEmpty()) {
+            return null;
+        }
+        JsonNode root = mapper.readTree(responseText);
+        for (OutputParameterSpec outputParam : outputParameters) {
+            JsonNode mapped = Resolver.resolveOutputMappings(outputParam, root, mapper);
+            if (mapped != null && !(mapped instanceof NullNode)) {
+                return mapper.writeValueAsString(mapped);
+            }
+        }
         return null;
     }
 

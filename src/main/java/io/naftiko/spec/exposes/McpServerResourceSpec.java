@@ -18,26 +18,32 @@ import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.naftiko.spec.InputParameterSpec;
 import io.naftiko.spec.OutputParameterSpec;
 
 /**
- * MCP Tool Specification Element.
- * 
- * Defines an MCP tool that maps to consumed HTTP operations.
- * Supports both simple call mode (call + with) and full orchestration (steps + mappings).
+ * MCP Resource Specification Element.
+ *
+ * Defines an MCP resource that exposes data agents can read. Two source types are supported:
+ * <ul>
+ *   <li><b>Dynamic</b> ({@code call}/{@code steps}): backed by consumed HTTP operations — same
+ *       orchestration model as tools.</li>
+ *   <li><b>Static</b> ({@code location}): served from local files identified by a
+ *       {@code file:///} URI.</li>
+ * </ul>
  */
-public class McpServerToolSpec {
+public class McpServerResourceSpec {
 
     private volatile String name;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private volatile String label;
 
+    private volatile String uri;
+
     private volatile String description;
 
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private final List<InputParameterSpec> inputParameters;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private volatile String mimeType;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private volatile ServerCallSpec call;
@@ -51,15 +57,10 @@ public class McpServerToolSpec {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private final List<OutputParameterSpec> outputParameters;
 
-    public McpServerToolSpec() {
-        this(null, null, null);
-    }
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private volatile String location;
 
-    public McpServerToolSpec(String name, String label, String description) {
-        this.name = name;
-        this.label = label;
-        this.description = description;
-        this.inputParameters = new CopyOnWriteArrayList<>();
+    public McpServerResourceSpec() {
         this.steps = new CopyOnWriteArrayList<>();
         this.outputParameters = new CopyOnWriteArrayList<>();
     }
@@ -80,6 +81,14 @@ public class McpServerToolSpec {
         this.label = label;
     }
 
+    public String getUri() {
+        return uri;
+    }
+
+    public void setUri(String uri) {
+        this.uri = uri;
+    }
+
     public String getDescription() {
         return description;
     }
@@ -88,8 +97,12 @@ public class McpServerToolSpec {
         this.description = description;
     }
 
-    public List<InputParameterSpec> getInputParameters() {
-        return inputParameters;
+    public String getMimeType() {
+        return mimeType;
+    }
+
+    public void setMimeType(String mimeType) {
+        this.mimeType = mimeType;
     }
 
     public ServerCallSpec getCall() {
@@ -116,4 +129,25 @@ public class McpServerToolSpec {
         return outputParameters;
     }
 
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    /**
+     * Returns {@code true} when this resource is served from a local file directory.
+     */
+    public boolean isStatic() {
+        return location != null;
+    }
+
+    /**
+     * Returns {@code true} when the URI contains {@code {param}} placeholders (resource template).
+     */
+    public boolean isTemplate() {
+        return uri != null && uri.contains("{") && uri.contains("}");
+    }
 }
