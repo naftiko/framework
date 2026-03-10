@@ -124,7 +124,7 @@ public class SkillServerAdapter extends ServerAdapter {
                             + "' cannot define both 'from' and 'instruction'.");
                 }
                 if (hasFrom) {
-                    String ns = tool.getFrom().getNamespace();
+                    String ns = tool.getFrom().getSourceNamespace();
                     if (!namespaceMode.containsKey(ns)) {
                         throw new IllegalArgumentException("Skill tool '" + tool.getName()
                                 + "' in skill '" + skill.getName()

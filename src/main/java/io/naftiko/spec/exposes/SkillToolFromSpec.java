@@ -21,22 +21,22 @@ package io.naftiko.spec.exposes;
  */
 public class SkillToolFromSpec {
 
-    private volatile String namespace;
+    private volatile String sourceNamespace;
     private volatile String action;
 
     public SkillToolFromSpec() {}
 
-    public SkillToolFromSpec(String namespace, String action) {
-        this.namespace = namespace;
+    public SkillToolFromSpec(String sourceNamespace, String action) {
+        this.sourceNamespace = sourceNamespace;
         this.action = action;
     }
 
-    public String getNamespace() {
-        return namespace;
+    public String getSourceNamespace() {
+        return sourceNamespace;
     }
 
-    public void setNamespace(String namespace) {
-        this.namespace = namespace;
+    public void setSourceNamespace(String sourceNamespace) {
+        this.sourceNamespace = sourceNamespace;
     }
 
     public String getAction() {

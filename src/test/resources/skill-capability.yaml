@@ -40,7 +40,7 @@ capability:
             - name: "list-orders"
               description: "List all orders in the system"
               from:
-                namespace: "orders-rest"
+                sourceNamespace: "orders-rest"
                 action: "list-orders"
             - name: "order-guide"
               description: "Guide for working with orders"
