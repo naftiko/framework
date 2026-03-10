@@ -34,7 +34,7 @@ public class SkillToolSpecDeserializationTest {
                 name: "list-orders"
                 description: "List all orders in the system"
                 from:
-                  namespace: "orders-rest"
+                  sourceNamespace: "orders-rest"
                   action: "list-orders"
                 """;
 
@@ -44,7 +44,7 @@ public class SkillToolSpecDeserializationTest {
         assertEquals("List all orders in the system", tool.getDescription());
         assertNotNull(tool.getFrom(), "from should be present");
         assertNull(tool.getInstruction(), "instruction should be null for derived tool");
-        assertEquals("orders-rest", tool.getFrom().getNamespace());
+        assertEquals("orders-rest", tool.getFrom().getSourceNamespace());
         assertEquals("list-orders", tool.getFrom().getAction());
     }
 
@@ -71,14 +71,14 @@ public class SkillToolSpecDeserializationTest {
                 name: "create-order"
                 description: "Create a new order"
                 from:
-                  namespace: "orders-mcp"
+                  sourceNamespace: "orders-mcp"
                   action: "create-order"
                 """;
 
         SkillToolSpec tool = YAML.readValue(yaml, SkillToolSpec.class);
 
         assertNotNull(tool.getFrom());
-        assertEquals("orders-mcp", tool.getFrom().getNamespace());
+        assertEquals("orders-mcp", tool.getFrom().getSourceNamespace());
         assertEquals("create-order", tool.getFrom().getAction());
     }
 

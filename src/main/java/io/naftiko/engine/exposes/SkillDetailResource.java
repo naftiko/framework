@@ -82,9 +82,9 @@ public class SkillDetailResource extends SkillServerResource {
             if (tool.getFrom() != null) {
                 toolEntry.put("type", "derived");
                 ObjectNode invRef = getMapper().createObjectNode();
-                invRef.put("targetNamespace", tool.getFrom().getNamespace());
+                invRef.put("targetNamespace", tool.getFrom().getSourceNamespace());
                 invRef.put("action", tool.getFrom().getAction());
-                invRef.put("mode", namespaceMode.getOrDefault(tool.getFrom().getNamespace(), "unknown"));
+                invRef.put("mode", namespaceMode.getOrDefault(tool.getFrom().getSourceNamespace(), "unknown"));
                 toolEntry.set("invocationRef", invRef);
             } else if (tool.getInstruction() != null) {
                 toolEntry.put("type", "instruction");

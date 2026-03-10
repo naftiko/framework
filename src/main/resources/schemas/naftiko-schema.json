@@ -1988,7 +1988,7 @@
           "type": "object",
           "description": "Derive this tool from a sibling api or mcp adapter.",
           "properties": {
-            "namespace": {
+            "sourceNamespace": {
               "type": "string",
               "description": "Namespace of a sibling exposes[] entry of type api or mcp"
             },
@@ -1998,7 +1998,7 @@
             }
           },
           "required": [
-            "namespace",
+            "sourceNamespace",
             "action"
           ],
           "additionalProperties": false
