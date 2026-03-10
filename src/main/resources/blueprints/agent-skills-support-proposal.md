@@ -114,19 +114,42 @@ capability:
       namespace: "weather-api"
       baseUri: "https://api.weather.com/v1/"
       resources:
-        - path: "forecast/{{location}}"
+        - name: "forecast"
+          path: "forecast/{{location}}"
+          inputParameters:
+            - name: "location"
+              in: "path"
           operations:
             - method: "GET"
               name: "get-forecast"
+              outputParameters:
+                - name: "forecast"
+                  type: "object"
+                  value: "$.forecast"
 
     - type: "http"
       namespace: "geocoding-api"
       baseUri: "https://geocode.example.com/"
       resources:
-        - path: "resolve/{{query}}"
+        - name: "resolve"
+          path: "resolve/{{query}}"
+          inputParameters:
+            - name: "query"
+              in: "path"
           operations:
             - method: "GET"
               name: "resolve-location"
+              outputParameters:
+                - name: "coordinates"
+                  type: "object"
+                  value: "$.coordinates"
+                  properties:
+                    lat:
+                      type: "number"
+                      value: "$.lat"
+                    lon:
+                      type: "number"
+                      value: "$.lon"
 
   exposes:
     # API adapter — owns tool execution via REST
@@ -139,9 +162,18 @@ capability:
           operations:
             - method: "GET"
               name: "get-forecast"
+              inputParameters:
+                - name: "city"
+                  in: "path"
+                  type: "string"
+                  description: "City name (e.g. 'London', 'New York')"
               call: "weather-api.get-forecast"
               with:
                 location: "{{city}}"
+              outputParameters:
+                - name: "forecast"
+                  type: "object"
+                  mapping: "$.forecast"
 
     # MCP adapter — owns tool execution via MCP protocol
     - type: "mcp"
@@ -152,6 +184,10 @@ capability:
       tools:
         - name: "resolve-and-forecast"
           description: "Resolve a place name to coordinates, then fetch forecast"
+          inputParameters:
+            - name: "place"
+              type: "string"
+              description: "Place name to resolve"
           steps:
             - type: "call"
               name: "geo"
@@ -163,10 +199,16 @@ capability:
               call: "weather-api.get-forecast"
               with:
                 location: "{{geo.coordinates.lat}},{{geo.coordinates.lon}}"
-          inputParameters:
-            - name: "place"
-              type: "string"
-              description: "Place name to resolve"
+          mappings:
+            - targetName: "location"
+              value: "$.geo.coordinates"
+            - targetName: "forecast"
+              value: "$.weather.forecast"
+          outputParameters:
+            - name: "location"
+              type: "object"
+            - name: "forecast"
+              type: "object"
 
     # Skill adapter — metadata/catalog layer (no execution)
     - type: "skill"
@@ -494,10 +536,7 @@ The SKILL.md file at the location can contain the same frontmatter properties as
   "description": "A skill definition. Declares tools derived from sibling api or mcp adapters or defined as local file instructions. Can also stand alone as purely descriptive (no tools). Supports full Agent Skills Spec frontmatter metadata. Skills describe tools — they do not execute them.",
   "properties": {
     "name": {
-      "type": "string",
-      "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$",
-      "minLength": 1,
-      "maxLength": 64,
+      "$ref": "#/$defs/IdentifierKebab",
       "description": "Skill identifier (kebab-case)"
     },
     "description": {
@@ -521,6 +560,7 @@ The SKILL.md file at the location can contain the same frontmatter properties as
     },
     "allowed-tools": {
       "type": "string",
+      "maxLength": 1024,
       "description": "Space-delimited list of pre-approved tool names (Agent Skills Spec)"
     },
     "argument-hint": {
@@ -563,10 +603,7 @@ The SKILL.md file at the location can contain the same frontmatter properties as
   "description": "A tool declared within a skill. Derived from a sibling api or mcp adapter via 'from', or defined as a local file instruction.",
   "properties": {
     "name": {
-      "type": "string",
-      "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$",
-      "minLength": 1,
-      "maxLength": 64,
+      "$ref": "#/$defs/IdentifierKebab",
       "description": "Tool identifier (kebab-case)"
     },
     "description": {
@@ -950,6 +987,9 @@ capability:
       resources:
         - path: "forecast/{{location}}"
           name: "forecast"
+          inputParameters:
+            - name: "location"
+              in: "path"
           operations:
             - method: "GET"
               name: "get-forecast"
@@ -964,13 +1004,23 @@ capability:
       resources:
         - path: "search/{{query}}"
           name: "search"
+          inputParameters:
+            - name: "query"
+              in: "path"
           operations:
             - method: "GET"
               name: "resolve-location"
               outputParameters:
                 - name: "coordinates"
                   type: "object"
-                  value: "$.result"
+                  value: "$.coordinates"
+                  properties:
+                    lat:
+                      type: "number"
+                      value: "$.lat"
+                    lon:
+                      type: "number"
+                      value: "$.lon"
 
   exposes:
     # API adapter — executes the forecast tool via REST
@@ -983,14 +1033,18 @@ capability:
           operations:
             - method: "GET"
               name: "get-forecast"
-              call: "weather-api.get-forecast"
-              with:
-                location: "{{city}}"
               inputParameters:
                 - name: "city"
                   in: "path"
                   type: "string"
                   description: "City name (e.g. 'London', 'New York')"
+              call: "weather-api.get-forecast"
+              with:
+                location: "{{city}}"
+              outputParameters:
+                - name: "forecast"
+                  type: "object"
+                  mapping: "$.forecast"
 
     # MCP adapter — executes multi-step tools via MCP protocol
     - type: "mcp"
