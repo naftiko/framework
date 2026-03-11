@@ -45,7 +45,7 @@ jobs:
             for file in "$dir"/*.{yaml,yml}; do
               [ -f "$file" ] || continue
               echo "Validating $file..."
-              npx --prefix .github ajv validate -s src/main/resources/schemas/capability-schema.json -d "$file" --spec=draft2020 --strict-schema=false
+              npx --prefix .github ajv validate -s src/main/resources/schemas/naftiko-schema.json -d "$file" --spec=draft2020 --strict-schema=false
             done
           done
           
