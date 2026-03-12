@@ -1,0 +1,66 @@
+/**
+ * Copyright 2025-2026 Naftiko
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ */
+package io.naftiko.spec.exposes.rest;
+
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import io.naftiko.spec.consumes.http.HttpAuthenticationSpec;
+import io.naftiko.spec.exposes.ServerSpec;
+
+/**
+ * REST Server Specification Element
+ */
+public class RestServerSpec extends ServerSpec {
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private volatile String namespace;
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private final List<RestServerResourceSpec> resources;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private volatile HttpAuthenticationSpec authentication;
+
+    public RestServerSpec() {
+        this(null, 0, null);
+    }
+
+    public RestServerSpec(String address, int port, String namespace) {
+        super("rest", address, port);
+        this.namespace = namespace;
+        this.resources = new CopyOnWriteArrayList<>();
+    }
+
+    public String getNamespace() {
+        return namespace;
+    }
+
+    public void setNamespace(String namespace) {
+        this.namespace = namespace;
+    }
+
+    public List<RestServerResourceSpec> getResources() {
+        return resources;
+    }
+
+    public HttpAuthenticationSpec getAuthentication() {
+        return authentication;
+    }
+
+    public void setAuthentication(HttpAuthenticationSpec authentication) {
+        this.authentication = authentication;
+    }
+
+}

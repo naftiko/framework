@@ -29,9 +29,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.naftiko.Capability;
 import io.naftiko.engine.exposes.ServerAdapter;
-import io.naftiko.engine.exposes.SkillServerAdapter;
+import io.naftiko.engine.exposes.skill.SkillServerAdapter;
 import io.naftiko.spec.NaftikoSpec;
-import io.naftiko.spec.exposes.SkillServerSpec;
+import io.naftiko.spec.exposes.skill.SkillServerSpec;
 
 /**
  * Integration tests for the Skill Server Adapter.
@@ -169,7 +169,7 @@ public class CapabilitySkillIntegrationTest {
         assertNotNull(invRef);
         assertEquals("orders-rest", invRef.get("targetNamespace"));
         assertEquals("list-orders", invRef.get("action"));
-        assertEquals("api", invRef.get("mode"));
+        assertEquals("rest", invRef.get("mode"));
 
         // Instruction tool has instruction path
         Map<String, Object> instructionTool = tools.get(1);

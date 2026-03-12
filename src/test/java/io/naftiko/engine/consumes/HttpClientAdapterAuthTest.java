@@ -20,8 +20,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.junit.jupiter.api.Test;
 import org.restlet.Request;
 import org.restlet.data.Method;
-import io.naftiko.spec.consumes.BearerAuthenticationSpec;
-import io.naftiko.spec.consumes.HttpClientSpec;
+import io.naftiko.engine.consumes.http.HttpClientAdapter;
+import io.naftiko.spec.consumes.http.HttpBearerAuthenticationSpec;
+import io.naftiko.spec.consumes.http.HttpClientSpec;
 
 public class HttpClientAdapterAuthTest {
 
@@ -29,7 +30,7 @@ public class HttpClientAdapterAuthTest {
     public void bearerAuthenticationShouldSetAuthorizationHeader() {
         HttpClientSpec spec = new HttpClientSpec("notion", "https://api.notion.com/v1/", null);
 
-        BearerAuthenticationSpec authentication = new BearerAuthenticationSpec();
+        HttpBearerAuthenticationSpec authentication = new HttpBearerAuthenticationSpec();
         authentication.setType("bearer");
         authentication.setToken("{{notion_api_key}}");
         spec.setAuthentication(authentication);

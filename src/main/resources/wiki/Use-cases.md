@@ -6,7 +6,7 @@ Connect AI assistants to your systems through capabilities, so they can access t
 
 How Naftiko achieves this technically:
 - Declare upstream systems in `capability.consumes` (typically `type: http`) with `namespace`, `baseUri`, authentication, headers, and operation contracts.
-- Expose the same domain as `type: mcp` tools and/or `type: api` resources in `capability.exposes`, so both AI agents and traditional clients use one integration layer.
+- Expose the same domain as `type: mcp` tools and/or `type: rest` resources in `capability.exposes`, so both AI agents and traditional clients use one integration layer.
 - Use `call`, `with`, `steps`, and JSONPath `mapping` in `outputParameters` to return normalized, task-ready payloads instead of raw provider responses.
 
 ![Integrate AI](https://naftiko.github.io/docs/images/technology/use_case_AI_integration.png)
@@ -44,7 +44,7 @@ How Naftiko achieves this technically:
 - [x] Pass thru source capability
   - [x] One source HTTP adapter per capability
   - [x] Multiple source HTTP adapters per capability
-- [x] Declarative source HTTP adapter and target API adapter
+- [x] Declarative source HTTP adapter and target REST adapter
   - [x] Focus on source APIs with JSON payloads
   - [x] Change HTTP methods to expose proper semantics
     - E.g. Adapt read-only POST queries into cacheable GET queries
@@ -78,7 +78,7 @@ How Naftiko achieves this technically:
 ![Rightsize microservices](https://naftiko.github.io/docs/images/technology/use_case_api_reusability_rightsize_microservices.png)
 
 #### Key features
-- [x] Declarative source HTTP adapter and target API adapter
+- [x] Declarative source HTTP adapter and target REST adapter
   - [x] Finish support for source APIs with JSON payloads
     - [x] Convert YAML, Protobuf, payloads to JSON
     - [x] Support sequence of steps with calls
@@ -107,7 +107,7 @@ How Naftiko achieves this technically:
 
 #### Key features
 - [x] Declarative target API contract with mocking mode
-  - [x] Allow API server adapter with no source HTTP adapter
+  - [x] Allow REST server adapter with no source HTTP adapter
   - [x] Use static value of output parameters as sample
 
 ## 8. API-first design
@@ -115,7 +115,7 @@ How Naftiko achieves this technically:
 Start from existing APIs and define reusable capabilities on top, so API investments can power new AI and app experiences.
 
 How Naftiko achieves this technically:
-- Begin with consumed API declarations (`baseUri`, auth, resources, operations), then incrementally add exposed API/MCP adapters.
+- Begin with consumed API declarations (`baseUri`, auth, resources, operations), then incrementally add exposed REST/MCP adapters.
 - Reuse existing security and configuration using `externalRefs` with file/runtime resolution and injected variables (e.g., `{{token}}`).
 - Add format-aware parsing and mapping (JSON, YAML, XML, CSV, Avro, Protobuf support in the framework) to normalize diverse backends.
 

@@ -19,6 +19,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.naftiko.spec.InputParameterSpec;
+import io.naftiko.spec.exposes.mcp.McpServerSpec;
+import io.naftiko.spec.exposes.rest.RestServerSpec;
+import io.naftiko.spec.exposes.skill.SkillServerSpec;
 
 /**
  * Base Exposed Adapter Specification Element
@@ -29,7 +32,7 @@ import io.naftiko.spec.InputParameterSpec;
     property = "type" // The name of the JSON property holding the type identifier
 )
 @JsonSubTypes({
-    @JsonSubTypes.Type(value = ApiServerSpec.class, name = "api"),
+    @JsonSubTypes.Type(value = RestServerSpec.class, name = "rest"),
     @JsonSubTypes.Type(value = McpServerSpec.class, name = "mcp"),
     @JsonSubTypes.Type(value = SkillServerSpec.class, name = "skill")
 })

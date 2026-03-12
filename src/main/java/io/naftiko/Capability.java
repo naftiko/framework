@@ -24,18 +24,18 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.naftiko.engine.ExternalRefResolver;
 import io.naftiko.spec.ExecutionContext;
 import io.naftiko.engine.consumes.ClientAdapter;
-import io.naftiko.engine.consumes.HttpClientAdapter;
-import io.naftiko.engine.exposes.ApiServerAdapter;
-import io.naftiko.engine.exposes.McpServerAdapter;
+import io.naftiko.engine.consumes.http.HttpClientAdapter;
 import io.naftiko.engine.exposes.ServerAdapter;
-import io.naftiko.engine.exposes.SkillServerAdapter;
+import io.naftiko.engine.exposes.mcp.McpServerAdapter;
+import io.naftiko.engine.exposes.rest.RestServerAdapter;
+import io.naftiko.engine.exposes.skill.SkillServerAdapter;
 import io.naftiko.spec.NaftikoSpec;
 import io.naftiko.spec.consumes.ClientSpec;
-import io.naftiko.spec.consumes.HttpClientSpec;
-import io.naftiko.spec.exposes.ApiServerSpec;
-import io.naftiko.spec.exposes.McpServerSpec;
+import io.naftiko.spec.consumes.http.HttpClientSpec;
 import io.naftiko.spec.exposes.ServerSpec;
-import io.naftiko.spec.exposes.SkillServerSpec;
+import io.naftiko.spec.exposes.mcp.McpServerSpec;
+import io.naftiko.spec.exposes.rest.RestServerSpec;
+import io.naftiko.spec.exposes.skill.SkillServerSpec;
 
 /**
  * Main Capability class that initializes and manages adapters based on configuration
@@ -86,8 +86,8 @@ public class Capability {
         }
 
         for (ServerSpec serverSpec : spec.getCapability().getExposes()) {
-            if ("api".equals(serverSpec.getType())) {
-                this.serverAdapters.add(new ApiServerAdapter(this, (ApiServerSpec) serverSpec));
+            if ("rest".equals(serverSpec.getType())) {
+                this.serverAdapters.add(new RestServerAdapter(this, (RestServerSpec) serverSpec));
             } else if ("mcp".equals(serverSpec.getType())) {
                 this.serverAdapters.add(new McpServerAdapter(this, (McpServerSpec) serverSpec));
             } else if ("skill".equals(serverSpec.getType())) {

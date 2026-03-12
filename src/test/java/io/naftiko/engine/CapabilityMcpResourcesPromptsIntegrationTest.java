@@ -22,14 +22,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.naftiko.Capability;
-import io.naftiko.engine.exposes.McpPromptHandler;
-import io.naftiko.engine.exposes.McpResourceHandler;
-import io.naftiko.engine.exposes.McpServerAdapter;
+import io.naftiko.engine.exposes.mcp.McpPromptHandler;
+import io.naftiko.engine.exposes.mcp.McpResourceHandler;
+import io.naftiko.engine.exposes.mcp.McpServerAdapter;
 import io.naftiko.spec.NaftikoSpec;
-import io.naftiko.spec.exposes.McpServerPromptSpec;
-import io.naftiko.spec.exposes.McpServerResourceSpec;
-import io.naftiko.spec.exposes.McpServerSpec;
-import io.naftiko.spec.exposes.McpServerToolSpec;
+import io.naftiko.spec.exposes.mcp.McpServerPromptSpec;
+import io.naftiko.spec.exposes.mcp.McpServerResourceSpec;
+import io.naftiko.spec.exposes.mcp.McpServerSpec;
+import io.naftiko.spec.exposes.mcp.McpServerToolSpec;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
@@ -583,7 +583,7 @@ public class CapabilityMcpResourcesPromptsIntegrationTest {
 
     private ObjectNode dispatch(String requestJson) throws Exception {
         JsonNode request = jsonMapper.readTree(requestJson);
-        var dispatcher = new io.naftiko.engine.exposes.McpProtocolDispatcher(adapter);
+        var dispatcher = new io.naftiko.engine.exposes.mcp.McpProtocolDispatcher(adapter);
         return dispatcher.dispatch(request);
     }
 }

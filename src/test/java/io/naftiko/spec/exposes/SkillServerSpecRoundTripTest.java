@@ -22,6 +22,9 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.naftiko.spec.NaftikoSpec;
+import io.naftiko.spec.exposes.skill.ExposedSkillSpec;
+import io.naftiko.spec.exposes.skill.SkillServerSpec;
+import io.naftiko.spec.exposes.skill.SkillToolSpec;
 
 /**
  * Round-trip tests for {@link SkillServerSpec} — YAML deserialization, field validation, and

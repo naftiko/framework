@@ -5,12 +5,12 @@ Welcome to the tutorial for Naftiko Framework. Starting with the simplest "Hello
 Please read the [installation instructions](https://github.com/naftiko/framework/wiki/Installation) to know how to run the Naftiko Engine with your capability file.
 
 ## 1. My first capability
-Start with a very basic capability returning "Hello, World!", using only an API server adapter with constants.
+Start with a very basic capability returning "Hello, World!", using only a REST server adapter with constants.
 ```
 naftiko: "0.4"
 capability:
   exposes:
-    - type: "api"
+    - type: "rest"
       port: 8081
       namespace: "tutorial"
       resources:
@@ -42,7 +42,7 @@ info:
 
 capability:
   exposes:
-    - type: "api"
+    - type: "rest"
       port: 8081
       namespace: "sample"
       resources:
@@ -93,7 +93,7 @@ info:
 
 capability:
   exposes:
-    - type: "api"
+    - type: "rest"
       port: 8081
       namespace: "sample"
       resources:
@@ -133,7 +133,7 @@ info:
 
 capability:
   exposes:
-    - type: "api"
+    - type: "rest"
       port: 8081
       namespace: "sample"
       resources:
@@ -202,7 +202,7 @@ info:
 
 capability:
   exposes:
-    - type: "api"
+    - type: "rest"
       port: 8081
       namespace: "my-capability"
       resources:

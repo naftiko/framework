@@ -16,7 +16,7 @@ package io.naftiko.engine.consumes;
 import io.naftiko.Capability;
 import io.naftiko.engine.Adapter;
 import io.naftiko.spec.consumes.ClientSpec;
-import io.naftiko.spec.consumes.HttpClientSpec;
+import io.naftiko.spec.consumes.http.HttpClientSpec;
 
 /**
  * Client Adapter implementation

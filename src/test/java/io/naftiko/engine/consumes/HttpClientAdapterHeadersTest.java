@@ -21,8 +21,9 @@ import org.junit.jupiter.api.Test;
 import org.restlet.Request;
 import org.restlet.data.Method;
 import io.naftiko.engine.Resolver;
+import io.naftiko.engine.consumes.http.HttpClientAdapter;
 import io.naftiko.spec.InputParameterSpec;
-import io.naftiko.spec.consumes.HttpClientSpec;
+import io.naftiko.spec.consumes.http.HttpClientSpec;
 
 public class HttpClientAdapterHeadersTest {
 

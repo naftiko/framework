@@ -16,6 +16,7 @@ package io.naftiko.spec.consumes;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.naftiko.spec.consumes.http.HttpClientSpec;
 
 /**
  * Base Exposed Adapter Specification Element

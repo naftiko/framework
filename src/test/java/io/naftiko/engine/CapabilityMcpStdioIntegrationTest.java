@@ -25,12 +25,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.naftiko.Capability;
-import io.naftiko.engine.exposes.McpProtocolDispatcher;
-import io.naftiko.engine.exposes.McpServerAdapter;
 import io.naftiko.engine.exposes.ServerAdapter;
-import io.naftiko.engine.exposes.StdioJsonRpcHandler;
+import io.naftiko.engine.exposes.mcp.McpProtocolDispatcher;
+import io.naftiko.engine.exposes.mcp.McpServerAdapter;
+import io.naftiko.engine.exposes.mcp.McpStdioHandler;
 import io.naftiko.spec.NaftikoSpec;
-import io.naftiko.spec.exposes.McpServerSpec;
+import io.naftiko.spec.exposes.mcp.McpServerSpec;
 
 /**
  * Integration tests for MCP Server Adapter with stdio transport.
@@ -188,7 +188,7 @@ public class CapabilityMcpStdioIntegrationTest {
                 input.getBytes(StandardCharsets.UTF_8));
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        StdioJsonRpcHandler handler = new StdioJsonRpcHandler(dispatcher, in, out);
+        McpStdioHandler handler = new McpStdioHandler(dispatcher, in, out);
         handler.run(); // Runs synchronously since input is finite
 
         String output = out.toString(StandardCharsets.UTF_8);

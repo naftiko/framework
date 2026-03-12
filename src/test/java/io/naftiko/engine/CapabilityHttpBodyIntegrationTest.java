@@ -21,11 +21,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.naftiko.Capability;
 import io.naftiko.engine.exposes.OperationStepExecutor;
-import io.naftiko.engine.exposes.ApiServerAdapter;
+import io.naftiko.engine.exposes.rest.RestServerAdapter;
 import io.naftiko.spec.NaftikoSpec;
-import io.naftiko.spec.exposes.ApiServerOperationSpec;
-import io.naftiko.spec.exposes.ApiServerResourceSpec;
-import io.naftiko.spec.exposes.ApiServerSpec;
+import io.naftiko.spec.exposes.rest.RestServerOperationSpec;
+import io.naftiko.spec.exposes.rest.RestServerResourceSpec;
+import io.naftiko.spec.exposes.rest.RestServerSpec;
 import org.restlet.Request;
 import org.restlet.data.Method;
 import org.restlet.data.MediaType;
@@ -35,8 +35,8 @@ import java.util.Map;
 public class CapabilityHttpBodyIntegrationTest {
 
     private Capability capability;
-    private ApiServerSpec serverSpec;
-    private ApiServerResourceSpec resourceSpec;
+    private RestServerSpec serverSpec;
+    private RestServerResourceSpec resourceSpec;
 
     @BeforeEach
     public void setUp() throws Exception {
@@ -52,14 +52,14 @@ public class CapabilityHttpBodyIntegrationTest {
         capability = new Capability(spec);
 
         // locate ApiResourceSpec
-        ApiServerAdapter adapter = (ApiServerAdapter) capability.getServerAdapters().get(0);
-        serverSpec = (ApiServerSpec) adapter.getSpec();
+        RestServerAdapter adapter = (RestServerAdapter) capability.getServerAdapters().get(0);
+        serverSpec = (RestServerSpec) adapter.getSpec();
         resourceSpec = serverSpec.getResources().get(0);
     }
 
     @Test
     public void testClientRequestBodyTemplating() throws Exception {
-        ApiServerOperationSpec serverOp = resourceSpec.getOperations().get(0);
+        RestServerOperationSpec serverOp = resourceSpec.getOperations().get(0);
 
         // Build incoming request body
         String incomingJson = "{\"user\":{\"id\":\"123\",\"name\":\"Alice\"}}";

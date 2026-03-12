@@ -29,18 +29,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.naftiko.Capability;
-import io.naftiko.engine.LookupExecutor;
 import io.naftiko.engine.Resolver;
 import io.naftiko.engine.StepExecutionContext;
 import io.naftiko.engine.consumes.ClientAdapter;
-import io.naftiko.engine.consumes.HttpClientAdapter;
+import io.naftiko.engine.consumes.http.HttpClientAdapter;
 import io.naftiko.spec.InputParameterSpec;
 import io.naftiko.spec.OutputParameterSpec;
-import io.naftiko.spec.consumes.HttpClientOperationSpec;
+import io.naftiko.spec.consumes.http.HttpClientOperationSpec;
 import io.naftiko.spec.exposes.ServerCallSpec;
-import io.naftiko.spec.exposes.ApiServerOperationSpec;
-import io.naftiko.spec.exposes.ApiServerResourceSpec;
-import io.naftiko.spec.exposes.ApiServerSpec;
+import io.naftiko.spec.exposes.rest.RestServerOperationSpec;
+import io.naftiko.spec.exposes.rest.RestServerResourceSpec;
+import io.naftiko.spec.exposes.rest.RestServerSpec;
 import io.naftiko.spec.exposes.OperationStepSpec;
 import io.naftiko.spec.exposes.OperationStepCallSpec;
 import io.naftiko.spec.exposes.OperationStepLookupSpec;
@@ -53,7 +52,7 @@ import io.naftiko.spec.exposes.OperationStepLookupSpec;
  * - Finding the appropriate client adapter and operation
  * - Executing the client request
  * 
- * Used by both ApiResourceRestlet and McpToolHandler to avoid duplication.
+ * Used by both RestResourceRestlet and McpToolHandler to avoid duplication.
  */
 public class OperationStepExecutor {
 
@@ -70,8 +69,8 @@ public class OperationStepExecutor {
      * server-level, resource-level and operation-level InputParameterSpec entries.
      */
     public Map<String, Object> resolveInputParametersFromRequest(Request request,
-            ApiServerSpec serverSpec, ApiServerResourceSpec resourceSpec,
-            ApiServerOperationSpec serverOp) {
+            RestServerSpec serverSpec, RestServerResourceSpec resourceSpec,
+            RestServerOperationSpec serverOp) {
         Map<String, Object> params = new ConcurrentHashMap<>();
         JsonNode tmpRoot = null;
 

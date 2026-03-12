@@ -21,7 +21,7 @@ The Naftiko framework has **strong implementation coverage** of core specificati
 
 ## 1. EXPOSITION TYPES
 
-### 1.1 REST API Exposition (`type: api`)
+### 1.1 REST API Exposition (`type: rest`)
 
 **Spec Definition** (v0.5):
 - Address and port binding
@@ -499,7 +499,7 @@ Input parameters available in path, query, header, cookie, body, environment loc
 
 **Implementation Status**: ✅ **FULLY IMPLEMENTED**
 
-**For Exposed API/MCP**:
+**For Exposed REST/MCP**:
 ```java
 // From ExposedInputParameter spec
 - name: user_id

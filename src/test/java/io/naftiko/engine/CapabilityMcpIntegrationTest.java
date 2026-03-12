@@ -21,12 +21,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.naftiko.Capability;
-import io.naftiko.engine.exposes.McpServerAdapter;
+import io.naftiko.engine.consumes.http.HttpClientAdapter;
 import io.naftiko.engine.exposes.ServerAdapter;
-import io.naftiko.engine.consumes.HttpClientAdapter;
+import io.naftiko.engine.exposes.mcp.McpServerAdapter;
 import io.naftiko.spec.NaftikoSpec;
-import io.naftiko.spec.exposes.McpServerSpec;
-import io.naftiko.spec.exposes.McpServerToolSpec;
+import io.naftiko.spec.exposes.mcp.McpServerSpec;
+import io.naftiko.spec.exposes.mcp.McpServerToolSpec;
 import java.io.File;
 
 /**

@@ -74,15 +74,15 @@ Example: A capability that consumes the Notion API and GitHub API, then exposes 
 ### Q: What's the difference between API and MCP exposure?
 **A:** 
 
-| Feature | API (REST) | MCP |
+| Feature | REST | MCP |
 |---------|-----------|-----|
 | **Protocol** | HTTP/REST | Model Context Protocol (JSON-RPC) |
 | **Best for** | General-purpose integrations, web apps | AI agent-native integrations |
 | **Tool discovery** | Manual or via OpenAPI | Automatic via MCP protocol |
-| **Configuration** | `type: "api"` with resources/operations | `type: "mcp"` with tools |
+| **Configuration** | `type: "rest"` with resources/operations | `type: "mcp"` with tools |
 | **Default transport** | HTTP | stdio or HTTP (streamable) |
 
-**Use API** for traditional REST clients, web applications, or when you want standard HTTP semantics.  
+**Use REST** for traditional REST clients, web applications, or when you want standard HTTP semantics.  
 **Use MCP** when exposing capabilities to AI agents or Claude.
 
 ### Q: What is a "namespace"?
@@ -290,7 +290,7 @@ docker run -e GITHUB_TOKEN=ghp_xxx -e NOTION_TOKEN=secret_xxx ...
 
 ```yaml
 exposes:
-  - type: api
+  - type: rest
     port: 8081
     namespace: my-api
     authentication:
@@ -399,7 +399,7 @@ This forwards `GET /github/repos/owner/name` to GitHub's `/repos/owner/name`.
 ## 📡 MCP-Specific
 
 ### Q: How do I expose a capability as an MCP tool?
-**A:** Use `type: mcp` in exposes instead of `type: api`:
+**A:** Use `type: mcp` in exposes instead of `type: rest`:
 
 ```yaml
 exposes:
@@ -645,12 +645,12 @@ This way, Capability B can combine Capability A with other APIs.
 
 Check the [Roadmap](https://github.com/naftiko/framework/wiki/Roadmap) for planned features.
 
-### Q: Can I expose the same capability on both API and MCP?
+### Q: Can I expose the same capability on both REST and MCP?
 **A:** Yes! Add multiple entries to `exposes`:
 
 ```yaml
 exposes:
-  - type: api
+  - type: rest
     port: 8081
     namespace: rest-api
     resources: [...]
