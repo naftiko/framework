@@ -29,7 +29,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.naftiko.Capability;
 import io.naftiko.engine.exposes.ServerAdapter;
-import io.naftiko.engine.exposes.skill.SkillServerAdapter;
 import io.naftiko.spec.NaftikoSpec;
 import io.naftiko.spec.exposes.SkillServerSpec;
 
