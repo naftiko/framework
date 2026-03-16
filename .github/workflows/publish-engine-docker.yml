@@ -1,4 +1,4 @@
-name: Publish Engine docker image
+name: Publish Engine Docker Image
 
 on:
   push:

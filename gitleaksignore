@@ -1,2 +1,0 @@
-# Ignore CI workflow files — admin:admin is a local ephemeral SonarQube instance
-[".github/workflows"]

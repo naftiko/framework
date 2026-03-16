@@ -1,3 +1,5 @@
+name: Tutorial Examples Test
+
 on:
   push:
     paths:
