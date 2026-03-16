@@ -1,0 +1,2 @@
+57b9bb6494928a220c48d69153e3d219a9e7f069:.github/workflows/Maven_tests.yml:curl-auth-user:58
+4ba457ac2fa31f1539afe94fc6214bd52e8ed465:.github/workflows/quality-gate.yml:curl-auth-user:93
