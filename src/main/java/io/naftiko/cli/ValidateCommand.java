@@ -57,10 +57,10 @@ public class ValidateCommand implements Runnable {
             JsonNode dataNode = loadFile(fileToValidate.toFile());
 
             // Load schema.
-            String schemaFileName = schemaVersion.isEmpty() ? "capability-schema.json" : "capability-schema-v" + schemaVersion + ".json";
+            String schemaFileName = schemaVersion.isEmpty() ? "naftiko-schema.json" : "naftiko-schema-v" + schemaVersion + ".json";
             InputStream schemaInputStream = getClass().getClassLoader().getResourceAsStream("schemas/" + schemaFileName);
             if (schemaInputStream == null) {
-                System.err.println("Error: Scheam version " + schemaVersion + " is not supported");
+                System.err.println("Error: Schema version " + schemaVersion + " is not supported");
                 System.exit(1);
             }
             JsonNode schemaNode = new ObjectMapper().readTree(schemaInputStream);
