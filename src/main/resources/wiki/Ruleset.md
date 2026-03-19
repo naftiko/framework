@@ -75,13 +75,13 @@ npm install -g @stoplight/spectral-cli
 Lint a file:
 
 ```bash
-npx @stoplight/spectral-cli lint my-capability.yml --ruleset src/main/resources/schemas/naftiko-rules.yml
+npx @stoplight/spectral-cli lint my-capability.yml --ruleset src/main/resources/rules/naftiko-rules.yml
 ```
 
 Lint all YAML files:
 
 ```bash
-npx @stoplight/spectral-cli lint "**/*.yml" --ruleset src/main/resources/schemas/naftiko-rules.yml
+npx @stoplight/spectral-cli lint "**/*.yml" --ruleset src/main/resources/rules/naftiko-rules.yml
 ```
 
 ---
@@ -121,6 +121,8 @@ Example: using `sales` in both a consumed adapter and an exposed adapter is inva
 - Severity: `warn`
 - Scope: root `consumes` and `capability.consumes`
 - Purpose: keep query params in input parameters, not inside path strings.
+
+Note: this check is applied to HTTP consumes entries.
 
 #### `naftiko-rest-resource-path-no-trailing-slash`
 
@@ -167,16 +169,6 @@ These rules improve agent and human discoverability.
 - Severity: `info`
 - Purpose: improve operation-level intent clarity.
 
-#### `naftiko-mcp-description`
-
-- Severity: `warn`
-- Purpose: improve MCP server instructions/context for agents.
-
-#### `naftiko-skill-description`
-
-- Severity: `warn`
-- Purpose: improve skill server purpose discoverability.
-
 #### `naftiko-steps-name-pattern`
 
 - Severity: `warn`
@@ -222,8 +214,6 @@ These rules reduce injection risk in rendered documentation/UIs.
 | `naftiko-consumes-description` | warn | `info-description` |
 | `naftiko-rest-resource-description` | warn | `tag-description` |
 | `naftiko-rest-operation-description` | info | `operation-description` |
-| `naftiko-mcp-description` | warn | `info-description` |
-| `naftiko-skill-description` | warn | `tag-description` |
 | `naftiko-steps-name-pattern` | warn | `arazzo-step-stepId` |
 | `naftiko-no-script-tags-in-markdown` | error | `no-script-tags-in-markdown`, `arazzo-no-script-tags-in-markdown` |
 | `naftiko-no-eval-in-markdown` | error | `no-eval-in-markdown` |
