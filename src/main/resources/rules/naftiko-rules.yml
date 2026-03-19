@@ -66,8 +66,8 @@ rules:
     severity: warn
     recommended: true
     given:
-      - "$.consumes[*].resources[*].path"
-      - "$.capability.consumes[*].resources[*].path"
+      - "$.consumes[?(@.type == 'http')].resources[*].path"
+      - "$.capability.consumes[?(@.type == 'http')].resources[*].path"
     then:
       function: pattern
       functionOptions:
@@ -135,8 +135,8 @@ rules:
     severity: warn
     recommended: true
     given:
-      - "$.consumes[?(@.type == 'http')]"
-      - "$.capability.consumes[?(@.type == 'http')]"
+      - "$.consumes[*]"
+      - "$.capability.consumes[*]"
     then:
       field: "description"
       function: truthy
@@ -161,28 +161,6 @@ rules:
     severity: info
     recommended: false
     given: "$.capability.exposes[?(@.type == 'rest')].resources[*].operations[*]"
-    then:
-      field: "description"
-      function: truthy
-
-  naftiko-mcp-description:
-    message: "MCP expose should have a `description` field (sent as server instructions during MCP initialization)."
-    description: >
-      The MCP server description is sent to AI agents as initialization
-      instructions. A meaningful description dramatically improves agent
-      understanding of available tools.
-    severity: warn
-    recommended: true
-    given: "$.capability.exposes[?(@.type == 'mcp')]"
-    then:
-      field: "description"
-      function: truthy
-
-  naftiko-skill-description:
-    message: "Skill expose should have a `description` field."
-    severity: warn
-    recommended: true
-    given: "$.capability.exposes[?(@.type == 'skill')]"
     then:
       field: "description"
       function: truthy
