@@ -232,7 +232,9 @@ jobs:
             -v "${{ github.workspace }}:/path" \
             zricethezav/gitleaks:latest detect \
             --source /path \
-            --gitleaks-ignore-path /path/.gitleaksignore \
+            --no-git \
+            --config /path/.github/workflows/.gitleaks.toml \
+            --gitleaks-ignore-path /path/.github/workflows/.gitleaksignore \
             --report-format json \
             --report-path /path/gitleaks-report.json \
             --exit-code 0
@@ -322,10 +324,15 @@ jobs:
             TRIVY_MSG="clean"; TRIVY_COLOR="brightgreen"
           fi
 
-          # Gitleaks badge
-          LC="${LEAKS_COUNT:-0}"
-          [ "$LC" -eq 0 ] && LEAKS_MSG="no secrets" && LEAKS_COLOR="brightgreen" \
-            || LEAKS_MSG="${LC} secrets" && LEAKS_COLOR="red"
+          # Gitleaks badge — use LEAKS_COUNT (sourced from gitleaks_metrics.env)
+          LEAKS_COUNT="${LEAKS_COUNT:-0}"
+          if [ "$LEAKS_COUNT" -eq 0 ]; then
+            LEAKS_MSG="no secrets"
+            LEAKS_COLOR="brightgreen"
+          else
+            LEAKS_MSG="${LEAKS_COUNT} secrets"
+            LEAKS_COLOR="red"
+          fi
 
           publish_badge() {
             local filename="$1" label="$2" message="$3" color="$4"
