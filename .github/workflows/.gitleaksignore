@@ -1,0 +1,5 @@
+[[allowlist]]
+description = "Allow SonarQube ephemeral auth"
+paths = [
+  '''.github/workflows/quality-gate.yml'''
+]

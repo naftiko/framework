@@ -1,0 +1,9 @@
+title = "Custom Gitleaks config"
+
+[allowlist]
+description = "Ignore generated reports and build artifacts"
+paths = [
+  '''sonar-report/.*''',
+  '''target/.*''',
+  '''.*\.json'''
+]
