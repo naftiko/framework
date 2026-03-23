@@ -28,7 +28,7 @@ import java.util.Map;
 public class FileGenerator {
     public static void generateCapabilityFile(String capabilityName, FileFormat format, String baseUri, String port) throws IOException {
         String templatePath = "templates/capability." + format.pathName + ".mustache";
-        String outputFileName = capabilityName + ".capability." + format.pathName;
+        String outputFileName = capabilityName + ".naftiko." + format.pathName;
         
         // Load template from resources.
         InputStream templateStream = FileGenerator.class

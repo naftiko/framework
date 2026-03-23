@@ -16,8 +16,6 @@ package io.naftiko.cli;
 import picocli.CommandLine.Command;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Scanner;
 
 import io.naftiko.cli.enums.FileFormat;
@@ -43,10 +41,6 @@ public class CreateCapabilityCommand implements Runnable {
                 System.exit(1);
             }
 
-            // File format.
-            List<String> formats = Arrays.asList(FileFormat.YAML.label, FileFormat.JSON.label);
-            String format = InteractiveMenu.showMenu("Choose file format:", formats);
-
             // Base URI.
             System.out.print("Type the targted URI: ");
             String baseUri = scanner.nextLine().trim();
@@ -63,8 +57,8 @@ public class CreateCapabilityCommand implements Runnable {
                 System.exit(1);
             }
             
-            System.out.println("Creating capability: " + capabilityName + " " + format + " " + baseUri + " " + port);
-            FileGenerator.generateCapabilityFile(capabilityName, FileFormat.valueOfLabel(format), baseUri, port);
+            System.out.println("Creating capability: " + capabilityName + " " + FileFormat.YAML + " " + baseUri + " " + port);
+            FileGenerator.generateCapabilityFile(capabilityName, FileFormat.YAML, baseUri, port);
             
             scanner.close();
         } catch (IOException e) {

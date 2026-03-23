@@ -30,22 +30,17 @@ public class ValidateCommandTest {
     Path tempDir;
 
     @Test
-    public void loadFileShouldParseYamlAndJson() throws Exception {
+    public void loadFileShouldParseYaml() throws Exception {
         Path yaml = tempDir.resolve("sample.yaml");
         Files.writeString(yaml, "name: test\n");
-
-        Path json = tempDir.resolve("sample.json");
-        Files.writeString(json, "{\"name\":\"test\"}\n");
 
         ValidateCommand command = new ValidateCommand();
         Method loadFile = ValidateCommand.class.getDeclaredMethod("loadFile", File.class);
         loadFile.setAccessible(true);
 
         JsonNode yamlNode = (JsonNode) loadFile.invoke(command, yaml.toFile());
-        JsonNode jsonNode = (JsonNode) loadFile.invoke(command, json.toFile());
 
         assertEquals("test", yamlNode.path("name").asText());
-        assertEquals("test", jsonNode.path("name").asText());
     }
 
     @Test
@@ -61,7 +56,7 @@ public class ValidateCommandTest {
                 () -> loadFile.invoke(command, txt.toFile()));
 
         assertEquals(IllegalArgumentException.class, error.getCause().getClass());
-        assertEquals("Unsupported file format. Only .yaml, .yml, and .json are supported.",
+        assertEquals("Unsupported file format. Only .yaml and .yml are supported.",
                 error.getCause().getMessage());
     }
 }

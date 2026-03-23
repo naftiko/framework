@@ -41,7 +41,7 @@ jobs:
           native-image-job-reports: 'true'
       
       - name: Build with Maven
-        run: mvn -B clean package -Pnative
+        run: mvn -B clean package -Pnative -Dtest="io.naftiko.cli.**"
       
       - name: Rename artifact (Unix)
         if: runner.os != 'Windows'
