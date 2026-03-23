@@ -31,32 +31,22 @@ public class FileGeneratorTest {
     Path tempDir;
 
     @Test
-    public void generateCapabilityFileShouldRenderYamlAndJsonTemplates() throws Exception {
+    public void generateCapabilityFileShouldRenderYamlTemplates() throws Exception {
         String capabilityName = "orders-" + UUID.randomUUID().toString().replace("-", "");
-        Path yaml = Paths.get(capabilityName + ".capability.yaml");
-        Path json = Paths.get(capabilityName + ".capability.json");
+        Path yaml = Paths.get(capabilityName + ".naftiko.yaml");
         try {
             FileGenerator.generateCapabilityFile(capabilityName, FileFormat.YAML,
                     "https://api.example.com", "8080");
-            FileGenerator.generateCapabilityFile(capabilityName, FileFormat.JSON,
-                    "https://api.example.com", "8080");
             assertTrue(Files.exists(yaml));
-            assertTrue(Files.exists(json));
 
             String yamlContent = Files.readString(yaml);
-            String jsonContent = Files.readString(json);
 
             assertTrue(yamlContent.contains(capabilityName));
             assertTrue(yamlContent.contains("https://api.example.com"));
             assertTrue(yamlContent.contains("8080"));
             assertTrue(yamlContent.contains("{{path}}"));
-
-            assertTrue(jsonContent.contains(capabilityName));
-            assertTrue(jsonContent.contains("https://api.example.com"));
-            assertTrue(jsonContent.contains("8080"));
         } finally {
             Files.deleteIfExists(yaml);
-            Files.deleteIfExists(json);
         }
     }
 

@@ -14,7 +14,6 @@
 package io.naftiko.cli.enums;
 
 public enum FileFormat {
-    JSON("Json","json"),
     YAML("Yaml","yaml"),
     UNKNOWN("Unknown","unknown");
 

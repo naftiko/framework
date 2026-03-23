@@ -167,14 +167,14 @@ jobs:
           retention-days: 14
 
       - name: Run Trivy scan
-        run: |
-          docker run --rm \
-            -v "${{ github.workspace }}:/project" \
-            aquasec/trivy:latest fs /project \
-            --scanners vuln,secret,misconfig \
-            --format json \
-            --output /project/trivy-report.json \
-            --exit-code 0
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          scanners: 'vuln,secret,misconfig'
+          format: 'json'
+          output: 'trivy-report.json'
+          exit-code: '0'
 
       - name: Publish Trivy summary
         if: always()

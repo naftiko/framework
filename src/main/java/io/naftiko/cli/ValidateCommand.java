@@ -35,11 +35,11 @@ import java.util.Set;
     name = "validate",
     mixinStandardHelpOptions = true,
     aliases = {"v", "val"},
-    description = "Validate a YAML or JSON capability configuration file against a JSON Schema"
+    description = "Validate a YAML capability configuration file against a JSON Schema"
 )
 public class ValidateCommand implements Runnable {
     
-    @Parameters(index = "0", description = "Path to the YAML or JSON capability configuration file to validate")
+    @Parameters(index = "0", description = "Path to the YAML capability configuration file to validate")
     private String filePath;
 
     @Parameters(index = "1", description = "Version of the schema to use for validation (expected format: x.x). If not set this is the lastest.", defaultValue = "")
@@ -60,7 +60,7 @@ public class ValidateCommand implements Runnable {
             String schemaFileName = schemaVersion.isEmpty() ? "naftiko-schema.json" : "naftiko-schema-v" + schemaVersion + ".json";
             InputStream schemaInputStream = getClass().getClassLoader().getResourceAsStream("schemas/" + schemaFileName);
             if (schemaInputStream == null) {
-                System.err.println("Error: Schema version " + schemaVersion + " is not supported");
+                System.err.println("Error: Schema " + schemaFileName + " is not supported");
                 System.exit(1);
             }
             JsonNode schemaNode = new ObjectMapper().readTree(schemaInputStream);
@@ -113,16 +113,12 @@ public class ValidateCommand implements Runnable {
         String fileName = file.getName().toLowerCase();
         
         if (fileName.endsWith(".yaml") || fileName.endsWith(".yml")) {
-            // Parser YAML
+            // Parse YAML
             ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
             return yamlMapper.readTree(file);
-        } else if (fileName.endsWith(".json")) {
-            // Parser JSON
-            ObjectMapper jsonMapper = new ObjectMapper();
-            return jsonMapper.readTree(file);
         } else {
             throw new IllegalArgumentException(
-                "Unsupported file format. Only .yaml, .yml, and .json are supported."
+                "Unsupported file format. Only .yaml and .yml are supported."
             );
         }
     }

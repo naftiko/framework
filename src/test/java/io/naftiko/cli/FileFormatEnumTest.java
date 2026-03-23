@@ -28,14 +28,6 @@ public class FileFormatEnumTest {
     }
 
     @Test
-    public void valueOfLabelShouldReturnJsonForJsonLabel() {
-        FileFormat result = FileFormat.valueOfLabel("Json");
-
-        assertEquals(FileFormat.JSON, result);
-        assertEquals("json", result.pathName);
-    }
-
-    @Test
     public void valueOfLabelShouldReturnUnknownForUnrecognizedLabel() {
         FileFormat result = FileFormat.valueOfLabel("Unknown");
 
@@ -52,14 +44,12 @@ public class FileFormatEnumTest {
     @Test
     public void enumValuesShouldHaveCorrectLabels() {
         assertEquals("Yaml", FileFormat.YAML.label);
-        assertEquals("Json", FileFormat.JSON.label);
         assertEquals("Unknown", FileFormat.UNKNOWN.label);
     }
 
     @Test
     public void enumValuesShouldHaveCorrectPathNames() {
         assertEquals("yaml", FileFormat.YAML.pathName);
-        assertEquals("json", FileFormat.JSON.pathName);
         assertEquals("unknown", FileFormat.UNKNOWN.pathName);
     }
 }
