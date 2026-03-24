@@ -33,7 +33,7 @@ public class OperationStepRoundTripTest {
                 name: fetch-database
                 call: notion.get-database
                 with:
-                  database_id: "$this.sample.database_id"
+                  database_id: "{{sample.database_id}}"
                   page_size: 100
                 """;
 
@@ -58,7 +58,7 @@ public class OperationStepRoundTripTest {
         assertEquals("notion.get-database", callStep.getCall(), "Call reference mismatch");
         assertNotNull(callStep.getWith(), "With should not be null");
         assertEquals(2, callStep.getWith().size(), "With should have 2 entries");
-        assertEquals("$this.sample.database_id", callStep.getWith().get("database_id"));
+        assertEquals("{{sample.database_id}}", callStep.getWith().get("database_id"));
         assertEquals(100, callStep.getWith().get("page_size"));
     }
 
@@ -69,7 +69,7 @@ public class OperationStepRoundTripTest {
                 name: find-user
                 index: list-users
                 match: email
-                lookupValue: "$this.sample.user_email"
+                lookupValue: "{{sample.user_email}}"
                 outputParameters:
                   - login
                   - id
@@ -96,7 +96,7 @@ public class OperationStepRoundTripTest {
         assertEquals("find-user", lookupStep.getName(), "Name mismatch");
         assertEquals("list-users", lookupStep.getIndex(), "Index mismatch");
         assertEquals("email", lookupStep.getMatch(), "Match field mismatch");
-        assertEquals("$this.sample.user_email", lookupStep.getLookupValue(), "Lookup value mismatch");
+        assertEquals("{{sample.user_email}}", lookupStep.getLookupValue(), "Lookup value mismatch");
         assertEquals(3, lookupStep.getOutputParameters().size(), "Should have 3 output parameters");
         assertTrue(lookupStep.getOutputParameters().contains("login"));
         assertTrue(lookupStep.getOutputParameters().contains("id"));
@@ -130,7 +130,7 @@ public class OperationStepRoundTripTest {
     @Test
     public void testProgrammaticCallStepCreation() throws Exception {
         Map<String, Object> withMap = new HashMap<>();
-        withMap.put("user_id", "$this.sample.user_id");
+        withMap.put("user_id", "{{sample.user_id}}");
         withMap.put("include_details", true);
 
         OperationStepCallSpec callStep = new OperationStepCallSpec("fetch-user", "api.get-user", withMap);

@@ -76,8 +76,8 @@ capability:
                   name: "fetch-entries"
                   call: "notion.query-entries"
                   with:
-                    start_date: "$this.cir.start_date"
-                    end_date: "$this.cir.end_date"
+                    start_date: "{{cir.start_date}}"
+                    end_date: "{{cir.end_date}}"
                 - type: "lookup"
                   name: "morning-project"
                   index: "fetch-projects"

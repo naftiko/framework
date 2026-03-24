@@ -53,7 +53,7 @@ capability:
               description: "City name or coordinates (lat,lon)"
           call: open-meteo.get-current
           with:
-            location: "$this.weather-mcp.location"
+            location: "{{weather-mcp.location}}"
           outputParameters:
             - type: object
               mapping: $.current

@@ -31,7 +31,7 @@ public class OperationStepDeserializationTest {
                 name: fetch-database
                 call: notion.get-database
                 with:
-                  database_id: "$this.sample.database_id"
+                  database_id: "{{sample.database_id}}"
                 """;
 
         ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
@@ -73,7 +73,7 @@ public class OperationStepDeserializationTest {
                 name: find-user
                 index: list-users
                 match: email
-                lookupValue: "$this.sample.user_email"
+                lookupValue: "{{sample.user_email}}"
                 outputParameters:
                   - login
                   - id
@@ -91,7 +91,7 @@ public class OperationStepDeserializationTest {
         assertEquals("find-user", lookupStep.getName(), "Name mismatch");
         assertEquals("list-users", lookupStep.getIndex(), "Index mismatch");
         assertEquals("email", lookupStep.getMatch(), "Match field mismatch");
-        assertEquals("$this.sample.user_email", lookupStep.getLookupValue(), "Lookup value mismatch");
+        assertEquals("{{sample.user_email}}", lookupStep.getLookupValue(), "Lookup value mismatch");
         assertEquals(3, lookupStep.getOutputParameters().size(), "Should have 3 output parameters");
         assertTrue(lookupStep.getOutputParameters().contains("login"), "Should contain 'login'");
         assertTrue(lookupStep.getOutputParameters().contains("id"), "Should contain 'id'");
@@ -105,7 +105,7 @@ public class OperationStepDeserializationTest {
                 name: find-role
                 index: roles
                 match: id
-                lookupValue: "$this.sample.role_id"
+                lookupValue: "{{sample.role_id}}"
                 outputParameters:
                   - role_name
                 """;

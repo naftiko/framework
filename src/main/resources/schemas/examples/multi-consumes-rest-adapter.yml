@@ -39,7 +39,7 @@ capability:
                   name: "fetch-user"
                   type: "call"
                   with:
-                    "username": "$this.sample.{{user_name}}"
+                    "username": "{{sample.{{user_name}}"
                       
                     
 
@@ -66,10 +66,10 @@ capability:
                   type: "call"
                   name: "fetch-db"
                   with:
-                    "database_id": "$this.sample.{{database_id}}"
+                    "database_id": "{{sample.database_id}}"
               mappings:
                   - targetName: "db_name"
-                    value: "$.{{dbName}}"
+                    value: "{{$.dbName}}"
                   - targetName: "Api-Version"
                     value: "v1"
         - path: "/notion/{{path}}"

@@ -574,7 +574,7 @@ method: GET
 label: Get User Profile
 call: github.get-user
 with:
-  username: $this.sample.username
+  username: "{{sample.username}}"
 outputParameters:
   - type: string
     mapping: $.login
@@ -598,7 +598,7 @@ steps:
     name: fetch-db
     call: notion.get-database
     with:
-      database_id: "$this.sample.database_id"
+      database_id: "{{sample.database_id}}"
 mappings:
   - targetName: db_name
     value: "$.dbName"
@@ -990,7 +990,7 @@ Calls a consumed operation.
 | **type** | `string` | **REQUIRED**. MUST be `"call"`. |
 | **name** | `string` | **REQUIRED**. Step name (from base). |
 | **call** | `string` | **REQUIRED**. Reference to consumed operation. Format: `{namespace}.{operationId}`. MUST match pattern `^[a-zA-Z0-9-]+\.[a-zA-Z0-9-]+$`. |
-| **with** | `WithInjector` | Parameter injection for the called operation. Keys are parameter names, values are strings or numbers (static values or `$this` references). |
+| **with** | `WithInjector` | Parameter injection for the called operation. Keys are parameter names, values are strings or numbers (static values or references). |
 
 **Rules:**
 
@@ -1042,7 +1042,7 @@ steps:
     name: fetch-db
     call: notion.get-database
     with:
-      database_id: $this.sample.database_id
+      database_id: {{sample.database_id}}
 ```
 
 **Lookup step (match against a previous call's output):**
@@ -1056,7 +1056,7 @@ steps:
     name: find-user
     index: list-users
     match: email
-    lookupValue: $this.sample.user_email
+    lookupValue: {{sample.user_email}}
     outputParameters:
       - login
       - id
@@ -1073,7 +1073,7 @@ steps:
     name: resolve-entry
     index: get-entries
     match: entry_id
-    lookupValue: $this.sample.target_id
+    lookupValue: {{sample.target_id}}
     outputParameters:
       - title
       - status
@@ -1081,7 +1081,7 @@ steps:
     name: post-result
     call: slack.post-message
     with:
-      text: $this.sample.title
+      text: {{sample.title}}
 ```
 
 ---
@@ -1152,7 +1152,7 @@ exposes:
                 name: "fetch-db"
                 call: "notion.get-database"
                 with:
-                  database_id: "$this.sample.database_id"
+                  database_id: "{{sample.database_id}}"
             mappings:
               - targetName: "db_name"
                 value: "$.dbName"
@@ -1161,7 +1161,7 @@ exposes:
 Here is what happens at orchestration time:
 
 1. The step `fetch-db` calls `notion.get-database`, which extracts `dbName` and `dbId` from the raw response via its own output parameters.
-2. The `with` injector passes `database_id` from the exposed input parameter (`$this.sample.database_id`) to the consumed operation.
+2. The `with` injector passes `database_id` from the exposed input parameter (`sample.database_id`) to the consumed operation.
 3. The mapping `targetName: "db_name"` refers to the exposed operation's output parameter `db_name`.
 4. The mapping `value: "$.dbName"` resolves to the value of the consumed operation's output parameter named `dbName`.
 5. As a result, the exposed output `db_name` is populated with the value extracted by `$.dbName` (i.e. `title[0].text.content` from the raw Notion API response).
@@ -1176,35 +1176,32 @@ mappings:
 
 ---
 
-### 3.15 `$this` Context Reference
 
-Describes how `$this` references work in `with` (WithInjector) and other expression contexts.
+### 3.15 Namespace Context Reference
 
-> Update (schema v0.4): The former `OperationStepParameter` object (with `name` and `value` fields) has been replaced by `WithInjector` (see §3.18). This section now documents the `$this` expression root, which is used within `WithInjector` values.
-> 
+Describes how namespace-qualified references work in `with` (WithInjector) and other expression contexts.
 
-#### 3.15.1 The `$this` root
+> Update (schema v0.5): The former `OperationStepParameter` object (with `name` and `value` fields) has been replaced by `WithInjector` (see §3.18). The former `$this` expression root has been removed — exposed input parameters are now referenced directly using a namespace-qualified path.
 
-In a `with` (WithInjector) value — whether on an ExposedOperation (simple mode) or an OperationStepCall — the **`$this`** root references the *current capability execution context*, i.e. values already resolved during orchestration.
+#### 3.15.1 Namespace-qualified references
 
-**`$this`** navigates the expose layer's input parameters using the path `$this.{exposeNamespace}.{inputParameterName}`. This allows a step or a simple-mode call to receive values that were provided by the caller of the exposed operation.
+In a `with` (WithInjector) value — whether on an ExposedOperation (simple mode) or an OperationStepCall — exposed input parameters are referenced using the path `{exposeNamespace}.{inputParameterName}`. This allows a step or a simple-mode call to receive values provided by the caller of the exposed operation.
 
-- **`$this.{exposeNamespace}.{paramName}`** — accesses an input parameter of the exposed resource or operation identified by its namespace.
+- **`{exposeNamespace}.{paramName}`** — accesses an input parameter of the exposed resource or operation identified by its namespace.
 - The `{exposeNamespace}` corresponds to the `namespace` of the exposed API.
 - The `{paramName}` corresponds to the `name` of an input parameter declared on the exposed resource or operation.
 
 #### 3.15.2 Example
 
-If the exposed API has namespace `sample` and an input parameter `database_id` declared on its resource, then:
+If the exposed API has namespace `sample` and an input parameter `database_id` declared on its resource:
 
-- `$this.sample.database_id` resolves to the value of `database_id` provided by the caller.
 
 **Usage in a WithInjector:**
 
 ```yaml
 call: notion.get-database
 with:
-  database_id: $this.sample.database_id
+  database_id: {{sample.database_id}}
 ```
 
 ---
@@ -1348,16 +1345,16 @@ Defines parameter injection for simple-mode exposed operations. Used with the `w
 
 #### 3.18.1 Shape
 
-`WithInjector` is an object whose keys are parameter names and whose values are static values or `$this` references.
+`WithInjector` is an object whose keys are parameter names and whose values are static values or references.
 
 - Each key corresponds to a parameter `name` in the consumed operation's `inputParameters`.
-- Each value is a `string` or a `number`: either a static value or a `$this.{namespace}.{paramName}` reference.
+- Each value is a `string` or a `number`: either a static value or a `{namespace}.{paramName}` reference.
 
 #### 3.18.2 Rules
 
 - The keys MUST correspond to valid parameter names in the consumed operation being called.
 - Values can be strings or numbers.
-- String values can use the `$this` root to reference exposed input parameters (same as in OperationStepParameter).
+- String values can reference exposed input parameters (same as in OperationStepParameter).
 - No additional constraints.
 
 #### 3.18.3 WithInjector Object Example
@@ -1365,7 +1362,7 @@ Defines parameter injection for simple-mode exposed operations. Used with the `w
 ```yaml
 call: github.get-user
 with:
-  username: $this.sample.username
+  username: {{sample.username}}
   Accept: "application/json"
   maxRetries: 3
 ```
@@ -1494,16 +1491,8 @@ At runtime, expressions are resolved as follows:
 
 If a referenced variable is not declared in any `binds` entry's `keys`, the document MUST be considered invalid.
 
-#### 3.20.3 Relationship with `$this`
 
-`\{\{variable\}\}` expressions and `$this` references serve different purposes:
-
-- `\{\{variable\}\}` resolves **static configuration** from external references (secrets, environment variables) declared via `keys`
-- `$this.{exposeNamespace}.{paramName}` resolves **runtime orchestration** values from the expose layer's input parameters
-
-The two expression systems are independent and MUST NOT be mixed.
-
-#### 3.20.4 Expression Examples
+#### 3.20.3 Expression Examples
 
 ```yaml
 # Authentication token from binding
@@ -1613,7 +1602,7 @@ capability:
               label: "Get User"
               call: "github.get-user"
               with:
-                username: "$this.app.username"
+                username: "{{app.username}}"
               outputParameters:
                 - type: "string"
                   mapping: "$.login"
@@ -1696,12 +1685,12 @@ capability:
                   name: "fetch-db"
                   call: "notion.get-database"
                   with:
-                    database_id: "$this.inspector.database_id"
+                    database_id: "{{inspector.database_id}}"
                 - type: "call"
                   name: "query-db"
                   call: "notion.query-database"
                   with:
-                    database_id: "$this.inspector.database_id"
+                    database_id: "{{inspector.database_id}}"
               mappings:
                 - targetName: "db_name"
                   value: "$.fetch-db.dbName"
@@ -1808,7 +1797,7 @@ capability:
                   name: "find-member"
                   index: "list-members"
                   match: "email"
-                  lookupValue: "$this.team.email"
+                  lookupValue: "{{team.email}}"
                   outputParameters:
                     - "fullName"
                     - "department"
@@ -1922,8 +1911,8 @@ capability:
               label: "Get Repository"
               call: "github.get-repo"
               with:
-                owner: "$this.dashboard.owner"
-                repo: "$this.dashboard.repo"
+                owner: "{{dashboard.owner}}"
+                repo: "{{dashboard.repo}}"
               outputParameters:
                 - type: "string"
                   mapping: "$.full_name"
@@ -1950,7 +1939,7 @@ capability:
                   name: "query-tasks"
                   call: "notion.query-database"
                   with:
-                    database_id: "$this.dashboard.database_id"
+                    database_id: "{{dashboard.database_id}}"
                 - type: "call"
                   name: "list-github-users"
                   call: "github.list-org-members"
