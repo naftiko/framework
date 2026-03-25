@@ -65,27 +65,41 @@ jobs:
           files: target/${{ matrix.artifact_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   test-binary:
-    name: Test binary with register.capability.yml
+    name: Test binary on ${{ matrix.os }}
     needs: build-native
-    runs-on: macos-latest  # pour tester uniquement sur macOS
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: naftiko-cli-linux-amd64
+          - os: macos-latest
+            artifact_name: naftiko-cli-macos-arm64
+          - os: windows-latest
+            artifact_name: naftiko-cli-windows-amd64.exe
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4  # récup le register.capability.yml
-
-      - name: Download macOS binary
+      - name: Download binary
         uses: actions/download-artifact@v4
         with:
-          name: naftiko-cli-macos-arm64
+          name: ${{ matrix.artifact_name }}
           path: ./bin
 
       - name: Make binary executable
-        run: chmod +x ./bin/naftiko-cli-macos-arm64
+        if: runner.os != 'Windows'
+        run: chmod +x ./bin/${{ matrix.artifact_name }}
 
-      - name: Run binary with register.capability.yml
+      - name: Test create + validate (Unix)
+        if: runner.os != 'Windows'
         run: |
-          output=$(./bin/naftiko-cli-macos-arm64 v src/test/resources/register.capability.yml)
-          exit_code=$?
-          echo "Output: $output"
-          echo "Exit code: $exit_code"
+          printf "test\nhttps://api.com\n8080\n" | ./bin/${{ matrix.artifact_name }} create capability
+          ./bin/${{ matrix.artifact_name }} v test.naftiko.yaml
+
+      - name: Test create + validate (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          "test`nhttps://api.com`n8080`n" | & ./bin/${{ matrix.artifact_name }} create capability
+          & ./bin/${{ matrix.artifact_name }} v test.naftiko.yaml
