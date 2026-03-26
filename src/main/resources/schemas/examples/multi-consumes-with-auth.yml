@@ -11,7 +11,7 @@ capability:
     address: "localhost"
     port: 8080
     resources: 
-      - path: "/users/"
+      - path: "/users"
         name: "users"
         label: "Users API"
         description: "API to retrieve user information"
@@ -34,7 +34,7 @@ capability:
   - namespace: "notion"
     description: "Notion API integration for accessing project and time tracking data relevant to CIR reporting."
     type: http
-    baseUri: "https://api.notion.com/v1/"
+    baseUri: "https://api.notion.com/v1"
     resources:
       - path: "/mock"
         name: "notion"
@@ -52,7 +52,7 @@ capability:
   - namespace: "github"
     description: "GitHub API integration for accessing user data."
     type: http
-    baseUri: "https://api.github.com/v1/"
+    baseUri: "https://api.github.com/v1"
     resources:
       - name: "github"
         path: "/users"

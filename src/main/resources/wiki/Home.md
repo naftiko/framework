@@ -23,6 +23,7 @@ Here are additional documents to learn more:
 - :anchor: [Specification](https://github.com/naftiko/framework/wiki/Specification)
 - :mega: [Releases](https://github.com/naftiko/framework/wiki/Releases)
 - :telescope: [Roadmap](https://github.com/naftiko/framework/wiki/Roadmap)
+- :mag: [Linting](https://github.com/naftiko/framework/wiki/Linting)
 - :nut_and_bolt: [Contribute](https://github.com/naftiko/framework/wiki/Contribute)
 - :ocean: [FAQ](https://github.com/naftiko/framework/wiki/FAQ)
 
