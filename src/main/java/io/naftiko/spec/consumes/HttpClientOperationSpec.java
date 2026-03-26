@@ -20,7 +20,16 @@ import io.naftiko.spec.OperationSpec;
  */
 public class HttpClientOperationSpec extends OperationSpec {
 
-    private volatile String body;
+    /**
+     * Request body definition. Accepts either:
+     * <ul>
+     *   <li>a plain {@link String} — treated as a raw Mustache template sent as
+     *       {@code application/json} (legacy form)</li>
+     *   <li>a {@link java.util.Map} with {@code type} and {@code data} fields — the structured
+     *       {@code RequestBody} object defined in the Naftiko specification</li>
+     * </ul>
+     */
+    private volatile Object body;
 
     public HttpClientOperationSpec() {
         this(null, null, null, null, null, null, null);
@@ -30,20 +39,20 @@ public class HttpClientOperationSpec extends OperationSpec {
         this(parentResource, method, name, label, null, null, null);
     }
 
-    public HttpClientOperationSpec(HttpClientResourceSpec parentResource, String method, String name, String label, String description, String body, String outputRawFormat) {
+    public HttpClientOperationSpec(HttpClientResourceSpec parentResource, String method, String name, String label, String description, Object body, String outputRawFormat) {
         this(parentResource, method, name, label, description, body, outputRawFormat, null);
     }
 
-    public HttpClientOperationSpec(HttpClientResourceSpec parentResource, String method, String name, String label, String description, String body, String outputRawFormat, String outputSchema) {
+    public HttpClientOperationSpec(HttpClientResourceSpec parentResource, String method, String name, String label, String description, Object body, String outputRawFormat, String outputSchema) {
         super(parentResource, method, name, label, description, outputRawFormat, outputSchema);
         this.body = body;
     }
 
-    public String getBody() {
+    public Object getBody() {
         return body;
     }
 
-    public void setBody(String body) {
+    public void setBody(Object body) {
         this.body = body;
     }
 

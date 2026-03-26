@@ -376,8 +376,41 @@ public class OperationStepExecutor {
                                 Resolver.resolveMustacheTemplate(clientResUri, parameters)));
 
                         if (clientOp.getBody() != null) {
-                            String resolvedBody = Resolver
-                                    .resolveMustacheTemplate(clientOp.getBody(), parameters);
+                            String resolvedBody;
+                            MediaType bodyMediaType = MediaType.APPLICATION_JSON;
+
+                            Object bodySpec = clientOp.getBody();
+                            if (bodySpec instanceof String) {
+                                // Legacy: plain Mustache template string
+                                resolvedBody = Resolver.resolveMustacheTemplate(
+                                        (String) bodySpec, parameters);
+                            } else {
+                                // Structured {type, data} RequestBody object
+                                @SuppressWarnings("unchecked")
+                                Map<String, Object> bodyMap = (Map<String, Object>) bodySpec;
+                                String bodyType = String.valueOf(
+                                        bodyMap.getOrDefault("type", "json"));
+                                Object data = bodyMap.get("data");
+                                String dataStr;
+                                try {
+                                    dataStr = mapper.writeValueAsString(data);
+                                } catch (IOException e) {
+                                    throw new IllegalArgumentException(
+                                        "Invalid structured body data for operation: "
+                                            + clientNamespace + "." + clientOpName,
+                                        e);
+                                }
+                                resolvedBody = Resolver.resolveMustacheTemplate(
+                                        dataStr, parameters);
+                                if ("formUrlEncoded".equalsIgnoreCase(bodyType)) {
+                                    bodyMediaType = MediaType.APPLICATION_WWW_FORM;
+                                } else if ("xml".equalsIgnoreCase(bodyType)) {
+                                    bodyMediaType = MediaType.APPLICATION_XML;
+                                } else if ("sparql".equalsIgnoreCase(bodyType)) {
+                                    bodyMediaType = MediaType.valueOf(
+                                            "application/sparql-query");
+                                }
+                            }
 
                             if (resolvedBody.contains("{{") && resolvedBody.contains("}}")) {
                                 throw new IllegalArgumentException(
@@ -387,7 +420,7 @@ public class OperationStepExecutor {
                                                         : "none"));
                             }
 
-                            ctx.clientRequest.setEntity(resolvedBody, MediaType.APPLICATION_JSON);
+                            ctx.clientRequest.setEntity(resolvedBody, bodyMediaType);
                         }
 
                         // Set authentication and headers
