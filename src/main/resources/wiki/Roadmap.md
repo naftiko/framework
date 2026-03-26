@@ -28,10 +28,12 @@ The goal of this version is to deliver a MVP to enable common AI integration use
 
 ### Rightsize AI context
   - [ ] Add support for authentication in the MCP server adapter
+  - [ ] Add mocking feature to MCP server adapter similar to REST server adapter
   - [ ] Facilitate integration with MCP and AI gateways
   - [ ] Facilitate skills publication in skills marketplaces
 
 ### Enable API reuse
+  - [ ] Add HTML and Markdown data format support for HTTP consumption
   - [ ] Support Webhook server adapter for workflow automation
   - [ ] Factorize capability core with "aggregates" of functions initially, entities and events later
   - [ ] Add conditional steps, for-each steps, parallel-join
@@ -79,6 +81,7 @@ The goal of this version is to broaden the platform surface area based on produc
 
 ### Extend protocol support
 - [ ] Add support for gRPC and tRPC as server adapters
+- [ ] Add support for SQL as client adapter
 - [ ] Add full resiliency patterns (rate limiter, time limiter, bulkhead, cache)
 
 ### Enterprise security
