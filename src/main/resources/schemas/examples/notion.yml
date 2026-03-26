@@ -112,7 +112,7 @@ capability:
     - type: "http"
       description: "Notion API integration for accessing pre-release participant data stored in Notion."
       namespace: "notion"
-      baseUri: "https://api.notion.com/v1/"
+      baseUri: "https://api.notion.com/v1"
       authentication:
         type: "bearer"
         token: "{{notion_api_key}}"
@@ -124,7 +124,7 @@ capability:
           value: "2025-09-03"
 
       resources:
-        - path: "data_sources/{{datasource_id}}/query"
+        - path: "/data_sources/{{datasource_id}}/query"
           name: "query"
           label: "Query database resource"
           operations:

@@ -29,7 +29,7 @@ capability:
     - type: "http"
       description: "Forwarded requests from the /notion/{path} resource, to be sent to the Notion API"
       namespace: "notion"
-      baseUri: "https://api.notion.com/v1/"
+      baseUri: "https://api.notion.com/v1"
       authentication:
         type: "bearer"
         token: "{{notion_api_key}}"
@@ -40,7 +40,7 @@ capability:
           in: "header"
           value: "2025-09-03"
       resources:
-        - path: "users/me"
+        - path: "/users/me"
           name: "users-me"
           operations:
             - method: "GET"

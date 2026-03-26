@@ -100,17 +100,18 @@ capability:
   consumes:
     - type: http
       namespace: open-meteo
-      baseUri: "https://api.open-meteo.com/v1/"
+      description: "Open-Meteo weather API for current conditions and alerts."
+      baseUri: "https://api.open-meteo.com/v1"
       resources:
         - name: forecast
-          path: forecast
+          path: /forecast
           operations:
             - name: get-current
               method: GET
               label: "Get Current Weather"
 
         - name: alerts
-          path: alerts
+          path: /alerts
           operations:
             - name: list-alerts
               method: GET
