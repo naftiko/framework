@@ -55,7 +55,7 @@ jobs:
           java -jar target/capability.jar \
             src/main/resources/schemas/tutorial/step-2-forwarding-api-resource.yml \
             > /tmp/step2.log 2>&1 &
-          sleep 2
+          sleep 3
 
       - name: Consume /notion/users/me endpoint - Forwarding API Resource
         run: |
