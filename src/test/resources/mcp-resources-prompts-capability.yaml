@@ -29,11 +29,11 @@ capability:
             - type: "array"
               mapping: "$.results"
               items:
-                - type: "object"
-                  properties:
-                    id:
-                      type: "string"
-                      mapping: "$.id"
+                type: "object"
+                properties:
+                  id:
+                    type: "string"
+                    mapping: "$.id"
       resources:
         - name: "database-schema"
           label: "Database Schema"

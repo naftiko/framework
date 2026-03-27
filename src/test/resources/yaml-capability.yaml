@@ -29,17 +29,17 @@ capability:
                 - type: "array"
                   mapping: "$.users"
                   items:
-                    - type: "object"
-                      properties:
-                        id:
-                          type: "string"
-                          mapping: "$.id"
-                        name:
-                          type: "string"
-                          mapping: "$.name"
-                        email:
-                          type: "string"
-                          mapping: "$.email"
+                    type: "object"
+                    properties:
+                      id:
+                        type: "string"
+                        mapping: "$.id"
+                      name:
+                        type: "string"
+                        mapping: "$.name"
+                      email:
+                        type: "string"
+                        mapping: "$.email"
 
   consumes:
     - type: "http"

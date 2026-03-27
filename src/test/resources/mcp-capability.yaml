@@ -28,14 +28,14 @@ capability:
             - type: "array"
               mapping: "$.results"
               items:
-                - type: "object"
-                  properties:
-                    name:
-                      type: "string"
-                      mapping: "$.properties.Name.title[0].text.content"
-                    status:
-                      type: "string"
-                      mapping: "$.properties.Status.select.name"
+                type: "object"
+                properties:
+                  name:
+                    type: "string"
+                    mapping: "$.properties.Name.title[0].text.content"
+                  status:
+                    type: "string"
+                    mapping: "$.properties.Status.select.name"
 
   consumes:
     - type: "http"
