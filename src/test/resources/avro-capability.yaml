@@ -29,17 +29,17 @@ capability:
                 - type: "array"
                   mapping: "$.records"
                   items:
-                    - type: "object"
-                      properties:
-                        id:
-                          type: "string"
-                          mapping: "$.id"
-                        title:
-                          type: "string"
-                          mapping: "$.title"
-                        description:
-                          type: "string"
-                          mapping: "$.description"
+                    type: "object"
+                    properties:
+                      id:
+                        type: "string"
+                        mapping: "$.id"
+                      title:
+                        type: "string"
+                        mapping: "$.title"
+                      description:
+                        type: "string"
+                        mapping: "$.description"
 
   consumes:
     - type: "http"
