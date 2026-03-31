@@ -18,12 +18,12 @@ Each capability is a coarse piece of domain that consumes existing HTTP-based AP
 Here are additional documents to learn more:
 
 - :rowboat: [Installation](https://github.com/naftiko/framework/wiki/Installation)
-- :sailboat: [Tutorial](https://github.com/naftiko/framework/wiki/Tutorial)
-- :ship: [Use cases](https://github.com/naftiko/framework/wiki/Use-Cases)
+- :sailboat: [Tutorial](https://github.com/naftiko/framework/wiki/Tutorial-MCP)
+- :ship: [Use cases](https://github.com/naftiko/framework/wiki/Guide-Use-Cases)
 - :anchor: [Specification](https://github.com/naftiko/framework/wiki/Specification)
 - :mega: [Releases](https://github.com/naftiko/framework/wiki/Releases)
 - :telescope: [Roadmap](https://github.com/naftiko/framework/wiki/Roadmap)
-- :mag: [Linting](https://github.com/naftiko/framework/wiki/Linting)
+- :mag: [Linting](https://github.com/naftiko/framework/wiki/Guide-Linting)
 - :nut_and_bolt: [Contribute](https://github.com/naftiko/framework/wiki/Contribute)
 - :ocean: [FAQ](https://github.com/naftiko/framework/wiki/FAQ)
 

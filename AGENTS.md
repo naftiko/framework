@@ -14,7 +14,7 @@
 |---|---|
 | `src/main/resources/schemas/naftiko-schema.json` | Naftiko JSON Schema (source of truth) |
 | `src/main/resources/schemas/examples/` | Capability examples (`cir.yml`, `notion.yml`, `skill-adapter.yml`, ...) |
-| `src/main/resources/schemas/tutorial/` | Shipyard Track tutorial (`step-1-shipyard-` to `step-10-shipyard-`) |
+| `src/main/resources/tutorial/` | Shipyard Track tutorial (`step-1-shipyard-` to `step-10-shipyard-`) |
 | `src/test/resources/` | Test fixtures (not examples) |
 | `src/main/resources/scripts/pr-check-wind.ps1` | Local pre-PR validation (Windows) |
 | `src/main/resources/scripts/pr-check-mac-linux.sh` | Local pre-PR validation (Unix/macOS) |

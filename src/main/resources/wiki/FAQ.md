@@ -755,8 +755,8 @@ Check the naftiko field in your YAML to specify the version.
 ### Q: Are there examples I can reference?
 **A:** Yes! Several resources:
 
-- **[Tutorial](https://github.com/naftiko/framework/wiki/Tutorial)** - Step-by-step guides
-- **[Use Cases](https://github.com/naftiko/framework/wiki/Use-cases)** - Real-world examples
+- **[Tutorial](https://github.com/naftiko/framework/wiki/Tutorial-MCP)** - Step-by-step guides
+- **[Use Cases](https://github.com/naftiko/framework/wiki/Guide-Use-Cases)** - Real-world examples
 - **Repository examples** - In `src/main/resources/specs/` and test resources
 - **Specification examples** - In the [Specification](https://github.com/naftiko/framework/wiki/Specification#4-complete-examples) (Section 4)
 
@@ -785,7 +785,7 @@ Check the naftiko field in your YAML to specify the version.
 4. **Test with Claude** - configure Claude Desktop with your MCP server
 5. **Publish** - share your capability spec with the community
 
-See the [Tutorial](https://github.com/naftiko/framework/wiki/Tutorial) Section 6 (MCP) for a full example.
+See the [Tutorial](https://github.com/naftiko/framework/wiki/Tutorial-MCP) Section 6 (MCP) for a full example.
 
 ### Q: I want to standardize data from multiple SaaS tools. How do I use Naftiko?
 **A:**
@@ -802,9 +802,9 @@ This is Naftiko's core strength for managing API sprawl.
 ## 🏝️ Additional Resources
 
 -  **[Specification](https://github.com/naftiko/framework/wiki/Specification)** - Complete technical reference
--  **[Tutorial](https://github.com/naftiko/framework/wiki/Tutorial)** - Step-by-step learning guide
+-  **[Tutorial](https://github.com/naftiko/framework/wiki/Tutorial-MCP)** - Step-by-step learning guide
 -  **[Installation](https://github.com/naftiko/framework/wiki/Installation)** - Setup instructions
--  **[Use Cases](https://github.com/naftiko/framework/wiki/Use-cases)** - Real-world examples
+-  **[Use Cases](https://github.com/naftiko/framework/wiki/Guide-Use-Cases)** - Real-world examples
 -  **[Roadmap](https://github.com/naftiko/framework/wiki/Roadmap)** - Future plans
 -  **[Contribute](https://github.com/naftiko/framework/wiki/Contribute)** - How to contribute
 -  **[Discussions](https://github.com/orgs/naftiko/discussions)** - Community Q&A

@@ -206,7 +206,7 @@ Catches semantic and style issues such as:
 | **Quality** | Missing `description` on consumes entries, REST resources, or operations |
 | **Security** | `<script>` tags or `eval(` in description fields |
 
-For the full list, see the [Ruleset](https://github.com/naftiko/framework/wiki/Ruleset) page.
+For the full list, see the [Ruleset](https://github.com/naftiko/framework/wiki/Specification-Ruleset) page.
 
 ---
 
