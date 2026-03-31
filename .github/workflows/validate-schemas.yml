@@ -36,7 +36,7 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: |
           PATHS=(
-            "src/main/resources/schemas/tutorial"
+            "src/main/resources/tutorial"
             "src/main/resources/schemas/examples"
             "src/test/resources"
           )

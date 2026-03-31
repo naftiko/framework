@@ -109,7 +109,7 @@ This section provides **machine-readable guidance** for AI coding agents contrib
 
 - **Language**: Java 21 (Maven build system)
 - **Specification**: The Naftiko Specification defines the capability schema. See `src/main/resources/schemas/naftiko-schema.json` for the latest JSON Schema.
-- **Examples**: `src/main/resources/schemas/examples/` contains capability examples. `src/main/resources/schemas/tutorial/` contains step-by-step tutorial capabilities.
+- **Examples**: `src/main/resources/schemas/examples/` contains capability examples. `src/main/resources/tutorial/` contains step-by-step tutorial capabilities.
 - **Test fixtures**: `src/test/resources/` contains YAML capabilities used for unit tests.
 - **Wiki**: the [project wiki](https://github.com/naftiko/framework/wiki) contains the full specification, tutorial, FAQ, and use cases.
 
@@ -129,7 +129,7 @@ This section provides **machine-readable guidance** for AI coding agents contrib
 |---|---|
 | `src/main/resources/schemas/naftiko-schema.json` | Naftiko Specification JSON Schema (latest) |
 | `src/main/resources/schemas/examples/` | Capability examples: `cir.yml`, `notion.yml`, `skill-adapter.yml`, `multi-consumes-*.yml`... |
-| `src/main/resources/schemas/tutorial/` | Step-by-step tutorial capabilities (`step-1-` to `step-6-`) |
+| `src/main/resources/tutorial/` | Step-by-step tutorial capabilities (`step-1-` to `step-10-`) |
 | `src/test/resources/` | Test fixtures (not examples) |
 | `.github/workflows/` | CI/CD pipelines |
 | `src/main/resources/scripts/pr-check-wind.ps1` | Local pre-PR validation (Windows) |

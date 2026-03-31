@@ -6,13 +6,15 @@ That's what we're going to build. In 10 steps, you'll go from zero to a fully op
 
 No code. Just a spec. Let's go.
 
-> **Prerequisites:** Make sure you can run the Naftiko Engine. See the [installation instructions](https://github.com/naftiko/framework/wiki/Installation). All capability files for this tutorial live in `src/main/resources/schemas/tutorial/`.
+> **Prerequisites:** Make sure you can run the Naftiko Engine. See the [installation instructions](https://github.com/naftiko/framework/wiki/Installation). All capability files for this tutorial live in `src/main/resources/tutorial/`.
 
 ---
 
-## Step 1 — Your first tool
+## Step 1 — Your first MCP tool
 
 **`step-1-shipyard-first-capability.yml`**
+
+> 📥 [step-1-shipyard-first-capability.yml](../tutorial/step-1-shipyard-first-capability.yml)
 
 The Maritime Registry at `registry.shipyard.dev` has a REST endpoint: `GET /ships`. It returns a list of ships. We want an agent to be able to call it. That's it — the absolute minimum.
 
@@ -68,21 +70,12 @@ That's your first tool. `consumes` declares where the data lives, `exposes` decl
 
 **`step-2-shipyard-input-parameters.yml`**
 
+> 📥 [step-2-shipyard-input-parameters.yml](../tutorial/step-2-shipyard-input-parameters.yml)
+
 An agent that can only list *all* ships isn't very useful. We need two things: a way to **filter** the list (by status), and a way to **look up** a specific ship (by IMO number).
 
 ```yaml
 tools:
-  - name: list-ships
-    description: "List ships in the shipyard, optionally filtered by status"
-    inputParameters:
-      - name: status
-        type: string
-        required: false
-        description: "Filter by operational status"
-    call: registry.list-ships
-    with:
-      status: shipyard-tools.status
-
   - name: get-ship
     description: "Retrieve a ship's details by IMO number"
     inputParameters:
@@ -107,9 +100,11 @@ Now the agent can ask: *"Show me only the active ships"* and *"Tell me about the
 
 ---
 
-## Step 3 — Unlocking the full registry
+## Step 3 — Binding secrets
 
 **`step-3-shipyard-auth-and-binds.yml`**
+
+> 📥 [step-3-shipyard-auth-and-binds.yml](../tutorial/step-3-shipyard-auth-and-binds.yml)
 
 So far, we've been hitting the registry's **public endpoints** — they return 5 basic fields per ship. But the registry has much more: specs, dimensions, tonnage, crew assignments, certifications. That data sits behind a bearer token.
 
@@ -149,9 +144,11 @@ REGISTRY_VERSION: "2024-01-01"
 
 ---
 
-## Step 4 — The ship card
+## Step 4 — Shaping the tool output
 
 **`step-4-shipyard-output-shaping.yml`**
+
+> 📥 [step-4-shipyard-output-shaping.yml](../tutorial/step-4-shipyard-output-shaping.yml)
 
 Now `get-ship` returns everything: year built, gross tonnage, length overall, beam, draft, classification society, certifications, crew assignments… An agent asking *"tell me about Northern Star"* doesn't need 30 fields. It needs a **ship card**.
 
@@ -209,9 +206,11 @@ The `specs` nested object is the key: `mapping: $.dimensions.length_overall` rea
 
 ---
 
-## Step 5 — A second registry
+## Step 5 — Consuming multiple APIs
 
 **`step-5-shipyard-multi-source.yml`** — Consumes: `shared/step5-registry-consumes.yaml`, `shared/legacy-consumes.yaml`
+
+> 📥 [step-5-shipyard-multi-source.yml](../tutorial/step-5-shipyard-multi-source.yml)
 
 Data rarely lives in one place. The Shipyard's modern registry is clean, but there's also a **legacy Dockyard** — an older system with records for vessels that were never migrated. Different API, different auth (API key instead of bearer), different field names.
 
@@ -226,6 +225,20 @@ capability:
       location: ./shared/step5-registry-consumes.yaml
     - import: legacy
       location: ./shared/legacy-consumes.yaml
+
+  exposes:
+    - type: mcp
+      port: 3001
+      namespace: shipyard-tools
+      tools:
+        - name: list-legacy-vessels
+          description: "List vessels from the legacy dockyard"
+          call: legacy.list-vessels
+          outputParameters:
+            - type: array
+              mapping: "$."
+              items:
+                type: object
 ```
 
 New tool: `list-legacy-vessels` — same pattern as `list-ships`, different source:
@@ -241,9 +254,11 @@ New tool: `list-legacy-vessels` — same pattern as `list-ships`, different sour
 
 ---
 
-## Step 6 — The agent gets hands
+## Step 6 — Write operations and body templates
 
 **`step-6-shipyard-write-operations.yml`** — Consumes: `shared/step6-registry-consumes.yaml`, `shared/legacy-consumes.yaml`
+
+> 📥 [step-6-shipyard-write-operations.yml](../tutorial/step-6-shipyard-write-operations.yml)
 
 Until now, every tool was read-only. List, get, inspect. But Captain Erik Lindström wants to **plan a voyage** — Oslo to Singapore, aboard the Northern Star, with his crew and cargo. The agent needs to *act*.
 
@@ -307,94 +322,11 @@ The agent went from observer to operator.
 
 ---
 
-## Step 7 — Organizing the toolbox
+## Step 7 — Orchestrated lookups
 
-**`step-7-shipyard-skill-groups.yml`**
+**`step-7-shipyard-orchestrated-lookup.yml`** — Consumes: `shared/step7-registry-consumes.yml`, `shared/legacy-consumes.yaml`
 
-Four tools and growing. A flat list works for now, but a real shipyard would have dozens. **Skills** group tools by business domain — so the agent discovers *capabilities*, not individual operations.
-
-```yaml
-- type: skill
-  port: 3002
-  namespace: shipyard-skills
-  description: "Shipyard skill groups for structured agent discovery"
-  skills:
-    - name: fleet-ops
-      description: "Fleet management — list, search, and inspect ships across all registries"
-      tools:
-        - name: list-ships
-          from:
-            sourceNamespace: shipyard-tools
-            action: list-ships
-        - name: get-ship
-          from:
-            sourceNamespace: shipyard-tools
-            action: get-ship
-        - name: list-legacy-vessels
-          from:
-            sourceNamespace: shipyard-tools
-            action: list-legacy-vessels
-    - name: voyage-ops
-      description: "Voyage planning — create and manage voyages"
-      tools:
-        - name: create-voyage
-          from:
-            sourceNamespace: shipyard-tools
-            action: create-voyage
-```
-
-Skills don't redefine logic — they reference existing MCP tools via `from`. When the agent asks *"what can I do with voyages?"*, the skill layer answers instantly. Think of it as a table of contents for your toolbox.
-
-**What you learned:** `type: skill`, `skills`, `from` referencing, business-level discovery.
-
----
-
-## Step 8 — A REST front door
-
-**`step-8-shipyard-rest-adapter.yml`**
-
-Not every consumer is an AI agent. Partner systems, dashboards, and mobile apps still speak REST. One capability, two front doors:
-
-```yaml
-- type: rest
-  port: 3002
-  namespace: shipyard-api
-  resources:
-    - name: ships
-      path: "/ships"
-      operations:
-        - name: list-ships
-          method: GET
-          call: shipyard-tools.list-ships
-    - name: ship-by-imo
-      path: "/ships/{{imo}}"
-      operations:
-        - name: get-ship
-          method: GET
-          call: shipyard-tools.get-ship
-          with:
-            imo_number: shipyard-api.imo
-    - name: legacy-vessels
-      path: "/legacy/vessels"
-      operations:
-        - name: list-legacy-vessels
-          method: GET
-    - name: voyages
-      path: "/voyages"
-      operations:
-        - name: create-voyage
-          method: POST
-```
-
-Same `call` + `with`, same consumes wiring — different protocol. The REST adapter is additive: it doesn't change the MCP or skill exposes. Three expose blocks, one capability.
-
-**What you learned:** `type: rest`, REST resources/operations, MCP ↔ REST coexistence.
-
----
-
-## Step 9 — Names, not IDs
-
-**`step-9-shipyard-orchestrated-lookup.yml`** — Consumes: `shared/step9-registry-consumes.yml`, `shared/legacy-consumes.yaml`
+> 📥 [step-7-shipyard-orchestrated-lookup.yml](../tutorial/step-7-shipyard-orchestrated-lookup.yml)
 
 Captain Erik is planning Oslo → Singapore. He insists on his cook: *"No Aiko, no departure."* The agent calls `get-ship` — but gets `assignedCrew: ["CREW-001", "CREW-003"]`. Raw IDs. Useless. Who is CREW-003? The captain needs *names*.
 
@@ -456,97 +388,20 @@ Aiko is on board. The captain is happy.
 
 ---
 
-## Step 10 — The Fleet Manifest
+## What you built
 
-**`step-10-shipyard-fleet-manifest.yml`** — Consumes: `shared/step10-registry-consumes.yml`, `shared/legacy-consumes.yaml`
+Over 7 steps, your single YAML capability grew from a 15-line wrapper around `GET /ships` into a multi-source, write-capable, orchestrated agent platform:
 
-The voyage is planned (Step 6). The crew is confirmed (Step 9). Now the operations team needs one document that has everything: ship details, crew names, cargo inventory — all resolved from raw IDs, all assembled server-side. The **Fleet Manifest**.
+**5 MCP tools** — `list-ships`, `get-ship`, `list-legacy-vessels`, `create-voyage`, `get-ship-with-crew`
 
-`get-voyage-manifest` is the capstone: **7 steps** — 4 API calls and 3 lookups:
+**2 consumed APIs** — the Maritime Registry (bearer auth, 5 operations) and the Legacy Dockyard (API key, 1 operation)
 
-```yaml
-- name: get-voyage-manifest
-  description: "Assemble a complete voyage manifest with ship, crew, and cargo"
-  inputParameters:
-    - name: voyageId
-      type: string
-      required: true
-  steps:
-    - name: get-voyage
-      type: call
-      call: registry.get-voyage
-      with:
-        voyageId: shipyard-tools.voyageId
-    - name: list-ships
-      type: call
-      call: registry.list-ships
-    - name: resolve-ship
-      type: lookup
-      index: list-ships
-      match: imo-number
-      lookupValue: "$.get-voyage.shipImo"
-    - name: list-crew
-      type: call
-      call: registry.list-crew
-    - name: resolve-crew
-      type: lookup
-      index: list-crew
-      match: crewId
-      lookupValue: "$.get-voyage.crewIds"
-      outputParameters:
-        - "fullName"
-        - "role"
-    - name: list-cargo
-      type: call
-      call: registry.list-cargo
-    - name: resolve-cargo
-      type: lookup
-      index: list-cargo
-      match: cargoId
-      lookupValue: "$.get-voyage.cargoIds"
-      outputParameters:
-        - "description"
-        - "weight"
-        - "hazardous"
-```
-
-One tool call. One complete manifest:
-
-```json
-{
-  "voyageId": "VOY-2026-042",
-  "status": "planned",
-  "route": { "from": "Oslo", "to": "Singapore" },
-  "ship": { "name": "Northern Star", "type": "cargo", "flag": "NO" },
-  "crew": [
-    { "fullName": "Erik Lindström", "role": "captain" },
-    { "fullName": "Aiko Tanaka", "role": "cook" }
-  ],
-  "cargo": [
-    { "type": "container", "description": "Electronics components", "weight": 12.5, "hazardous": false },
-    { "type": "bulk", "description": "Iron ore samples", "weight": 85.0, "hazardous": false }
-  ]
-}
-```
-
-This step also adds `info` metadata (label, description, tags, dates) — because a production capability deserves a proper identity. And it updates the skill and REST layers one last time: `get-voyage-manifest` joins `voyage-ops`, and a new `GET /voyages/{voyageId}/manifest` endpoint appears.
-
-Everything from Steps 1–9 converges here. Contract-first → wire → auth → shape → multi-source → write → skills → REST → lookup → **full orchestration.** That's the Shipyard.
-
-**What you learned:** Multi-lookup chaining, `info` metadata, consumes-level `outputParameters`, and that a complete maritime agent fits in a single YAML file.
+All from one spec. No code. Welcome to Spec-Driven Integration.
 
 ---
 
-## What you built
+## Going further
 
-Over 10 steps, your single YAML capability grew from a 15-line wrapper around `GET /ships` into a full agent platform:
+Ready to expose your tools as **agent skills**, add a **REST front door**, and assemble a full **Fleet Manifest** with multi-step orchestration?
 
-**6 MCP tools** — `list-ships`, `get-ship`, `list-legacy-vessels`, `create-voyage`, `get-ship-with-crew`, `get-voyage-manifest`
-
-**2 skills** — `fleet-ops` (4 tools), `voyage-ops` (2 tools)
-
-**6 REST endpoints** — `GET /ships`, `GET /ships/{imo}`, `GET /legacy/vessels`, `POST /voyages`, `GET /ships/{imo}/crew`, `GET /voyages/{voyageId}/manifest`
-
-**2 consumed APIs** — the Maritime Registry (bearer auth, 6 operations) and the Legacy Dockyard (API key, 1 operation)
-
-All from one spec. No code. Welcome to Spec-Driven Integration.
+Continue with the [Advanced Track](Tutorial-MCP-Advanced.md).

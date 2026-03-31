@@ -73,7 +73,7 @@ jobs:
             ARGS=$(yq -o=json ".tests[$i].args // {}" $TEST_FILE)
 
             # Start server with a timeout guard
-            timeout 120 java -jar target/capability.jar src/main/resources/schemas/tutorial/$FILE &
+            timeout 120 java -jar target/capability.jar src/main/resources/tutorial/$FILE &
             PID=$!
 
             echo "Waiting for MCP server on port $PORT..."

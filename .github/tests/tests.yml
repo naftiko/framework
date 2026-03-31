@@ -125,8 +125,8 @@ tests:
   - jq: 'has("crewIds")'
   - jq: '.crewIds | length > 0'
 
-- name: step7-skill-list-ships
-  file: step-7-shipyard-skill-groups.yml
+- name: step8-skill-list-ships
+  file: step-8-shipyard-skill-groups.yml
   port: 3001
   tool: list-ships
   args: {}
@@ -134,8 +134,8 @@ tests:
   - jq: 'type == "array"'
   - jq: 'length > 0'
 
-- name: step7-skill-create-voyage
-  file: step-7-shipyard-skill-groups.yml
+- name: step8-skill-create-voyage
+  file: step-8-shipyard-skill-groups.yml
   port: 3007
   tool: create-voyage
   args:
@@ -151,9 +151,9 @@ tests:
   - jq: 'has("route")'
   - jq: 'has("status")'
 
-- name: step8-rest-list-ships
+- name: step9-rest-list-ships
   type: rest
-  file: step-8-shipyard-rest-adapter.yml
+  file: step-9-shipyard-rest-adapter.yml
   port: 3001
   method: GET
   path: /ships
@@ -162,9 +162,9 @@ tests:
   - jq: 'length > 0'
   - jq: '.[0] | has("imoNumber")'
 
-- name: step8-rest-get-ship
+- name: step9-rest-get-ship
   type: rest
-  file: step-8-shipyard-rest-adapter.yml
+  file: step-9-shipyard-rest-adapter.yml
   port: 3002
   method: GET
   path: /ships/IMO-9321483
@@ -173,9 +173,9 @@ tests:
   - jq: 'has("name")'
   - jq: 'has("type")'
 
-- name: step8-rest-create-voyage
+- name: step9-rest-create-voyage
   type: rest
-  file: step-8-shipyard-rest-adapter.yml
+  file: step-9-shipyard-rest-adapter.yml
   port: 3002
   method: POST
   path: /voyages
@@ -192,8 +192,8 @@ tests:
   - jq: 'has("route")'
   - jq: 'has("status")'
 
-- name: step9-get-ship-with-crew
-  file: step-9-shipyard-orchestrated-lookup.yml
+- name: step7-get-ship-with-crew
+  file: step-7-shipyard-orchestrated-lookup.yml
   port: 3001
   tool: get-ship-with-crew
   args:

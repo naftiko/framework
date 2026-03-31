@@ -17,7 +17,7 @@ binds:
 capability:
   consumes:
     - import: registry
-      location: ./shared/step9-registry-consumes.yml
+      location: ./shared/step7-registry-consumes.yml
     - import: legacy
       location: ./shared/legacy-consumes.yaml
 
