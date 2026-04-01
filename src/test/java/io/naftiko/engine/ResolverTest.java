@@ -16,13 +16,19 @@ package io.naftiko.engine;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.restlet.Request;
+import org.restlet.data.Method;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.NullNode;
 import io.naftiko.spec.OutputParameterSpec;
+import io.naftiko.spec.InputParameterSpec;
 
 public class ResolverTest {
 
@@ -92,6 +98,202 @@ public class ResolverTest {
         assertEquals(42000, specs.path("tonnage").asInt());
         assertEquals(229, specs.path("length").asInt());
     }
+
+      @Test
+      public void resolveMustacheTemplateShouldHandleNullAndEmptyParameters() {
+        assertNull(Resolver.resolveMustacheTemplate(null, Map.of()));
+        assertEquals("plain", Resolver.resolveMustacheTemplate("plain", null));
+        assertEquals("plain", Resolver.resolveMustacheTemplate("plain", Map.of()));
+
+        String rendered = Resolver.resolveMustacheTemplate("hello {{name}}/{{missing}}",
+            Map.of("name", "alice"));
+        assertEquals("hello alice/", rendered);
+      }
+
+      @Test
+      public void resolveInputParameterFromRequestShouldHandlePathQueryHeaderAndBody() throws Exception {
+        Request request = new Request(Method.GET, "https://example.com/search?q=ships");
+        request.getAttributes().put("shipId", "IMO-1");
+        request.getHeaders().set("X-Tenant", "acme");
+
+        JsonNode body = MAPPER.readTree("{\"name\":\"Voyager\",\"meta\":{\"rank\":1}}\n");
+
+        InputParameterSpec path = new InputParameterSpec();
+        path.setName("shipId");
+        path.setIn("path");
+
+        InputParameterSpec query = new InputParameterSpec();
+        query.setName("q");
+        query.setIn("query");
+
+        InputParameterSpec header = new InputParameterSpec();
+        header.setName("X-Tenant");
+        header.setIn("header");
+
+        InputParameterSpec bodyJsonPath = new InputParameterSpec();
+        bodyJsonPath.setName("name");
+        bodyJsonPath.setIn("body");
+        bodyJsonPath.setValue("$.name");
+
+        InputParameterSpec bodyObject = new InputParameterSpec();
+        bodyObject.setName("meta");
+        bodyObject.setIn("body");
+        bodyObject.setValue("$.meta");
+
+        assertEquals("IMO-1", Resolver.resolveInputParameterFromRequest(path, request, body, MAPPER));
+        assertEquals("ships", Resolver.resolveInputParameterFromRequest(query, request, body, MAPPER));
+        assertEquals("acme", Resolver.resolveInputParameterFromRequest(header, request, body, MAPPER));
+        assertEquals("Voyager",
+            Resolver.resolveInputParameterFromRequest(bodyJsonPath, request, body, MAPPER));
+
+        Object meta = Resolver.resolveInputParameterFromRequest(bodyObject, request, body, MAPPER);
+        assertTrue(meta instanceof Map);
+        assertEquals(1, ((Map<?, ?>) meta).get("rank"));
+      }
+
+      @Test
+      public void resolveInputParameterFromRequestShouldSupportConstantAndBodyFallbacks()
+          throws Exception {
+        Request request = new Request(Method.GET, "https://example.com/items");
+        JsonNode body = MAPPER.readTree("{\"x\":1}");
+
+        InputParameterSpec constant = new InputParameterSpec();
+        constant.setName("x");
+        constant.setConstant("fixed");
+        constant.setIn("query");
+
+        InputParameterSpec missingBodyPath = new InputParameterSpec();
+        missingBodyPath.setName("missing");
+        missingBodyPath.setIn("body");
+        missingBodyPath.setValue("$.does.not.exist");
+
+        InputParameterSpec rawBody = new InputParameterSpec();
+        rawBody.setName("raw");
+        rawBody.setIn("body");
+
+        assertEquals("fixed", Resolver.resolveInputParameterFromRequest(constant, request, body, MAPPER));
+        assertNull(Resolver.resolveInputParameterFromRequest(missingBodyPath, request, body, MAPPER));
+        assertEquals(body, Resolver.resolveInputParameterFromRequest(rawBody, request, body, MAPPER));
+      }
+
+      @Test
+      public void resolveInputParametersToRequestShouldApplyHeaderQueryAndTemplateResolution() {
+        Request clientRequest = new Request(Method.GET, "https://api.example.com/items");
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("requestId", "abc");
+        parameters.put("q", "ice class");
+
+        InputParameterSpec header = new InputParameterSpec();
+        header.setName("X-Trace");
+        header.setIn("header");
+        header.setValue("trace-{{requestId}}");
+
+        InputParameterSpec query = new InputParameterSpec();
+        query.setName("search");
+        query.setIn("query");
+        query.setTemplate("{{q}}");
+
+        InputParameterSpec constant = new InputParameterSpec();
+        constant.setName("X-Mode");
+        constant.setIn("header");
+        constant.setConstant("strict");
+
+        Resolver.resolveInputParametersToRequest(clientRequest, List.of(header, query, constant),
+            parameters);
+
+        assertEquals("trace-abc", clientRequest.getHeaders().getFirstValue("X-Trace", true));
+        assertEquals("strict", clientRequest.getHeaders().getFirstValue("X-Mode", true));
+        assertTrue(clientRequest.getResourceRef().toString().contains("search=ice+class"));
+        assertEquals("trace-abc", parameters.get("X-Trace"));
+        assertEquals("ice class", parameters.get("search"));
+      }
+
+      @Test
+      public void resolveOutputMappingsShouldHandleNullAndInvalidArrayRoots() throws Exception {
+        JsonNode clientRoot = MAPPER.readTree("{\"data\":{\"id\":1}}\n");
+
+        assertEquals(NullNode.instance, Resolver.resolveOutputMappings(null, clientRoot, MAPPER));
+
+        OutputParameterSpec arraySpec = new OutputParameterSpec();
+        arraySpec.setType("array");
+        arraySpec.setMapping("$.data");
+
+        JsonNode mapped = Resolver.resolveOutputMappings(arraySpec, clientRoot, MAPPER);
+        assertTrue(mapped.isNull());
+      }
+
+      @Test
+      public void resolveOutputMappingsShouldHandleArrayItemFallbackAndNullProperties()
+          throws Exception {
+        JsonNode clientRoot = MAPPER.readTree("""
+            {
+              "rows": [
+              {"name":"A"},
+              {"other":"B"}
+              ]
+            }
+            """);
+
+        OutputParameterSpec itemSpec = new OutputParameterSpec();
+        itemSpec.setType("object");
+        OutputParameterSpec name = new OutputParameterSpec();
+        name.setName("name");
+        name.setType("string");
+        name.setMapping("$.name");
+        itemSpec.getProperties().add(name);
+
+        OutputParameterSpec rootArray = new OutputParameterSpec();
+        rootArray.setType("array");
+        rootArray.setMapping("$.rows");
+        rootArray.setItems(itemSpec);
+
+        JsonNode mapped = Resolver.resolveOutputMappings(rootArray, clientRoot, MAPPER);
+        assertTrue(mapped.isArray());
+        assertEquals("A", mapped.get(0).get("name").asText());
+        assertTrue(mapped.get(1).get("name").isNull());
+
+        OutputParameterSpec noItemMapping = new OutputParameterSpec();
+        noItemMapping.setType("array");
+        noItemMapping.setMapping("$.rows");
+        OutputParameterSpec primitiveItem = new OutputParameterSpec();
+        primitiveItem.setType("string");
+        noItemMapping.setItems(primitiveItem);
+
+        JsonNode passthrough = Resolver.resolveOutputMappings(noItemMapping, clientRoot, MAPPER);
+        assertEquals("A", passthrough.get(0).get("name").asText());
+      }
+
+      @Test
+      public void resolveOutputMappingsShouldHandleObjectValuesAndPrimitiveFallback() throws Exception {
+        JsonNode root = MAPPER.readTree("""
+            {
+              "map": {
+              "a": {"id": 10},
+              "b": {"other": 20}
+              },
+              "value": "xyz"
+            }
+            """);
+
+        OutputParameterSpec valuesSpec = new OutputParameterSpec();
+        valuesSpec.setType("object");
+        valuesSpec.setMapping("$.map");
+        OutputParameterSpec valueItem = new OutputParameterSpec();
+        valueItem.setType("number");
+        valueItem.setMapping("$.id");
+        valuesSpec.setValues(valueItem);
+
+        JsonNode values = Resolver.resolveOutputMappings(valuesSpec, root, MAPPER);
+        assertEquals(10, values.get("a").asInt());
+        assertTrue(values.get("b").isNull());
+
+        OutputParameterSpec primitive = new OutputParameterSpec();
+        primitive.setType("string");
+        primitive.setMapping("$.value");
+
+        JsonNode primitiveValue = Resolver.resolveOutputMappings(primitive, root, MAPPER);
+        assertEquals("xyz", primitiveValue.asText());
+      }
 
     /**
      * Regression test for #213: array parameters in Mustache body templates must be

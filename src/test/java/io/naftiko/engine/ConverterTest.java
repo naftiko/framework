@@ -16,6 +16,8 @@ package io.naftiko.engine;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -26,6 +28,8 @@ import org.junit.jupiter.api.io.TempDir;
 import org.restlet.data.MediaType;
 import org.restlet.representation.StringRepresentation;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.NullNode;
 import io.naftiko.spec.OutputParameterSpec;
 
 public class ConverterTest {
@@ -54,6 +58,31 @@ public class ConverterTest {
 
         assertEquals(
                 "Protobuf format requires outputSchema to be specified in operation specification",
+                error.getMessage());
+    }
+
+    @Test
+    public void convertToJsonShouldRequireSchemaForProtobufWhenSchemaIsEmpty() {
+        StringRepresentation entity =
+                new StringRepresentation("{}", MediaType.APPLICATION_OCTET_STREAM);
+
+        IOException error = assertThrows(IOException.class,
+                () -> Converter.convertToJson("Protobuf", "", entity));
+
+        assertEquals(
+                "Protobuf format requires outputSchema to be specified in operation specification",
+                error.getMessage());
+    }
+
+    @Test
+    public void convertToJsonShouldRequireSchemaForAvro() {
+        StringRepresentation entity =
+                new StringRepresentation("{}", MediaType.APPLICATION_OCTET_STREAM);
+
+        IOException error = assertThrows(IOException.class,
+                () -> Converter.convertToJson("Avro", "", entity));
+
+        assertEquals("Avro format requires outputSchema to be specified in operation specification",
                 error.getMessage());
     }
 
@@ -110,4 +139,106 @@ public class ConverterTest {
         assertEquals("$.['user details'].email",
                 Converter.fixJsonPathWithSpaces("$.user details.email"));
     }
+
+        @Test
+        public void convertToJsonShouldSupportJsonWhenFormatIsNull() throws Exception {
+                StringRepresentation entity =
+                                new StringRepresentation("{\"status\":\"ok\"}", MediaType.APPLICATION_JSON);
+
+                JsonNode root = Converter.convertToJson(null, null, entity);
+
+                assertEquals("ok", root.get("status").asText());
+        }
+
+        @Test
+        public void convertToJsonShouldSupportExplicitJsonFormat() throws Exception {
+                StringRepresentation entity =
+                                new StringRepresentation("{\"status\":\"ok\",\"count\":2}",
+                                                MediaType.APPLICATION_JSON);
+
+                JsonNode root = Converter.convertToJson("JSON", null, entity);
+
+                assertEquals("ok", root.get("status").asText());
+                assertEquals(2, root.get("count").asInt());
+        }
+
+        @Test
+        public void convertToJsonShouldSupportXmlYamlAndCsvFormats() throws Exception {
+                StringRepresentation xmlEntity =
+                                new StringRepresentation("<root><name>Alice</name></root>", MediaType.APPLICATION_XML);
+                JsonNode xml = Converter.convertToJson("XML", null, xmlEntity);
+                assertEquals("Alice", xml.get("name").asText());
+
+                StringRepresentation yamlEntity = new StringRepresentation("name: Alice\nage: 42\n",
+                                MediaType.valueOf("application/yaml"));
+                JsonNode yaml = Converter.convertToJson("YAML", null, yamlEntity);
+                assertEquals("Alice", yaml.get("name").asText());
+                assertEquals(42, yaml.get("age").asInt());
+
+                StringRepresentation csvEntity =
+                                new StringRepresentation("name,age\nAlice,42\nBob,39\n", MediaType.TEXT_CSV);
+                JsonNode csv = Converter.convertToJson("CSV", null, csvEntity);
+                assertTrue(csv.isArray());
+                assertEquals("Alice", csv.get(0).get("name").asText());
+                assertEquals("39", csv.get(1).get("age").asText());
+        }
+
+        @Test
+        public void convertProtobufToJsonShouldWrapMissingSchemaAsIOException() {
+                ByteArrayInputStream payload = new ByteArrayInputStream(new byte[] {1, 2, 3});
+
+                IOException error = assertThrows(IOException.class,
+                                () -> Converter.convertProtobufToJson(payload, "schemas/does-not-exist.proto"));
+
+                assertTrue(error.getMessage().contains("Failed to deserialize Protocol Buffer"));
+                assertTrue(error.getMessage().contains("Proto schema file not found"));
+        }
+
+        @Test
+        public void convertAvroToJsonShouldWrapMissingSchemaAsIOException() {
+                ByteArrayInputStream payload = new ByteArrayInputStream(new byte[] {1, 2, 3});
+
+                IOException error = assertThrows(IOException.class,
+                                () -> Converter.convertAvroToJson(payload, "schemas/does-not-exist.avsc"));
+
+                assertTrue(error.getMessage().contains("Failed to deserialize Avro data"));
+                assertTrue(error.getMessage().contains("Avro schema file not found"));
+        }
+
+        @Test
+        public void loadSchemaFileShouldReturnNullWhenSchemaCannotBeFound() throws Exception {
+                InputStream stream = Converter.loadSchemaFile("schemas/does-not-exist.any");
+                assertEquals(null, stream);
+        }
+
+        @Test
+        public void jsonPathExtractShouldHandleRootSelectorsAndEmptyMapping() throws Exception {
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode root = mapper.readTree("{\"a\":1}");
+
+                assertEquals(root, Converter.jsonPathExtract(root, "$"));
+                assertEquals(root, Converter.jsonPathExtract(root, "$."));
+                assertEquals(NullNode.instance, Converter.jsonPathExtract(root, ""));
+                assertEquals(NullNode.instance, Converter.jsonPathExtract(root, null));
+                assertEquals(NullNode.instance, Converter.jsonPathExtract(null, "$"));
+        }
+
+        @Test
+        public void applyMaxLengthIfNeededShouldHandleNullSpecAndNonTextualValues() throws Exception {
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode numberNode = mapper.readTree("123");
+                JsonNode textNode = mapper.readTree("\"hello\"");
+
+                assertEquals(numberNode, Converter.applyMaxLengthIfNeeded(new OutputParameterSpec(),
+                                numberNode));
+                assertEquals(textNode, Converter.applyMaxLengthIfNeeded(null, textNode));
+                assertEquals(NullNode.instance,
+                                Converter.applyMaxLengthIfNeeded(new OutputParameterSpec(), NullNode.instance));
+        }
+
+        @Test
+        public void fixJsonPathWithSpacesShouldLeaveMappingsWithoutSpacesUntouched() {
+                assertEquals(null, Converter.fixJsonPathWithSpaces(null));
+                assertEquals("$.user.email", Converter.fixJsonPathWithSpaces("$.user.email"));
+        }
 }

@@ -14,7 +14,9 @@
 package io.naftiko.engine.exposes;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.net.ServerSocket;
 import java.util.List;
@@ -36,6 +38,8 @@ import io.naftiko.spec.OutputParameterSpec;
 import io.naftiko.spec.exposes.RestServerOperationSpec;
 import io.naftiko.spec.exposes.RestServerResourceSpec;
 import io.naftiko.spec.exposes.RestServerSpec;
+import io.naftiko.spec.exposes.ServerCallSpec;
+import io.naftiko.spec.exposes.OperationStepLookupSpec;
 
 public class OperationStepExecutorIntegrationTest {
 
@@ -172,6 +176,90 @@ public class OperationStepExecutorIntegrationTest {
                 "\"user\":{\"id\":\"u-1\"}}", List.of(missing, match));
 
         assertEquals("\"u-1\"", mapped);
+    }
+
+    @Test
+    public void applyOutputMappingsShouldReturnNullForEmptyInputs() throws Exception {
+        OperationStepExecutor executor = new OperationStepExecutor(capabilityFromYaml("""
+                naftiko: "1.0.0-alpha1"
+                capability:
+                  exposes:
+                    - type: "rest"
+                      address: "localhost"
+                      port: 0
+                      namespace: "dummy"
+                      resources:
+                        - path: "/dummy"
+                          operations:
+                            - method: "GET"
+                              name: "dummy"
+                  consumes: []
+                """));
+
+        assertNull(executor.applyOutputMappings(null, List.of()));
+        assertNull(executor.applyOutputMappings("", List.of()));
+        assertNull(executor.applyOutputMappings("{}", null));
+        assertNull(executor.applyOutputMappings("{}", List.of()));
+    }
+
+    @Test
+    public void executeShouldThrowForInvalidCallAndMissingModes() throws Exception {
+        OperationStepExecutor executor = new OperationStepExecutor(capabilityFromYaml("""
+                naftiko: "1.0.0-alpha1"
+                capability:
+                  exposes:
+                    - type: "rest"
+                      address: "localhost"
+                      port: 0
+                      namespace: "dummy"
+                      resources:
+                        - path: "/dummy"
+                          operations:
+                            - method: "GET"
+                              name: "dummy"
+                  consumes: []
+                """));
+
+        IllegalArgumentException invalidCall = assertThrows(IllegalArgumentException.class,
+                () -> executor.execute(new ServerCallSpec("bad.call"), null, Map.of(),
+                        "Operation 'dummy'"));
+        assertEquals("Invalid call for Operation 'dummy': bad.call", invalidCall.getMessage());
+
+        IllegalArgumentException missingMode = assertThrows(IllegalArgumentException.class,
+                () -> executor.execute(null, null, Map.of(), "Operation 'dummy'"));
+        assertEquals("Operation 'dummy' has neither call nor steps defined",
+                missingMode.getMessage());
+    }
+
+    @Test
+    public void executeStepsShouldThrowWhenLookupReferencesMissingIndex() throws Exception {
+        OperationStepExecutor executor = new OperationStepExecutor(capabilityFromYaml("""
+                naftiko: "1.0.0-alpha1"
+                capability:
+                  exposes:
+                    - type: "rest"
+                      address: "localhost"
+                      port: 0
+                      namespace: "dummy"
+                      resources:
+                        - path: "/dummy"
+                          operations:
+                            - method: "GET"
+                              name: "dummy"
+                  consumes: []
+                """));
+
+        OperationStepLookupSpec lookup = new OperationStepLookupSpec();
+        lookup.setName("find");
+        lookup.setIndex("does-not-exist");
+        lookup.setMatch("id");
+        lookup.setLookupValue("u-1");
+
+        IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+                () -> executor.executeSteps(List.of(lookup), Map.of()));
+
+        assertEquals("Lookup step references non-existent step: does-not-exist",
+                error.getMessage());
     }
 
     private static Capability capabilityFromYaml(String yaml) throws Exception {
