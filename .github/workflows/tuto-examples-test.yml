@@ -35,6 +35,7 @@ jobs:
           cat > shared/secrets.yaml << EOF
           registry-bearer-token: ${{ secrets.REGISTRY_TOKEN }}
           registry-api-version: ${{ secrets.REGISTRY_VERSION }}
+          dockyard-api-key: ${{ secrets.DOCKYARD_API_KEY }}
           EOF
 
       - name: Run tests
