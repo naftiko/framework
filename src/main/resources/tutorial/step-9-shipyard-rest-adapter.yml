@@ -23,6 +23,7 @@ capability:
 
   exposes:
     - type: mcp
+      address: "0.0.0.0" # Needed in Docker context. Permits to access the MCP with localhost from outside the container.
       port: 3001
       namespace: shipyard-tools
       description: "Shipyard MCP tools for fleet management"
@@ -213,7 +214,7 @@ capability:
                   mapping: "$.status"
 
     - type: skill
-      address: localhost
+      address: "0.0.0.0" # Needed in Docker context. Permits to access the MCP with localhost from outside the container.
       port: 3002
       namespace: shipyard-skills
       description: "Shipyard skill groups for structured agent discovery"
@@ -246,6 +247,7 @@ capability:
                 action: create-voyage
 
     - type: rest
+      address: "0.0.0.0" # Needed in Docker context. Permits to access the MCP with localhost from outside the container.
       port: 3002
       namespace: shipyard-api
       resources:
