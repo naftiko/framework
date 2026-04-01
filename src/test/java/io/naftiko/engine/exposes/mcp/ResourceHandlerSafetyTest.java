@@ -14,7 +14,10 @@
 package io.naftiko.engine.exposes.mcp;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -81,6 +84,56 @@ public class ResourceHandlerSafetyTest {
 
         assertEquals(null, params);
     }
+
+        @Test
+        public void listAllShouldExpandStaticFilesAndListTemplatesShouldReturnOnlyTemplates()
+                        throws Exception {
+                Path docs = tempDir.resolve("docs");
+                Files.createDirectories(docs);
+                Files.writeString(docs.resolve("guide.md"), "# guide\n");
+                Files.writeString(docs.resolve("data.json"), "{}\n");
+
+                McpServerResourceSpec staticSpec = staticResource("docs", "data://docs", docs);
+
+                McpServerResourceSpec templateSpec = new McpServerResourceSpec();
+                templateSpec.setName("user-profile");
+                templateSpec.setUri("data://users/{userId}/profile");
+
+                ResourceHandler handler = new ResourceHandler(null, List.of(staticSpec, templateSpec), null);
+
+                List<Map<String, String>> listed = handler.listAll();
+                assertEquals(2, listed.size());
+                assertTrue(listed.stream().anyMatch(e -> "data://docs/guide.md".equals(e.get("uri"))));
+                assertTrue(listed.stream().anyMatch(e -> "data://docs/data.json".equals(e.get("uri"))));
+
+                List<McpServerResourceSpec> templates = handler.listTemplates();
+                assertEquals(1, templates.size());
+                assertEquals("user-profile", templates.get(0).getName());
+        }
+
+        @Test
+        public void readShouldThrowForUnknownResourceUri() {
+                ResourceHandler handler = new ResourceHandler(null, List.of(), null);
+
+                IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+                                () -> handler.read("data://unknown"));
+                assertEquals("Unknown resource URI: data://unknown", error.getMessage());
+        }
+
+        @Test
+        public void matchTemplateShouldHandleNullsAndExactNonTemplateUris() {
+                assertEquals(null, ResourceHandler.matchTemplate(null, "data://x"));
+                assertEquals(null, ResourceHandler.matchTemplate("data://x", null));
+
+                Map<String, String> exact = ResourceHandler.matchTemplate("data://fixed", "data://fixed");
+                assertNotNull(exact);
+                assertTrue(exact.isEmpty());
+
+                Map<String, String> mismatch = ResourceHandler.matchTemplate("data://fixed",
+                                "data://other");
+                assertEquals(null, mismatch);
+                assertFalse(mismatch != null);
+        }
 
     private static McpServerResourceSpec staticResource(String name, String uri, Path dir) {
         McpServerResourceSpec spec = new McpServerResourceSpec();

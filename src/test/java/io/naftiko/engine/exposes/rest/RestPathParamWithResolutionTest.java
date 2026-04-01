@@ -14,7 +14,6 @@
 package io.naftiko.engine.exposes.rest;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.net.ServerSocket;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
