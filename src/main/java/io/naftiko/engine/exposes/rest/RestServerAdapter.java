@@ -182,7 +182,7 @@ public class RestServerAdapter extends ServerAdapter {
      * @param spec The Naftiko spec
      * @return Set of allowed variable names from binds declarations
      */
-    private static Set<String> extractAllowedVariables(NaftikoSpec spec) {
+    static Set<String> extractAllowedVariables(NaftikoSpec spec) {
         Set<String> allowed = new HashSet<>();
         
         if (spec == null || spec.getBinds() == null) {

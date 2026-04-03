@@ -174,7 +174,7 @@ public class ResourceRestlet extends Restlet {
      * Check if an operation can build a mock response using const values from outputParameters.
      * Returns true if the operation has at least one outputParameter with a const value.
      */
-    private boolean canBuildMockResponse(RestServerOperationSpec serverOp) {
+    boolean canBuildMockResponse(RestServerOperationSpec serverOp) {
         if (serverOp.getOutputParameters() == null || serverOp.getOutputParameters().isEmpty()) {
             return false;
         }
@@ -231,7 +231,7 @@ public class ResourceRestlet extends Restlet {
     /**
      * Send a mock response using const values from outputParameters.
      */
-    private void sendMockResponse(RestServerOperationSpec serverOp, Response response) {
+    void sendMockResponse(RestServerOperationSpec serverOp, Response response) {
         try {
             ObjectMapper mapper = new ObjectMapper();
 
@@ -281,7 +281,7 @@ public class ResourceRestlet extends Restlet {
     /**
      * Build a JSON node for a single parameter, using const values or structures.
      */
-    private JsonNode buildParameterValue(OutputParameterSpec param, ObjectMapper mapper) {
+    JsonNode buildParameterValue(OutputParameterSpec param, ObjectMapper mapper) {
         if (param == null) {
             return NullNode.instance;
         }
@@ -330,7 +330,7 @@ public class ResourceRestlet extends Restlet {
         return NullNode.instance;
     }
 
-    private void sendResponse(RestServerOperationSpec serverOp, Response response,
+    void sendResponse(RestServerOperationSpec serverOp, Response response,
             OperationStepExecutor.HandlingContext found) {
         // Apply output mappings if present or forward the raw entity
         if (serverOp.getOutputParameters() != null && !serverOp.getOutputParameters().isEmpty()) {
@@ -360,7 +360,7 @@ public class ResourceRestlet extends Restlet {
      * calls to the resource that should be forwarded to a target endpoint without going through the
      * operation steps.
      */
-    private boolean handleFromForwardSpec(Request request, Response response) {
+    boolean handleFromForwardSpec(Request request, Response response) {
         for (ClientAdapter adapter : getCapability().getClientAdapters()) {
             if (adapter instanceof HttpClientAdapter) {
                 HttpClientAdapter httpAdapter = (HttpClientAdapter) adapter;
@@ -419,7 +419,7 @@ public class ResourceRestlet extends Restlet {
     /**
      * Copy a set of trusted headers from one request to another.
      */
-    private void copyTrustedHeaders(Request from, Request to, Iterable<String> trustedHeaders) {
+    void copyTrustedHeaders(Request from, Request to, Iterable<String> trustedHeaders) {
         if (trustedHeaders == null) {
             return;
         }
@@ -440,7 +440,7 @@ public class ResourceRestlet extends Restlet {
      * 
      * Handles conversion to JSON if outputRawFormat is specified.
      */
-    private String mapOutputParameters(RestServerOperationSpec serverOp,
+    String mapOutputParameters(RestServerOperationSpec serverOp,
             OperationStepExecutor.HandlingContext found) throws IOException {
         if (found == null || found.clientResponse == null
                 || found.clientResponse.getEntity() == null) {
@@ -467,7 +467,7 @@ public class ResourceRestlet extends Restlet {
     /**
      * Return the `in` value for a spec, defaulting to "body" when missing.
      */
-    private String inOrDefault(OutputParameterSpec spec) {
+    String inOrDefault(OutputParameterSpec spec) {
         if (spec == null)
             return "body";
         String in = spec.getIn();
