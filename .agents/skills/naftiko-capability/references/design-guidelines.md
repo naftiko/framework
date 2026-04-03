@@ -98,6 +98,7 @@ Avoid:
 - Use tools for actions and resources for read-only data access.
 - Prefer small tools with crisp, typed `inputParameters`.
 - If an MCP tool becomes complex, switch to orchestration and document it clearly.
+- Use mock mode (`outputParameters` with `const`, no `call`/`steps`) for prototyping, demos, or contract-first development when no consumed API is available yet.
 
 ## Orchestration guidelines (steps + mappings)
 

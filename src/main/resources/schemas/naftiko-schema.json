@@ -448,6 +448,44 @@
         }
       ]
     },
+    "MockOutputParameter": {
+      "type": "object",
+      "description": "A named output parameter with a static const value for mock mode (no consumed operations).",
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/IdentifierKebab",
+          "description": "Name of the output field in the mock response JSON."
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "string",
+            "number",
+            "boolean"
+          ]
+        },
+        "const": {
+          "description": "Static value returned by the mock tool.",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            }
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "const"
+      ],
+      "additionalProperties": false
+    },
     "OrchestratedOutputParameterBase": {
       "type": "object",
       "description": "Base for a named output parameter whose value is populated by step mappings during orchestration.",
@@ -852,7 +890,7 @@
     },
     "McpTool": {
       "type": "object",
-      "description": "An MCP tool definition. Each tool maps to one or more consumed HTTP operations.",
+      "description": "An MCP tool definition. Each tool maps to one or more consumed HTTP operations, or serves static mock responses using const values.",
       "properties": {
         "name": {
           "$ref": "#/$defs/IdentifierKebab",
@@ -931,6 +969,28 @@
                 "$ref": "#/$defs/OrchestratedOutputParameter"
               }
             }
+          }
+        },
+        {
+          "required": [
+            "outputParameters"
+          ],
+          "type": "object",
+          "description": "Mock mode: serves static responses from const values in outputParameters. No consumes block required.",
+          "properties": {
+            "outputParameters": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/$defs/MockOutputParameter"
+              }
+            }
+          },
+          "not": {
+            "anyOf": [
+              { "required": ["call"] },
+              { "required": ["steps"] }
+            ]
           }
         }
       ],

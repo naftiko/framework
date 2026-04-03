@@ -333,7 +333,7 @@ Capability groups not declared in the configuration are omitted from the `initia
 
 An MCP tool definition. Each tool maps to one or more consumed HTTP operations, similar to ExposedOperation but adapted for the MCP protocol (no HTTP method, tool-oriented input schema).
 
-> The McpTool supports the same two modes as ExposedOperation: **simple** (direct `call` + `with`) and **orchestrated** (multi-step with `steps` + `mappings`).
+> The McpTool supports three modes: **simple** (direct `call` + `with`), **orchestrated** (multi-step with `steps` + `mappings`), and **mock** (static responses from `const` values in `outputParameters`, no `call` or `steps` needed).
 > 
 
 **Fixed Fields:**
@@ -367,10 +367,18 @@ An MCP tool definition. Each tool maps to one or more consumed HTTP operations, 
 - `outputParameters` are `OrchestratedOutputParameter[]`
 - `call` and `with` MUST NOT be present
 
+**Mock mode** — static responses from `const` values (no consumed operations required):
+
+- `outputParameters` is **REQUIRED** (at least 1 entry), using `MockOutputParameter[]`
+- Each `MockOutputParameter` has `name`, `type`, and `const` (all required)
+- `call` and `steps` MUST NOT be present
+- No `consumes` block is needed
+- Returns a fixed JSON response built from `const` values in `outputParameters`
+
 **Rules:**
 
 - Both `name` and `description` are mandatory.
-- Exactly one of the two modes MUST be used (simple or orchestrated).
+- Exactly one of the three modes MUST be used (simple, orchestrated, or mock).
 - In simple mode, `call` MUST follow the format `{namespace}.{operationId}` and reference a valid consumed operation.
 - In orchestrated mode, the `steps` array MUST contain at least one entry.
 - Input parameters are accessed via namespace-qualified references of the form `{mcpNamespace}.{paramName}`.
@@ -409,6 +417,35 @@ Declares an input parameter for an MCP tool. These become properties in the tool
   type: number
   description: Number of results per page (max 100)
   required: false
+```
+
+#### 3.5.6b MockOutputParameter Object
+
+A named output parameter with a static `const` value, used in **mock mode** MCP tools. Mock tools return fixed JSON responses without consuming any HTTP API.
+
+**Fixed Fields:**
+
+| Field Name | Type | Description |
+| --- | --- | --- |
+| **name** | `string` | **REQUIRED**. Name of the output field in the mock response JSON. MUST match pattern `^[a-zA-Z0-9-]+$`. |
+| **type** | `string` | **REQUIRED**. Data type. One of: `string`, `number`, `boolean`. |
+| **const** | `string \| number \| boolean` | **REQUIRED**. Static value returned by the mock tool. |
+
+**Rules:**
+
+- All three fields (`name`, `type`, `const`) are mandatory.
+- No additional properties are allowed.
+
+**MockOutputParameter Example:**
+
+```yaml
+outputParameters:
+  - name: message
+    type: string
+    const: "Hello, World!"
+  - name: status-code
+    type: number
+    const: 200
 ```
 
 #### 3.5.7 McpResource Object
