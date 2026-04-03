@@ -16,7 +16,6 @@ package io.naftiko.engine.exposes.rest;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import java.lang.reflect.Method;
 import java.net.ServerSocket;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
@@ -105,10 +104,7 @@ public class ForwardHeaderIntegrationTest {
             request.getAttributes().put("path", "pages");
             Response response = new Response(request);
 
-            Method forwardMethod = ResourceRestlet.class.getDeclaredMethod("handleFromForwardSpec",
-                    Request.class, Response.class);
-            forwardMethod.setAccessible(true);
-            boolean handled = (boolean) forwardMethod.invoke(restlet, request, response);
+            boolean handled = restlet.handleFromForwardSpec(request, response);
 
             assertTrue(handled, "Forward request should be handled");
             assertEquals(Status.SUCCESS_OK, response.getStatus(), "Forward response should be 200");

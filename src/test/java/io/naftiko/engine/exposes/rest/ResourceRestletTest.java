@@ -76,11 +76,7 @@ public class ResourceRestletTest {
         Request request = new Request(Method.GET, "http://localhost/preview");
         Response response = new Response(request);
 
-        java.lang.reflect.Method sendMockResponse = ResourceRestlet.class
-                .getDeclaredMethod("sendMockResponse",
-                RestServerOperationSpec.class, Response.class);
-        sendMockResponse.setAccessible(true);
-        sendMockResponse.invoke(restlet, operation, response);
+        restlet.sendMockResponse(operation, response);
 
         assertEquals(Status.SUCCESS_OK, response.getStatus());
         assertNotNull(response.getEntity());
@@ -126,11 +122,7 @@ public class ResourceRestletTest {
                 "{\"user\":{\"id\":\"u-1\",\"name\":\"Alice\"}}",
                 MediaType.APPLICATION_JSON);
 
-        java.lang.reflect.Method mapOutputParameters = ResourceRestlet.class
-                .getDeclaredMethod("mapOutputParameters",
-                RestServerOperationSpec.class, OperationStepExecutor.HandlingContext.class);
-        mapOutputParameters.setAccessible(true);
-        String mapped = (String) mapOutputParameters.invoke(restlet, operation, handlingContext);
+        String mapped = restlet.mapOutputParameters(operation, handlingContext);
 
         JsonNode payload = JSON.readTree(mapped);
         assertEquals("u-1", payload.path("id").asText());
@@ -189,17 +181,12 @@ public class ResourceRestletTest {
         body.setMapping("$.id");
         operation.getOutputParameters().add(body);
 
-        java.lang.reflect.Method mapOutputParameters = ResourceRestlet.class
-                .getDeclaredMethod("mapOutputParameters",
-                        RestServerOperationSpec.class, OperationStepExecutor.HandlingContext.class);
-        mapOutputParameters.setAccessible(true);
-
-        String nullContext = (String) mapOutputParameters.invoke(restlet, operation, null);
+        String nullContext = restlet.mapOutputParameters(operation, null);
         assertNull(nullContext);
 
         OperationStepExecutor.HandlingContext context = new OperationStepExecutor.HandlingContext();
         context.clientResponse = new Response(new Request(Method.GET, "http://localhost/internal"));
-        String noEntity = (String) mapOutputParameters.invoke(restlet, operation, context);
+        String noEntity = restlet.mapOutputParameters(operation, context);
         assertNull(noEntity);
     }
 
@@ -211,12 +198,8 @@ public class ResourceRestletTest {
         ResourceRestlet restlet = new ResourceRestlet(capability, serverSpec,
                 serverSpec.getResources().get(0));
 
-        java.lang.reflect.Method canBuildMockResponse = ResourceRestlet.class
-                .getDeclaredMethod("canBuildMockResponse", RestServerOperationSpec.class);
-        canBuildMockResponse.setAccessible(true);
-
         RestServerOperationSpec noOutput = new RestServerOperationSpec();
-        assertFalse((boolean) canBuildMockResponse.invoke(restlet, noOutput));
+        assertFalse(restlet.canBuildMockResponse(noOutput));
 
         RestServerOperationSpec nestedConst = new RestServerOperationSpec();
         OutputParameterSpec root = new OutputParameterSpec();
@@ -229,7 +212,7 @@ public class ResourceRestletTest {
         root.getProperties().add(child);
         nestedConst.getOutputParameters().add(root);
 
-        assertTrue((boolean) canBuildMockResponse.invoke(restlet, nestedConst));
+        assertTrue(restlet.canBuildMockResponse(nestedConst));
     }
 
     @Test
@@ -239,11 +222,6 @@ public class ResourceRestletTest {
                 .getSpec();
         ResourceRestlet restlet = new ResourceRestlet(capability, serverSpec,
                 serverSpec.getResources().get(0));
-
-        java.lang.reflect.Method buildParameterValue = ResourceRestlet.class
-                .getDeclaredMethod("buildParameterValue", OutputParameterSpec.class,
-                        ObjectMapper.class);
-        buildParameterValue.setAccessible(true);
 
         ObjectMapper mapper = new ObjectMapper();
 
@@ -255,7 +233,7 @@ public class ResourceRestletTest {
         field.setConstant("ok");
         objectParam.getProperties().add(field);
 
-        JsonNode objectNode = (JsonNode) buildParameterValue.invoke(restlet, objectParam, mapper);
+        JsonNode objectNode = restlet.buildParameterValue(objectParam, mapper);
         assertEquals("ok", objectNode.path("status").asText());
 
         OutputParameterSpec arrayParam = new OutputParameterSpec();
@@ -265,14 +243,13 @@ public class ResourceRestletTest {
         item.setConstant("v");
         arrayParam.setItems(item);
 
-        JsonNode arrayNode = (JsonNode) buildParameterValue.invoke(restlet, arrayParam, mapper);
+        JsonNode arrayNode = restlet.buildParameterValue(arrayParam, mapper);
         assertTrue(arrayNode.isArray());
         assertEquals("v", arrayNode.get(0).asText());
 
         OutputParameterSpec primitiveNoConst = new OutputParameterSpec();
         primitiveNoConst.setType("string");
-        JsonNode primitive =
-                (JsonNode) buildParameterValue.invoke(restlet, primitiveNoConst, mapper);
+        JsonNode primitive = restlet.buildParameterValue(primitiveNoConst, mapper);
         assertTrue(primitive.isNull());
     }
 
@@ -284,21 +261,16 @@ public class ResourceRestletTest {
         ResourceRestlet restlet = new ResourceRestlet(capability, serverSpec,
                 serverSpec.getResources().get(0));
 
-        java.lang.reflect.Method copyTrustedHeaders = ResourceRestlet.class
-                .getDeclaredMethod("copyTrustedHeaders", Request.class, Request.class,
-                        Iterable.class);
-        copyTrustedHeaders.setAccessible(true);
-
         Request from = new Request(Method.GET, "http://localhost/source");
         from.getHeaders().add("X-Trace", "abc");
         Request to = new Request(Method.GET, "http://localhost/target");
 
-        copyTrustedHeaders.invoke(restlet, from, to, java.util.List.of("X-Trace", "X-Missing"));
+        restlet.copyTrustedHeaders(from, to, java.util.List.of("X-Trace", "X-Missing"));
         assertEquals("abc", to.getHeaders().getFirstValue("X-Trace", true));
         assertNull(to.getHeaders().getFirstValue("X-Missing", true));
 
         Request toNoop = new Request(Method.GET, "http://localhost/noop");
-        copyTrustedHeaders.invoke(restlet, from, toNoop, null);
+        restlet.copyTrustedHeaders(from, toNoop, null);
         assertNull(toNoop.getHeaders().getFirstValue("X-Trace", true));
     }
 
@@ -310,21 +282,15 @@ public class ResourceRestletTest {
         ResourceRestlet restlet = new ResourceRestlet(capability, serverSpec,
                 serverSpec.getResources().get(0));
 
-        java.lang.reflect.Method sendResponse = ResourceRestlet.class.getDeclaredMethod(
-                "sendResponse", RestServerOperationSpec.class, Response.class,
-                OperationStepExecutor.HandlingContext.class);
-        sendResponse.setAccessible(true);
-
         OperationStepExecutor.HandlingContext handlingContext =
                 new OperationStepExecutor.HandlingContext();
         Request clientRequest = new Request(Method.GET, "http://localhost/internal");
         handlingContext.clientResponse = new Response(clientRequest);
         handlingContext.clientResponse.setEntity("{\"id\":\"u-1\"}", MediaType.APPLICATION_JSON);
 
-        // No output parameters => raw entity forwarding path.
         RestServerOperationSpec rawOperation = new RestServerOperationSpec();
         Response rawResponse = new Response(new Request(Method.GET, "http://localhost/test"));
-        sendResponse.invoke(restlet, rawOperation, rawResponse, handlingContext);
+        restlet.sendResponse(rawOperation, rawResponse, handlingContext);
         assertEquals("{\"id\":\"u-1\"}", rawResponse.getEntity().getText());
 
         // Unsupported output format triggers mapping exception path.
@@ -337,7 +303,7 @@ public class ResourceRestletTest {
         failingOperation.getOutputParameters().add(output);
 
         Response errorResponse = new Response(new Request(Method.GET, "http://localhost/test"));
-        sendResponse.invoke(restlet, failingOperation, errorResponse, handlingContext);
+        restlet.sendResponse(failingOperation, errorResponse, handlingContext);
         assertEquals(Status.SERVER_ERROR_INTERNAL, errorResponse.getStatus());
         assertTrue(errorResponse.getEntity().getText().contains("Failed to map output parameters"));
     }
@@ -350,16 +316,12 @@ public class ResourceRestletTest {
         ResourceRestlet restlet = new ResourceRestlet(capability, serverSpec,
                 serverSpec.getResources().get(0));
 
-        java.lang.reflect.Method inOrDefault = ResourceRestlet.class
-                .getDeclaredMethod("inOrDefault", OutputParameterSpec.class);
-        inOrDefault.setAccessible(true);
-
         OutputParameterSpec explicit = new OutputParameterSpec();
         explicit.setIn("header");
 
-        assertEquals("body", inOrDefault.invoke(restlet, new Object[] {null}));
-        assertEquals("body", inOrDefault.invoke(restlet, new OutputParameterSpec()));
-        assertEquals("header", inOrDefault.invoke(restlet, explicit));
+        assertEquals("body", restlet.inOrDefault(null));
+        assertEquals("body", restlet.inOrDefault(new OutputParameterSpec()));
+        assertEquals("header", restlet.inOrDefault(explicit));
     }
 
         @Test

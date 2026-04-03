@@ -206,30 +206,21 @@ class OperationStepExecutorBranchTest {
                   consumes: []
                 """);
 
-        java.lang.reflect.Method addStepOutputToParameters = OperationStepExecutor.class.getDeclaredMethod(
-                "addStepOutputToParameters", Map.class, String.class, JsonNode.class);
-        addStepOutputToParameters.setAccessible(true);
-
-        java.lang.reflect.Method resolveStepOutput = OperationStepExecutor.class.getDeclaredMethod(
-                "resolveStepOutput", OperationStepExecutor.HandlingContext.class, JsonNode.class);
-        resolveStepOutput.setAccessible(true);
-
         ObjectMapper mapper = new ObjectMapper();
         JsonNode raw = mapper.readTree("{\"id\":\"u-1\",\"name\":\"Alice\"}");
 
         Map<String, Object> runtime = new HashMap<>();
-        addStepOutputToParameters.invoke(executor, runtime, "step1", raw);
+        executor.addStepOutputToParameters(runtime, "step1", raw);
         assertTrue(runtime.containsKey("step1"));
 
-        addStepOutputToParameters.invoke(executor, null, "step", raw);
-        addStepOutputToParameters.invoke(executor, runtime, null, raw);
-        addStepOutputToParameters.invoke(executor, runtime, "step", null);
+        executor.addStepOutputToParameters(null, "step", raw);
+        executor.addStepOutputToParameters(runtime, null, raw);
+        executor.addStepOutputToParameters(runtime, "step", null);
 
-        JsonNode nullRaw = (JsonNode) resolveStepOutput.invoke(executor,
-          new Object[] {null, null});
+        JsonNode nullRaw = executor.resolveStepOutput(null, null);
         assertTrue(nullRaw.isNull());
 
-        JsonNode passthrough = (JsonNode) resolveStepOutput.invoke(executor, null, raw);
+        JsonNode passthrough = executor.resolveStepOutput(null, raw);
         assertEquals("u-1", passthrough.path("id").asText());
 
         OperationStepExecutor.HandlingContext ctx = new OperationStepExecutor.HandlingContext();
@@ -247,7 +238,7 @@ class OperationStepExecutorBranchTest {
         operation.getOutputParameters().addAll(List.of(named, unnamed));
         ctx.clientOperation = operation;
 
-        JsonNode projected = (JsonNode) resolveStepOutput.invoke(executor, ctx, raw);
+        JsonNode projected = executor.resolveStepOutput(ctx, raw);
         assertEquals("u-1", projected.path("userId").asText());
         assertNull(projected.get("name"));
     }

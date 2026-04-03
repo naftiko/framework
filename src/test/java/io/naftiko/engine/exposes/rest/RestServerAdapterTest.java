@@ -15,7 +15,6 @@ package io.naftiko.engine.exposes.rest;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import java.lang.reflect.Method;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.restlet.Restlet;
@@ -80,7 +79,6 @@ public class RestServerAdapterTest {
         assertTrue(chain instanceof ChallengeAuthenticator);
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void extractAllowedVariablesShouldReturnAllBindingKeys() throws Exception {
         NaftikoSpec spec = parseYaml("""
@@ -95,10 +93,7 @@ public class RestServerAdapterTest {
                   consumes: []
                 """);
 
-        Method method = RestServerAdapter.class
-                .getDeclaredMethod("extractAllowedVariables", io.naftiko.spec.NaftikoSpec.class);
-        method.setAccessible(true);
-        Set<String> keys = (Set<String>) method.invoke(null, spec);
+        Set<String> keys = RestServerAdapter.extractAllowedVariables(spec);
 
         assertEquals(2, keys.size());
         assertTrue(keys.contains("auth_token"));

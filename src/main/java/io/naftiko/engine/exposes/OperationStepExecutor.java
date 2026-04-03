@@ -276,7 +276,7 @@ public class OperationStepExecutor {
      * Expose each step JSON output under the step name so downstream templates can reference
      * fields with syntax like {{step-name.field}}.
      */
-    private void addStepOutputToParameters(Map<String, Object> runtimeParameters, String stepName,
+    void addStepOutputToParameters(Map<String, Object> runtimeParameters, String stepName,
             JsonNode stepOutput) {
         if (runtimeParameters == null || stepName == null || stepOutput == null) {
             return;
@@ -292,7 +292,7 @@ public class OperationStepExecutor {
      * When consumed operation output parameters are defined, expose the projected object so
      * templates can reference declared names like {{step-name.userid}}.
      */
-    private JsonNode resolveStepOutput(HandlingContext context, JsonNode rawOutput) {
+    JsonNode resolveStepOutput(HandlingContext context, JsonNode rawOutput) {
         if (rawOutput == null) {
             return NullNode.instance;
         }

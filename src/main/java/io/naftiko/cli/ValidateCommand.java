@@ -109,7 +109,7 @@ public class ValidateCommand implements Runnable {
         }
     }
     
-    private JsonNode loadFile(File file) throws IOException {
+    JsonNode loadFile(File file) throws IOException {
         String fileName = file.getName().toLowerCase();
         
         if (fileName.endsWith(".yaml") || fileName.endsWith(".yml")) {
