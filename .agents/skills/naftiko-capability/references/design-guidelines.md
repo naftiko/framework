@@ -103,6 +103,7 @@ Avoid:
     - Set `destructive: true` for tools that delete or overwrite (DELETE, PUT).
     - Set `idempotent: true` for tools safe to retry.
     - Set `openWorld: true` for tools calling external APIs; `false` for closed-domain tools (local data, caches).
+- Use mock mode (`outputParameters` with `const`, no `call`/`steps`) for prototyping, demos, or contract-first development when no consumed API is available yet.
 
 ## Orchestration guidelines (steps + mappings)
 
