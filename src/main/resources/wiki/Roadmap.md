@@ -27,7 +27,7 @@ The goal of this version is to deliver a MVP to enable common AI integration use
 The goal of this version is to deliver a MVP to enable common AI integration use cases and grow our community.
 
 ### Rightsize AI context
-  - [ ] Add mocking feature to MCP server adapter similar to REST server adapter
+  - [x] Add mocking feature to MCP server adapter similar to REST server adapter
   - [ ] Add tool annotations (readOnly, destructive, idempotent, openWorld)
   - [ ] Add support for authentication in the MCP server adapter
   - [ ] Facilitate integration with MCP and AI gateways

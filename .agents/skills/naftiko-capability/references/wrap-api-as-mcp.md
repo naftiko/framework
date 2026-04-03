@@ -51,8 +51,9 @@ An MCP tool/resource/prompt can be:
 
 - simple mode: `call` + optional `with`
 - orchestrated mode: `steps` + optional `mappings` + `outputParameters`
+- mock mode: `outputParameters` with `const` values only (no `call`, no `steps`, no `consumes` block required)
 
-Do not mix simple and orchestrated fields in the same tool/resource (choose one).
+Do not mix fields from different modes in the same tool/resource (choose one).
 
 ## Mapping strategy (recommended)
 
@@ -104,7 +105,11 @@ For each MCP tool:
     - must define `steps` (min 1), each step has `name`
     - may define `mappings`
     - `outputParameters` must use orchestrated output parameter objects (named + typed)
-5. Tool `inputParameters`:
+5. If tool is mock (no consumed API):
+    - must define `outputParameters` (at least 1) with `const` values
+    - must NOT define `call` or `steps`
+    - no `consumes` block is required
+6. Tool `inputParameters`:
     - each parameter must have `name`, `type`, `description`
     - set `required: false` explicitly for optional params (default is true)
 

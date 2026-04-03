@@ -132,6 +132,7 @@ How Naftiko achieves this technically:
 #### Key features
 - [x] Declarative target API contract with mocking mode
   - [x] Allow REST server adapter with no source HTTP adapter
+  - [x] Allow MCP server adapter with no source HTTP adapter
   - [x] Use static value of output parameters as sample
 
 ## 9. Capability-first API reusability

@@ -333,7 +333,7 @@ Capability groups not declared in the configuration are omitted from the `initia
 
 An MCP tool definition. Each tool maps to one or more consumed HTTP operations, similar to ExposedOperation but adapted for the MCP protocol (no HTTP method, tool-oriented input schema).
 
-> The McpTool supports the same two modes as ExposedOperation: **simple** (direct `call` + `with`) and **orchestrated** (multi-step with `steps` + `mappings`).
+> The McpTool supports three modes: **simple** (direct `call` + `with`), **orchestrated** (multi-step with `steps` + `mappings`), and **mock** (static responses from `const` values in `outputParameters`, no `call` or `steps` needed).
 > 
 
 **Fixed Fields:**
@@ -367,10 +367,17 @@ An MCP tool definition. Each tool maps to one or more consumed HTTP operations, 
 - `outputParameters` are `OrchestratedOutputParameter[]`
 - `call` and `with` MUST NOT be present
 
+**Mock mode** — static responses from `const` values (no consumed operations required):
+
+- `outputParameters` is **REQUIRED** (at least 1 entry with `const` values)
+- `call` and `steps` MUST NOT be present
+- No `consumes` block is needed
+- Returns a fixed JSON response built from `const` values in `outputParameters`
+
 **Rules:**
 
 - Both `name` and `description` are mandatory.
-- Exactly one of the two modes MUST be used (simple or orchestrated).
+- Exactly one of the three modes MUST be used (simple, orchestrated, or mock).
 - In simple mode, `call` MUST follow the format `{namespace}.{operationId}` and reference a valid consumed operation.
 - In orchestrated mode, the `steps` array MUST contain at least one entry.
 - Input parameters are accessed via namespace-qualified references of the form `{mcpNamespace}.{paramName}`.
