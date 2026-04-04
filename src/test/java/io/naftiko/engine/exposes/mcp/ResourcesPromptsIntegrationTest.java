@@ -43,7 +43,7 @@ public class ResourcesPromptsIntegrationTest {
 
     @BeforeEach
     public void setUp() throws Exception {
-        String resourcePath = "src/test/resources/mcp-resources-prompts-capability.yaml";
+        String resourcePath = "src/test/resources/mcp/mcp-resources-prompts-capability.yaml";
         File file = new File(resourcePath);
 
         assertTrue(file.exists(),

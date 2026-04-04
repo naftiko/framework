@@ -697,6 +697,14 @@
             ]
           },
           "minItems": 1
+        },
+        "aggregates": {
+          "type": "array",
+          "description": "Domain aggregates defining reusable functions that adapters can reference via ref.",
+          "items": {
+            "$ref": "#/$defs/Aggregate"
+          },
+          "minItems": 1
         }
       },
       "anyOf": [
@@ -717,6 +725,137 @@
           ]
         }
       ],
+      "additionalProperties": false
+    },
+    "Aggregate": {
+      "type": "object",
+      "description": "A domain aggregate grouping reusable functions. Adapters reference these functions via ref.",
+      "properties": {
+        "label": {
+          "type": "string",
+          "description": "Human-readable name for this aggregate (e.g. 'Forecast')."
+        },
+        "namespace": {
+          "$ref": "#/$defs/IdentifierKebab",
+          "description": "Machine-readable qualifier for this aggregate. Used as the first segment in ref values."
+        },
+        "functions": {
+          "type": "array",
+          "description": "Reusable invocable units within this aggregate.",
+          "items": {
+            "$ref": "#/$defs/AggregateFunction"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "label",
+        "namespace",
+        "functions"
+      ],
+      "additionalProperties": false
+    },
+    "AggregateFunction": {
+      "type": "object",
+      "description": "A reusable invocable unit within an aggregate. Adapter units reference it via ref: aggregate-namespace.function-name.",
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/IdentifierKebab",
+          "description": "Function name. Combined with aggregate namespace to form the ref target."
+        },
+        "description": {
+          "type": "string",
+          "description": "A meaningful description of the function."
+        },
+        "semantics": {
+          "$ref": "#/$defs/Semantics"
+        },
+        "inputParameters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/McpToolInputParameter"
+          }
+        },
+        "call": {
+          "type": "string",
+          "description": "Reference to the consumed operation. Format: {namespace}.{operationId}.",
+          "pattern": "^[a-zA-Z0-9-]+\\.[a-zA-Z0-9-]+$"
+        },
+        "with": {
+          "$ref": "#/$defs/WithInjector"
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/OperationStep"
+          },
+          "minItems": 1
+        },
+        "mappings": {
+          "type": "array",
+          "description": "Maps step outputs to the function's output parameters.",
+          "items": {
+            "$ref": "#/$defs/StepOutputMapping"
+          }
+        },
+        "outputParameters": {
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "description"
+      ],
+      "anyOf": [
+        {
+          "required": [
+            "call"
+          ],
+          "type": "object",
+          "properties": {
+            "outputParameters": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/MappedOutputParameter"
+              }
+            }
+          }
+        },
+        {
+          "required": [
+            "steps"
+          ],
+          "type": "object",
+          "properties": {
+            "mappings": true,
+            "outputParameters": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/OrchestratedOutputParameter"
+              }
+            }
+          }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "Semantics": {
+      "type": "object",
+      "description": "Transport-neutral behavioral metadata for an invocable unit. Used for design-time tooling and adapter derivations (e.g. MCP hints).",
+      "properties": {
+        "safe": {
+          "type": "boolean",
+          "description": "If true, the function does not modify state. Default: false."
+        },
+        "idempotent": {
+          "type": "boolean",
+          "description": "If true, repeating the call has no additional effect. Default: false."
+        },
+        "cacheable": {
+          "type": "boolean",
+          "description": "If true, the result can be cached. Default: false."
+        }
+      },
       "additionalProperties": false
     },
     "ExposesRest": {
@@ -873,6 +1012,11 @@
             "$ref": "#/$defs/McpToolInputParameter"
           }
         },
+        "ref": {
+          "type": "string",
+          "description": "Reference to an aggregate function. Format: {aggregate-namespace}.{function-name}. Inherited fields are merged; explicit fields override.",
+          "pattern": "^[a-zA-Z0-9-]+\\.[a-zA-Z0-9-]+$"
+        },
         "call": {
           "type": "string",
           "description": "For simple cases, the reference to the consumed operation. Format: {namespace}.{operationId}.",
@@ -895,17 +1039,19 @@
             "$ref": "#/$defs/StepOutputMapping"
           }
         },
+        "hints": {
+          "$ref": "#/$defs/McpToolHints"
+        },
         "outputParameters": {
           "type": "array"
         }
       },
-      "required": [
-        "name",
-        "description"
-      ],
+      "required": [],
       "anyOf": [
         {
           "required": [
+            "name",
+            "description",
             "call"
           ],
           "type": "object",
@@ -920,6 +1066,8 @@
         },
         {
           "required": [
+            "name",
+            "description",
             "steps"
           ],
           "type": "object",
@@ -932,8 +1080,36 @@
               }
             }
           }
+        },
+        {
+          "required": [
+            "ref"
+          ]
         }
       ],
+      "additionalProperties": false
+    },
+    "McpToolHints": {
+      "type": "object",
+      "description": "Optional hints describing tool behavior to MCP clients. All properties are advisory. Mapped to ToolAnnotations in the MCP protocol.",
+      "properties": {
+        "readOnly": {
+          "type": "boolean",
+          "description": "If true, the tool does not modify its environment. Default: false."
+        },
+        "destructive": {
+          "type": "boolean",
+          "description": "If true, the tool may perform destructive updates. Meaningful only when readOnly is false. Default: true."
+        },
+        "idempotent": {
+          "type": "boolean",
+          "description": "If true, calling the tool repeatedly with the same arguments has no additional effect. Meaningful only when readOnly is false. Default: false."
+        },
+        "openWorld": {
+          "type": "boolean",
+          "description": "If true, the tool may interact with external entities. Default: true."
+        }
+      },
       "additionalProperties": false
     },
     "McpToolInputParameter": {
@@ -1304,6 +1480,11 @@
             "$ref": "#/$defs/ExposedInputParameter"
           }
         },
+        "ref": {
+          "type": "string",
+          "description": "Reference to an aggregate function. Format: {aggregate-namespace}.{function-name}. Inherited fields are merged; explicit fields override.",
+          "pattern": "^[a-zA-Z0-9-]+\\.[a-zA-Z0-9-]+$"
+        },
         "call": {
           "type": "string",
           "description": "For simple cases, the reference to the consumed operation. Format: {namespace}.{operationId}. E.g.: notion.get-database or github.get-user",
@@ -1356,6 +1537,11 @@
               }
             }
           }
+        },
+        {
+          "required": [
+            "ref"
+          ]
         }
       ],
       "additionalProperties": false

@@ -98,6 +98,11 @@ Avoid:
 - Use tools for actions and resources for read-only data access.
 - Prefer small tools with crisp, typed `inputParameters`.
 - If an MCP tool becomes complex, switch to orchestration and document it clearly.
+- Use `hints` to signal tool behavior to clients:
+    - Set `readOnly: true` for tools that only read data (GET-like).
+    - Set `destructive: true` for tools that delete or overwrite (DELETE, PUT).
+    - Set `idempotent: true` for tools safe to retry.
+    - Set `openWorld: true` for tools calling external APIs; `false` for closed-domain tools (local data, caches).
 
 ## Orchestration guidelines (steps + mappings)
 
@@ -127,6 +132,33 @@ Do not mix fields from both modes in one operation/tool.
 - Prefer returning stable, typed `outputParameters` over raw upstream payloads.
 - Do not expose internal IDs unless they are necessary and meaningful for consumers.
 - Avoid returning massive nested objects if only a few fields are needed.
+
+## Aggregate design guidelines (DDD-inspired)
+
+Aggregates borrow from [Domain-Driven Design](https://en.wikipedia.org/wiki/Domain-driven_design#Building_blocks): each aggregate groups related functions under a namespace that represents a single domain concept (the **Aggregate Root**). Functions within the aggregate are the operations that agents and clients can invoke.
+
+### Define aggregate boundaries around domain concepts
+
+- One aggregate = one domain concept (e.g., `forecast`, `ticket`, `user-profile`).
+- Functions within an aggregate should operate on the same domain data — if a function feels unrelated, it likely belongs in a different aggregate.
+- Keep function names intention-revealing and adapter-neutral: `get-forecast`, not `mcp-get-forecast` or `rest-forecast-query`.
+
+### Use `ref` to share functions across adapters
+
+- When the same domain operation is exposed via REST *and* MCP, define it once in `aggregates` and reference it with `ref` from both adapters.
+- Override only the adapter-specific fields at the tool/operation level (e.g., `method` for REST, `hints` for MCP).
+- Do not duplicate the full function definition inline when `ref` can carry it.
+
+### Use `semantics` as the single source of behavioral truth
+
+- Declare `safe`, `idempotent`, and `cacheable` on the aggregate function — they describe the domain behavior, not a transport detail.
+- Let the engine derive MCP `hints` from semantics automatically. Override hints only when the derived values are insufficient (e.g., setting `openWorld`).
+- Do not set `semantics` on functions that are only exposed via REST — REST has its own semantic model via HTTP methods.
+
+### Keep aggregates lean
+
+- Start with functions only (the "functions-first" approach). Entities, events, and other DDD stereotypes may be added in future schema versions.
+- Avoid creating an aggregate for a single function that is only used in one place — aggregates pay off when sharing across adapters or when grouping related operations.
 
 ## Secret management (dev → prod)
 
