@@ -132,7 +132,7 @@ public class NaftikoSpectralRulesetTest {
             "npx",
             "@stoplight/spectral-cli",
             "lint",
-            "src/test/resources/spectral-semantics-inconsistent.yaml",
+            "src/test/resources/rules/spectral-semantics-inconsistent.yaml",
             "--ruleset",
             rulesetPath.toAbsolutePath().toString());
 
@@ -158,7 +158,7 @@ public class NaftikoSpectralRulesetTest {
             "npx",
             "@stoplight/spectral-cli",
             "lint",
-            "src/test/resources/spectral-semantics-inconsistent.yaml",
+            "src/test/resources/rules/spectral-semantics-inconsistent.yaml",
             "--ruleset",
             rulesetPath.toAbsolutePath().toString());
 
@@ -178,7 +178,7 @@ public class NaftikoSpectralRulesetTest {
             "npx",
             "@stoplight/spectral-cli",
             "lint",
-            "src/test/resources/spectral-semantics-consistent.yaml",
+            "src/test/resources/rules/spectral-semantics-consistent.yaml",
             "--ruleset",
             rulesetPath.toAbsolutePath().toString());
 

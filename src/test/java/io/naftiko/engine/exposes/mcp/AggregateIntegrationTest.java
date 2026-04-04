@@ -46,7 +46,7 @@ public class AggregateIntegrationTest {
 
     @Test
     void refShouldResolveCallFromAggregateFunction() throws Exception {
-        Capability capability = loadCapability("src/test/resources/aggregate-basic.yaml");
+        Capability capability = loadCapability("src/test/resources/aggregates/aggregate-basic.yaml");
         McpServerAdapter adapter = (McpServerAdapter) capability.getServerAdapters().get(0);
         McpServerSpec serverSpec = adapter.getMcpServerSpec();
 
@@ -58,7 +58,7 @@ public class AggregateIntegrationTest {
 
     @Test
     void refShouldResolveInputParametersFromFunction() throws Exception {
-        Capability capability = loadCapability("src/test/resources/aggregate-basic.yaml");
+        Capability capability = loadCapability("src/test/resources/aggregates/aggregate-basic.yaml");
         McpServerAdapter adapter = (McpServerAdapter) capability.getServerAdapters().get(0);
         McpServerSpec serverSpec = adapter.getMcpServerSpec();
 
@@ -69,7 +69,7 @@ public class AggregateIntegrationTest {
 
     @Test
     void refShouldInheritDescriptionWhenOmitted() throws Exception {
-        Capability capability = loadCapability("src/test/resources/aggregate-basic.yaml");
+        Capability capability = loadCapability("src/test/resources/aggregates/aggregate-basic.yaml");
         McpServerAdapter adapter = (McpServerAdapter) capability.getServerAdapters().get(0);
         McpServerSpec serverSpec = adapter.getMcpServerSpec();
 
@@ -81,7 +81,7 @@ public class AggregateIntegrationTest {
 
     @Test
     void restOperationRefShouldInheritNameAndDescription() throws Exception {
-        Capability capability = loadCapability("src/test/resources/aggregate-basic.yaml");
+        Capability capability = loadCapability("src/test/resources/aggregates/aggregate-basic.yaml");
         // REST adapter is the second server adapter
         io.naftiko.engine.exposes.rest.RestServerAdapter restAdapter =
                 (io.naftiko.engine.exposes.rest.RestServerAdapter) capability.getServerAdapters()
@@ -101,7 +101,7 @@ public class AggregateIntegrationTest {
 
     @Test
     void safeFunctionShouldDeriveReadOnlyHint() throws Exception {
-        Capability capability = loadCapability("src/test/resources/aggregate-basic.yaml");
+        Capability capability = loadCapability("src/test/resources/aggregates/aggregate-basic.yaml");
         McpServerAdapter adapter = (McpServerAdapter) capability.getServerAdapters().get(0);
         McpServerSpec serverSpec = adapter.getMcpServerSpec();
 
@@ -117,7 +117,7 @@ public class AggregateIntegrationTest {
     @Test
     void toolWithNoExplicitHintsShouldGetFullDerivation() throws Exception {
         Capability capability =
-                loadCapability("src/test/resources/aggregate-hints-override.yaml");
+                loadCapability("src/test/resources/aggregates/aggregate-hints-override.yaml");
         McpServerAdapter adapter = (McpServerAdapter) capability.getServerAdapters().get(0);
         McpServerSpec serverSpec = adapter.getMcpServerSpec();
 
@@ -133,7 +133,7 @@ public class AggregateIntegrationTest {
     @Test
     void toolWithPartialHintOverrideShouldMerge() throws Exception {
         Capability capability =
-                loadCapability("src/test/resources/aggregate-hints-override.yaml");
+                loadCapability("src/test/resources/aggregates/aggregate-hints-override.yaml");
         McpServerAdapter adapter = (McpServerAdapter) capability.getServerAdapters().get(0);
         McpServerSpec serverSpec = adapter.getMcpServerSpec();
 
@@ -149,7 +149,7 @@ public class AggregateIntegrationTest {
     @Test
     void toolWithExplicitHintsShouldOverrideDerived() throws Exception {
         Capability capability =
-                loadCapability("src/test/resources/aggregate-hints-override.yaml");
+                loadCapability("src/test/resources/aggregates/aggregate-hints-override.yaml");
         McpServerAdapter adapter = (McpServerAdapter) capability.getServerAdapters().get(0);
         McpServerSpec serverSpec = adapter.getMcpServerSpec();
 
@@ -165,7 +165,7 @@ public class AggregateIntegrationTest {
     @Test
     void toolWithoutRefShouldNotHaveHints() throws Exception {
         Capability capability =
-                loadCapability("src/test/resources/aggregate-hints-override.yaml");
+                loadCapability("src/test/resources/aggregates/aggregate-hints-override.yaml");
         McpServerAdapter adapter = (McpServerAdapter) capability.getServerAdapters().get(0);
         McpServerSpec serverSpec = adapter.getMcpServerSpec();
 
@@ -178,7 +178,7 @@ public class AggregateIntegrationTest {
 
     @Test
     void toolsListShouldIncludeDerivedAnnotationsInWireFormat() throws Exception {
-        Capability capability = loadCapability("src/test/resources/aggregate-basic.yaml");
+        Capability capability = loadCapability("src/test/resources/aggregates/aggregate-basic.yaml");
         McpServerAdapter adapter = (McpServerAdapter) capability.getServerAdapters().get(0);
         ProtocolDispatcher dispatcher = new ProtocolDispatcher(adapter);
 
@@ -205,7 +205,7 @@ public class AggregateIntegrationTest {
     @Test
     void unknownRefShouldFailFast() {
         assertThrows(IllegalArgumentException.class,
-                () -> loadCapability("src/test/resources/aggregate-invalid-ref.yaml"));
+                () -> loadCapability("src/test/resources/aggregates/aggregate-invalid-ref.yaml"));
     }
 
 }
