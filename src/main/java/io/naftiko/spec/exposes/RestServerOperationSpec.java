@@ -34,6 +34,9 @@ public class RestServerOperationSpec extends OperationSpec {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private volatile Map<String, Object> with;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private volatile String ref;
+
     public RestServerOperationSpec() {
         this(null, null, null, null, null, null, null, null, null);
     }
@@ -75,6 +78,14 @@ public class RestServerOperationSpec extends OperationSpec {
 
     public void setWith(Map<String, Object> with) {
         this.with = with != null ? new ConcurrentHashMap<>(with) : null;
+    }
+
+    public String getRef() {
+        return ref;
+    }
+
+    public void setRef(String ref) {
+        this.ref = ref;
     }
 
 }
