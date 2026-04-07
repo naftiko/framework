@@ -1,12 +1,52 @@
 name: Synchronize Schema and Rules to Fabric
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/main/resources/schemas/naftiko-schema.json'
+      - 'src/main/resources/rules/naftiko-rules.yml'
+      - 'src/main/resources/rules/functions/**'
   workflow_dispatch:
 
 jobs:
   sync-to-fabric:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Dummy sync
-        run: echo "Dummy sync"
+      - name: Checkout framework
+        uses: actions/checkout@v4
+        with:
+          path: framework
+
+      - name: Checkout fabric
+        uses: actions/checkout@v4
+        with:
+          repository: naftiko/fabric
+          token: ${{ secrets.FABRIC_CONTENTS_WRITE_PR_WRITE }}
+          path: fabric
+
+      - name: Copy schema and rules
+        run: |
+          cp framework/src/main/resources/schemas/naftiko-schema.json \
+             fabric/frontend/vscode-naftiko/src/resources/schemas/naftiko-schema.json
+
+          rm -rf fabric/frontend/vscode-naftiko/src/resources/rules/*
+          cp -R framework/src/main/resources/rules/* \
+               fabric/frontend/vscode-naftiko/src/resources/rules/
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.FABRIC_CONTENTS_WRITE_PR_WRITE }}
+          path: fabric
+          branch: chore/schema-and-rules
+          commit-message: "chore: update schema and rules from framework"
+          title: "chore: update schema and rules from framework"
+          body: |
+            Automated sync from [framework@${{ github.sha }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}).
+
+            Updated files:
+            - `naftiko-schema.json`
+            - `rules/*`
+          delete-branch: true
