@@ -8,6 +8,49 @@
     <artifactId>framework</artifactId>
     <version>1.0.0-alpha2-SNAPSHOT</version>
 
+    <name>Naftiko Framework</name>
+    <description>Framework for building and running Naftiko capabilities and CLI tooling.</description>
+    <url>https://github.com/naftiko/framework</url>
+    <inceptionYear>2026</inceptionYear>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://opensource.org/license/apache-2-0/</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>eskenazit</id>
+            <name>Thomas Eskénazi</name>
+            <url>https://github.com/eskenazit</url>
+        </developer>
+        <developer>
+            <id>jlouvel</id>
+            <name>Jerome Louvel</name>
+            <url>https://github.com/jlouvel</url>
+        </developer>
+        <developer>
+            <id>jeremnaf</id>
+            <name>Jérémie Tarnaud</name>
+            <url>https://github.com/jeremnaf</url>
+        </developer>
+        <developer>
+            <id>farah-t-trigui</id>
+            <name>Farah Trigui</name>
+            <url>https://github.com/farah-t-trigui</url>
+        </developer>
+    </developers>
+
+    <scm>
+        <url>https://github.com/naftiko/framework</url>
+        <connection>scm:git:https://github.com/naftiko/framework.git</connection>
+        <developerConnection>scm:git:ssh://github.com:naftiko/framework.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
+
     <properties>
         <java.version>21</java.version>
         <maven.compiler.source>21</maven.compiler.source>
@@ -21,6 +64,7 @@
         <junit.jupiter.version>5.12.2</junit.jupiter.version>
         <jacoco.version>0.8.13</jacoco.version>
     </properties>
+
     <distributionManagement>
         <repository>
             <id>github</id>
@@ -33,6 +77,7 @@
             <url>https://maven.pkg.github.com/naftiko/framework</url>
         </snapshotRepository>
     </distributionManagement>
+
     <dependencies>
         <dependency>
             <groupId>info.picocli</groupId>
@@ -180,6 +225,70 @@
             </resource>
         </resources>
         <plugins>
+            <!-- Central Publishing Plugin -->
+            <plugin>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <version>0.10.0</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <publishingServerId>central</publishingServerId>
+                    <autoPublish>true</autoPublish>
+                    <waitUntil>published</waitUntil>
+                </configuration>
+            </plugin>
+
+            <!-- Source Plugin - generates source JAR -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.3.0</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Javadoc Plugin - generates Javadoc JAR -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.6.3</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <!-- Be lenient with Javadoc errors -->
+                    <doclint>none</doclint>
+                    <source>21</source>
+                </configuration>
+            </plugin>
+
+            <!-- GPG Plugin - signs artifacts -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+                     
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -293,6 +402,7 @@
             </plugin>
         </plugins>
     </build>
+
     <!-- Profile for GraalVM native build -->
     <profiles>
         <profile>
