@@ -117,4 +117,95 @@ public class OutputParameterDeserializationTest {
         "Named output should not serialize using mapping field");
   }
 
+  /**
+   * Regression test for PR #287 review comment: when an object output parameter
+   * has nested properties with {@code value} (mock mode), the deserializer must
+   * call {@code setValue()} — not {@code setMapping()} — on the child properties.
+   *
+   * The bug occurs because the property key ("status") is injected as "name" into
+   * the child node before the recursive dispatch, causing the
+   * {@code (value && name)} branch to misroute the value into mapping.
+   */
+  @Test
+  public void deserializeShouldSetValueNotMappingOnNestedPropertyWithValue() throws Exception {
+    String yamlSnippet = """
+        type: object
+        properties:
+          status:
+            type: string
+            value: "ok"
+          greeting:
+            type: string
+            value: "Hello, {{name}}!"
+        """;
+
+    ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+    OutputParameterSpec spec = mapper.readValue(yamlSnippet, OutputParameterSpec.class);
+
+    assertEquals("object", spec.getType());
+
+    OutputParameterSpec statusProp = spec.getProperties().stream()
+        .filter(p -> "status".equals(p.getName())).findFirst().orElse(null);
+    assertNotNull(statusProp, "status property should exist");
+    assertEquals("string", statusProp.getType());
+    assertEquals("ok", statusProp.getValue(),
+        "Static value should be set via setValue(), not routed to mapping");
+    assertNull(statusProp.getMapping(),
+        "Mapping should be null for a static-value property");
+
+    OutputParameterSpec greetingProp = spec.getProperties().stream()
+        .filter(p -> "greeting".equals(p.getName())).findFirst().orElse(null);
+    assertNotNull(greetingProp, "greeting property should exist");
+    assertEquals("Hello, {{name}}!", greetingProp.getValue(),
+        "Mustache template value should be set via setValue()");
+    assertNull(greetingProp.getMapping(),
+        "Mapping should be null for a Mustache-template-value property");
+  }
+
+  /**
+   * Ensures that nested properties with {@code mapping} still deserialize
+   * correctly (setMapping), and are not affected by the value-fix.
+   */
+  @Test
+  public void deserializeShouldPreserveMappingOnNestedPropertyWithMapping() throws Exception {
+    String yamlSnippet = """
+        type: object
+        properties:
+          status:
+            type: string
+            mapping: "$.status"
+        """;
+
+    ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+    OutputParameterSpec spec = mapper.readValue(yamlSnippet, OutputParameterSpec.class);
+
+    OutputParameterSpec statusProp = spec.getProperties().stream()
+        .filter(p -> "status".equals(p.getName())).findFirst().orElse(null);
+    assertNotNull(statusProp, "status property should exist");
+    assertEquals("$.status", statusProp.getMapping(),
+        "Mapping should be preserved for properties using mapping");
+    assertNull(statusProp.getValue(),
+        "Value should be null for a mapped property");
+  }
+
+  /**
+   * Regression test: consumed output parameters (with explicit name + value in YAML)
+   * must still route value to mapping for backward compatibility.
+   */
+  @Test
+  public void deserializeShouldRoutValueToMappingForConsumedOutputParameter() throws Exception {
+    String yamlSnippet = """
+        name: userid
+        type: string
+        value: "$.id"
+        """;
+
+    ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+    OutputParameterSpec spec = mapper.readValue(yamlSnippet, OutputParameterSpec.class);
+
+    assertEquals("userid", spec.getName());
+    assertEquals("$.id", spec.getMapping(),
+        "Consumed output parameter value should be routed to mapping");
+  }
+
 }

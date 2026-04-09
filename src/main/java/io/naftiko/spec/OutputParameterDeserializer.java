@@ -22,8 +22,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
- * Custom deserializer for OutputParameterSpec that handles nested structure definitions
- * including properties, items, and values in a polymorphic manner.
+ * Custom deserializer for OutputParameterSpec that handles nested structure definitions including
+ * properties, items, and values in a polymorphic manner.
  */
 public class OutputParameterDeserializer extends JsonDeserializer<OutputParameterSpec> {
 
@@ -100,16 +100,17 @@ public class OutputParameterDeserializer extends JsonDeserializer<OutputParamete
                     try {
                         String propName = entry.getKey();
                         JsonNode propNode = entry.getValue();
-                        
-                        // Inject the property name into the property spec
-                        if (propNode.isObject()) {
-                            ((ObjectNode) propNode).put("name", propName);
-                        }
-                        
+
                         OutputParameterSpec propSpec = deserializeNode(propNode, ctxt);
+                        // Set the name from the property key AFTER deserialization
+                        // so the dispatch logic sees the original node content
+                        if (propSpec.getName() == null) {
+                            propSpec.setName(propName);
+                        }
                         spec.getProperties().add(propSpec);
                     } catch (Exception e) {
-                        throw new RuntimeException("Error deserializing property: " + entry.getKey(), e);
+                        throw new RuntimeException(
+                                "Error deserializing property: " + entry.getKey(), e);
                     }
                 });
             }
