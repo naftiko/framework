@@ -21,7 +21,7 @@ import picocli.CommandLine.Command;
 @Command(
     name = "naftiko",
     mixinStandardHelpOptions = true, 
-    version = "1.0.0-alpha1",
+    version = "1.0.0-alpha2",
     description = "Naftiko CLI",
     subcommands = {CreateCommand.class, ValidateCommand.class}
 )

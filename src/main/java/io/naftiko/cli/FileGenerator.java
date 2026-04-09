@@ -24,8 +24,22 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 public class FileGenerator {
+    private static final String VERSION;
+
+    static {
+        try (InputStream versionStream = FileGenerator.class.getClassLoader().getResourceAsStream("version.properties")) {
+            Properties props = new Properties();
+            props.load(versionStream);
+            String v = props.getProperty("version");
+            VERSION = v.endsWith("-SNAPSHOT") ? v.substring(0, v.length() - "-SNAPSHOT".length()) : v;
+        } catch (IOException e) {
+            throw new ExceptionInInitializerError("Could not load version.properties: " + e.getMessage());
+        }
+    }
+
     public static void generateCapabilityFile(String capabilityName, FileFormat format, String baseUri, String port) throws IOException {
         String templatePath = "templates/capability." + format.pathName + ".mustache";
         String outputFileName = capabilityName + ".naftiko." + format.pathName;
@@ -41,6 +55,7 @@ public class FileGenerator {
         // Render template and write file.
         Template mustache = Mustache.compiler().compile(new InputStreamReader(templateStream));
         Map<String, Object> scope = new HashMap<>();
+        scope.put("version", VERSION);
         scope.put("capabilityName", capabilityName);
         scope.put("port", port);
         scope.put("baseUri", baseUri);
