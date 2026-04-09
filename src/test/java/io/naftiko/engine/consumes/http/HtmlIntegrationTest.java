@@ -50,7 +50,7 @@ public class HtmlIntegrationTest {
     @Test
     public void testCapabilityLoaded() {
         assertNotNull(capability, "Capability should be initialized");
-        assertEquals("1.0.0-alpha1", capability.getSpec().getNaftiko());
+        assertEquals("1.0.0-alpha2", capability.getSpec().getNaftiko());
     }
 
     @Test
