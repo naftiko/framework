@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://naftiko.io/schemas/v1.0.0-alpha2/naftiko.json",
+  "$id": "https://naftiko.io/schemas/v1.0.0-alpha5/naftiko.json",
   "name": "Naftiko Specification",
   "description": "This Schema should be used to describe and validate Naftiko Capabilities",
   "type": "object",
@@ -8,7 +8,7 @@
     "naftiko": {
       "type": "string",
       "description": "Version of the Naftiko specification",
-      "const": "1.0.0-alpha2"
+      "const": "1.0.0-alpha5"
     },
     "info": {
       "$ref": "#/$defs/Info"
@@ -267,7 +267,7 @@
           "description": "JsonPath expression to extract the value. E.g. $.properties.Name.title[0].text.content"
         },
         "const": {
-          "description": "Schema-level constant for validation and linting. Not used at runtime for value injection — use 'value' instead.",
+          "description": "Schema-level constant for validation and linting. Not used at runtime for value injection \u2014 use 'value' instead.",
           "oneOf": [
             {
               "type": "string"
@@ -1955,7 +1955,7 @@
     },
     "ExposesSkill": {
       "type": "object",
-      "description": "Skill server adapter — metadata and catalog layer. Skills declare tools derived from sibling api or mcp adapters or defined as local file instructions. Does not execute tools.",
+      "description": "Skill server adapter \u2014 metadata and catalog layer. Skills declare tools derived from sibling api or mcp adapters or defined as local file instructions. Does not execute tools.",
       "properties": {
         "type": {
           "type": "string",

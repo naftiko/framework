@@ -1,4 +1,4 @@
-naftiko: "1.0.0-alpha2"
+naftiko: "1.0.0-alpha5"
 consumes:
   - namespace: registry
     type: http
