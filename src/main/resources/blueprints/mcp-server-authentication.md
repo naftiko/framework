@@ -36,7 +36,7 @@
 
 Authentication support for the MCP server adapter, adding two complementary authentication modes:
 
-1. **`authentication` with existing types** (bearer, apikey, basic, digest) — Reuse the same `Authentication` union already defined for `ExposesRest` and `ExposesSkill`. The engine validates incoming `Authorization` headers on every HTTP request to the MCP endpoint before dispatching to `JettyStreamableHandler`. This covers the common case of a shared secret, API key, or static bearer token protecting the MCP server — identical to how the REST adapter works today.
+1. **`authentication` with existing types** (bearer, apikey, basic, digest) — Reuse the same `Authentication` union already defined for `ExposesRest` and `ExposesSkill`. The engine validates incoming `Authorization` headers on every HTTP request to the MCP endpoint before dispatching to `McpServerResource`. This covers the common case of a shared secret, API key, or static bearer token protecting the MCP server — identical to how the REST adapter works today.
 
 2. **`authentication` with new `oauth2` type** — A new `AuthOAuth2` schema definition that aligns with the [MCP 2025-11-25 Authorization specification](https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization). The MCP server acts as an OAuth 2.1 resource server: it validates bearer tokens issued by an external authorization server, serves Protected Resource Metadata (RFC 9728), and returns proper `WWW-Authenticate` challenges on `401`/`403`. This is the protocol-native authorization mode for MCP over Streamable HTTP.
 
@@ -57,15 +57,15 @@ Authentication support for the MCP server adapter, adding two complementary auth
 | **Secure remote deployment** | MCP servers can be deployed on public endpoints with OAuth protection | Operations, InfoSec |
 | **Parity with REST adapter** | Same auth UX for all adapter types — configure once in YAML | Capability authors |
 | **Enterprise readiness** | Integration with corporate IdPs (Keycloak, Entra ID, Okta) via standard OAuth 2.1 | Enterprise teams |
-| **Zero-code security** | Declarative authentication — no custom Jetty filters or middleware | Developers |
+| **Zero-code security** | Declarative authentication — no custom filters or middleware | Developers |
 
 ### Key Design Decisions
 
-1. **Two-tier authentication model**: Simple static credentials (bearer/apikey/basic/digest) reuse the existing `Authentication` union and `ServerAuthenticationFilter` pattern from the REST adapter. OAuth 2.1 adds a new `AuthOAuth2` type for protocol-native MCP authorization.
+1. **Two-tier authentication model**: Simple static credentials (bearer/apikey/basic/digest) reuse the existing `Authentication` union and `ServerAuthenticationRestlet` pattern from the REST adapter. OAuth 2.1 adds a new `AuthOAuth2` type for protocol-native MCP authorization.
 
-2. **Jetty Handler chain**: Authentication is implemented as a Jetty `Handler` wrapper that intercepts requests before `JettyStreamableHandler`, mirroring the REST adapter's filter-before-router pattern but using Jetty's handler model instead of Restlet's filter chain.
+2. **Restlet filter chain**: Authentication is implemented as a Restlet `Restlet` wrapper that intercepts requests before the `Router` → `McpServerResource` chain, following the same filter-before-router pattern used by the REST and Skill adapters.
 
-3. **Protected Resource Metadata is auto-served**: When `oauth2` authentication is configured, the engine auto-serves the `/.well-known/oauth-protected-resource` endpoint with metadata derived from the YAML configuration — no manual metadata file needed.
+3. **Protected Resource Metadata is auto-served**: When `oauth2` authentication is configured, the engine auto-serves the `/.well-known/oauth-protected-resource` endpoint via additional routes on the `Router` — no manual metadata file needed.
 
 4. **`WWW-Authenticate` challenges follow the spec**: On `401 Unauthorized`, the server includes the `resource_metadata` URL and optional `scope` in the `WWW-Authenticate: Bearer` header, as required by RFC 9728 and MCP 2025-11-25.
 
@@ -165,8 +165,8 @@ ExposesMcp
 ├── resources[]
 └── prompts[]
 
-Jetty HTTP Chain:
-  Server → ServerConnector → JettyStreamableHandler → ProtocolDispatcher
+Restlet HTTP Chain:
+  Server → Router → McpServerResource → ProtocolDispatcher
   (no authentication)
 ```
 
@@ -185,12 +185,12 @@ ExposesMcp
 ├── resources[]
 └── prompts[]
 
-Jetty HTTP Chain (with static auth):
-  Server → ServerConnector → McpAuthenticationHandler → JettyStreamableHandler
+Restlet HTTP Chain (with static auth):
+  Server → ServerAuthenticationRestlet → Router → McpServerResource
   (same pattern as REST adapter's ServerAuthenticationRestlet wrapping Router)
 
-Jetty HTTP Chain (with OAuth2 auth):
-  Server → ServerConnector → McpOAuth2Handler → JettyStreamableHandler
+Restlet HTTP Chain (with OAuth2 auth):
+  Server → McpOAuth2Restlet → Router → McpServerResource
   (validates JWT, serves /.well-known/oauth-protected-resource)
 ```
 
@@ -214,15 +214,15 @@ ExposesRest                        ExposesMcp                         ExposesSki
 ├─ resources[]                     ├─ tools[]                          ├─ skills[]
 │  └─ operations[]                 ├─ resources[]                      │
 └─ (Restlet filter chain)          └─ prompts[]                        └─ (Restlet filter chain)
-                                      (Jetty handler chain)
+                                      (Restlet filter chain)
 
 Filter/Handler flow:
 
 REST:   ChallengeAuthenticator ──→ Router ──→ ResourceRestlet
         ServerAuthenticationRestlet ──→ Router ──→ ResourceRestlet
 
-MCP:    McpAuthenticationHandler ──→ JettyStreamableHandler ──→ ProtocolDispatcher
-        McpOAuth2Handler ──→ JettyStreamableHandler ──→ ProtocolDispatcher
+MCP:    ServerAuthenticationRestlet ──→ Router ──→ McpServerResource ──→ ProtocolDispatcher
+        McpOAuth2Restlet ──→ Router ──→ McpServerResource ──→ ProtocolDispatcher
 ```
 
 ### Conceptual mapping
@@ -230,9 +230,9 @@ MCP:    McpAuthenticationHandler ──→ JettyStreamableHandler ──→ Prot
 | Concept | REST Adapter | MCP Adapter (proposed) |
 |---------|-------------|------------------------|
 | Auth config location | `exposes[].authentication` | `exposes[].authentication` |
-| Static credential validation | `ServerAuthenticationRestlet` | `McpAuthenticationHandler` |
-| HTTP challenge (basic/digest) | Restlet `ChallengeAuthenticator` | Jetty `McpAuthenticationHandler` |
-| OAuth2 resource server | Not supported | `McpOAuth2Handler` (new) |
+| Static credential validation | `ServerAuthenticationRestlet` | `ServerAuthenticationRestlet` (reused) |
+| HTTP challenge (basic/digest) | Restlet `ChallengeAuthenticator` | Restlet `ChallengeAuthenticator` (reused) |
+| OAuth2 resource server | Not supported | `McpOAuth2Restlet` (new) |
 | Credential source | `binds` → environment vars | `binds` → environment vars |
 | Timing-safe comparison | `MessageDigest.isEqual()` | `MessageDigest.isEqual()` |
 | Transport applicability | HTTP only | HTTP only (skip for stdio) |
@@ -577,45 +577,49 @@ capability:
 
 ### 9.1 Authentication Handler Insertion
 
-`McpServerAdapter.initHttpTransport()` currently sets `JettyStreamableHandler` directly on the Jetty server. With authentication, the chain becomes:
+`McpServerAdapter.initHttpTransport()` currently passes the `Router` directly to `initServer()`. With authentication, a `buildServerChain()` method wraps the router — identical to the REST adapter's pattern:
 
 ```java
 // Pseudocode — current
-server.setHandler(new JettyStreamableHandler(this));
+Router router = new Router(context);
+router.attachDefault(McpServerResource.class);
+initServer(address, port, router);
 
 // Pseudocode — proposed
-Handler mcpHandler = new JettyStreamableHandler(this);
-if (spec.authentication() != null) {
-    mcpHandler = buildAuthHandler(spec.authentication(), mcpHandler);
-}
-server.setHandler(mcpHandler);
+Router router = new Router(context);
+router.attachDefault(McpServerResource.class);
+Restlet chain = buildServerChain(serverSpec, router);
+initServer(address, port, chain);
 ```
 
-Where `buildAuthHandler` returns:
-- `McpAuthenticationHandler` for static types (bearer, apikey, basic, digest)
-- `McpOAuth2Handler` for `oauth2`
+Where `buildServerChain` returns:
+- `ServerAuthenticationRestlet` wrapping the router for static types (bearer, apikey)
+- Restlet `ChallengeAuthenticator` wrapping the router for basic/digest
+- `McpOAuth2Restlet` wrapping the router for `oauth2`
 
-Both wrap the downstream handler and intercept requests before they reach `JettyStreamableHandler`.
+The static authentication path reuses `ServerAuthenticationRestlet` directly — no MCP-specific class needed.
 
-### 9.2 Static Authentication Handler (`McpAuthenticationHandler`)
+### 9.2 Static Authentication (reuses `ServerAuthenticationRestlet`)
 
-A Jetty `Handler.Wrapper` that:
+The existing `ServerAuthenticationRestlet` is reused directly — no MCP-specific authentication class is needed for static credentials. The Restlet sits before the `Router` in the chain:
 
-1. Extracts credentials from the HTTP request (same logic as `ServerAuthenticationRestlet`)
+1. Extracts credentials from the HTTP request (bearer token or API key)
 2. Resolves `{{VARIABLE}}` templates from environment, restricted to `binds`-declared keys
 3. Compares using `MessageDigest.isEqual()` (timing-safe)
-4. On success: delegates to wrapped handler (`JettyStreamableHandler`)
+4. On success: delegates to the next `Restlet` (the `Router` → `McpServerResource`)
 5. On failure: returns `401 Unauthorized` with appropriate challenge header
 
+For basic/digest authentication, the existing Restlet `ChallengeAuthenticator` is reused, again following the same pattern as the REST adapter.
+
 ```
-Request → McpAuthenticationHandler
-           ├─ Valid credentials → JettyStreamableHandler → ProtocolDispatcher
+Request → ServerAuthenticationRestlet
+           ├─ Valid credentials → Router → McpServerResource → ProtocolDispatcher
            └─ Invalid/missing  → 401 Unauthorized
 ```
 
-### 9.3 OAuth 2.1 Handler (`McpOAuth2Handler`)
+### 9.3 OAuth 2.1 Handler (`McpOAuth2Restlet`)
 
-A Jetty `Handler.Wrapper` that implements the resource server side of MCP 2025-11-25 authorization:
+A Restlet `Restlet` subclass that implements the resource server side of MCP 2025-11-25 authorization. It wraps the `Router` in the same position as `ServerAuthenticationRestlet`:
 
 **Initialization:**
 1. Fetch AS metadata from `authorizationServerUrl` (try `.well-known/oauth-authorization-server` then `.well-known/openid-configuration`)
@@ -625,12 +629,12 @@ A Jetty `Handler.Wrapper` that implements the resource server side of MCP 2025-1
 **Request handling:**
 
 ```
-Request → McpOAuth2Handler
+Request → McpOAuth2Restlet
            ├─ GET /.well-known/oauth-protected-resource → Return metadata JSON
            ├─ No Authorization header → 401 + WWW-Authenticate
            ├─ Invalid/expired token → 401 + WWW-Authenticate
            ├─ Insufficient scope → 403 + WWW-Authenticate (insufficient_scope)
-           └─ Valid token → JettyStreamableHandler → ProtocolDispatcher
+           └─ Valid token → Router → McpServerResource → ProtocolDispatcher
 ```
 
 **Token validation (JWKS mode):**
@@ -768,11 +772,11 @@ Additional cross-field validations:
 
 **Alternative considered**: A single `Authentication` union with all five types, and adapter-level validation rules rejecting `oauth2` on REST/Skill. Rejected because schema-level enforcement is stronger than rule-level enforcement, and because OAuth2 may eventually need different configuration for REST (e.g., token relay) vs. MCP (resource server).
 
-### D2: Jetty Handler chain vs. Servlet Filter
+### D2: Restlet filter chain — reuse `ServerAuthenticationRestlet`
 
-**Decision**: Implement authentication as a Jetty `Handler.Wrapper`.
+**Decision**: Reuse the existing `ServerAuthenticationRestlet` for static credentials and implement `McpOAuth2Restlet` as a new `Restlet` subclass for OAuth 2.1.
 
-**Rationale**: The MCP adapter already uses Jetty's Handler model (not Servlets). `JettyStreamableHandler` extends `Handler.Abstract`. Wrapping it with another handler is the natural Jetty pattern and avoids introducing a Servlet context just for authentication.
+**Rationale**: The MCP adapter now uses the Restlet framework for HTTP transport, the same as the REST and Skill adapters. `ServerAuthenticationRestlet` already implements bearer and API key validation with timing-safe comparison. Reusing it directly avoids code duplication and ensures consistent authentication behavior across all three adapter types. OAuth 2.1 requires MCP-specific logic (Protected Resource Metadata, JWT validation) that justifies a dedicated class.
 
 ### D3: No per-tool scope mapping
 
@@ -807,10 +811,10 @@ Additional cross-field validations:
 **Bring MCP authentication to parity with REST adapter for the simplest cases.**
 
 1. Add `authentication` property to `ExposesMcp` in JSON schema (use existing `Authentication` union first; `McpAuthentication` union comes in Phase 2)
-2. Create `McpAuthenticationHandler` (Jetty `Handler.Wrapper`) — port logic from `ServerAuthenticationRestlet` to Jetty handler model
-3. Wire into `McpServerAdapter.initHttpTransport()` — insert handler before `JettyStreamableHandler`
+2. Add `buildServerChain()` to `McpServerAdapter` — reuse `ServerAuthenticationRestlet` and `ChallengeAuthenticator` from the REST adapter, wrapping the `Router` before `McpServerResource`
+3. Wire into `McpServerAdapter.initHttpTransport()` — insert authentication restlet before the `Router`
 4. Add Spectral rule `naftiko-mcp-auth-stdio-conflict`
-5. Tests: unit tests for handler, integration test with bearer-protected MCP server
+5. Tests: unit tests for chain wiring, integration test with bearer-protected MCP server
 
 ### Phase 2: OAuth 2.1 Resource Server
 
@@ -818,7 +822,7 @@ Additional cross-field validations:
 
 1. Add `AuthOAuth2` definition to JSON schema
 2. Replace `Authentication` ref on `ExposesMcp` with `McpAuthentication` union
-3. Create `McpOAuth2Handler`:
+3. Create `McpOAuth2Restlet`:
    - AS metadata discovery (RFC 8414)
    - JWKS fetching and caching
    - JWT validation (signature, expiry, issuer, audience)
@@ -831,7 +835,7 @@ Additional cross-field validations:
 
 **Extended OAuth features.**
 
-1. Add introspection support to `McpOAuth2Handler` (RFC 7662)
+1. Add introspection support to `McpOAuth2Restlet` (RFC 7662)
 2. Implement `403` scope challenge responses
 3. Origin header validation for DNS rebinding prevention
 4. JWKS cache key rotation support (unknown-kid refresh)
@@ -849,8 +853,8 @@ Additional cross-field validations:
 
 ### Engine
 
-- `McpServerAdapter` with no `authentication` configured behaves exactly as it does today — no handler inserted, no overhead
-- Existing `JettyStreamableHandler` is not modified — authentication handlers wrap it
+- `McpServerAdapter` with no `authentication` configured behaves exactly as it does today — the `Router` is passed directly to `initServer()`, no overhead
+- Existing `McpServerResource` and `ProtocolDispatcher` are not modified — authentication restlets wrap the `Router`
 
 ### Wire Protocol
 

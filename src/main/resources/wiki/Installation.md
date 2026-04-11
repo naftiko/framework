@@ -1,6 +1,6 @@
-To use Naftiko Framework, you must install and then run its engine.
+To use Naftiko Framework, you need to install and then run the Naftiko Engine, passing a Naftiko YAML file to it. A command-line interface is also provided.
 
-## Docker usage
+## Naftiko Engine
 ### Prerequisites
 * You need Docker or, if you are on macOS or Windows their Docker Desktop version. To do so, follow the official documentation:
   * [For Mac](https://docs.docker.com/desktop/setup/install/mac-install/)
@@ -31,7 +31,7 @@ To use Naftiko Framework, you must install and then run its engine.
   * If your capability refers to some local hosts, be careful to not use 'localhost', but 'host.docker.internal' instead. This is because your capability will run into an isolated docker container, so 'localhost' will refer to the container and not your local machine.\
     For example:
     ```bash
-    baseUri: "http://host.docker.internal:8080/api"
+    baseUri: "http://host.docker.internal:8080/api/"
     ```
   * In the same way, if your capability expose a local host, be careful to not use 'localhost', but '0.0.0.0' instead. Else requests to localhost coming from outside of the container won't succeed.\
     For example:
@@ -53,8 +53,8 @@ To use Naftiko Framework, you must install and then run its engine.
   ```
   Then you should be able to request your capability at http://localhost:8081
 
-## CLI tool
-The Naftiko framework provides a CLI tool.\
+## Naftiko CLI
+The Naftiko Framework also includes a CLI tool.\
 The goal of this CLI is to simplify configuration and validation. While everything can be done manually, the CLI provides helper commands.
 
 ## Installation
