@@ -15,7 +15,6 @@ package io.naftiko.engine.exposes.mcp;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.ServerSocket;
 import java.net.URI;
@@ -29,7 +28,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.naftiko.Capability;
 import io.naftiko.spec.NaftikoSpec;
-import io.naftiko.spec.exposes.McpServerSpec;
 import io.naftiko.util.VersionHelper;
 
 /**
