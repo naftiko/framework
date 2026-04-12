@@ -1,13 +1,15 @@
 # Token Refresh Authentication
 ## Automatic Token Lifecycle Management for Consumed HTTP Adapters
 
-**Status**: Proposed
+**Status**: Proposed (revised)
 
-**Version**: 1.0.0-alpha1
+**Version**: 1.0.0-alpha2
 
-**Date**: April 4, 2026
+**Date**: April 11, 2026
 
 **Parent proposal**: [Aggregates & Ref](https://github.com/naftiko/framework/pull/240)
+
+**Revision note**: Updated for consistency with the OAuth 2.1 resource server authentication implemented in [MCP Server Authentication](https://github.com/naftiko/framework/pull/243). Key changes: renamed client-side type to `oauth2-client` (avoids collision with the existing `type: "oauth2"` used on the exposes side), aligned HTTP client and thread-safety patterns with `OAuth2AuthenticationRestlet`, confirmed no new dependencies are needed, and updated Spectral rule prefixes.
 
 ---
 
@@ -23,9 +25,10 @@
 8. [Implementation Examples](#8-implementation-examples)
 9. [Security Considerations](#9-security-considerations)
 10. [Validation Rules](#10-validation-rules)
-11. [Design Decisions & Rationale](#11-design-decisions--rationale)
-12. [Implementation Roadmap](#12-implementation-roadmap)
-13. [Backward Compatibility](#13-backward-compatibility)
+11. [Existing Infrastructure (Server-Side OAuth2)](#11-existing-infrastructure-server-side-oauth2)
+12. [Design Decisions & Rationale](#12-design-decisions--rationale)
+13. [Implementation Roadmap](#13-implementation-roadmap)
+14. [Backward Compatibility](#14-backward-compatibility)
 
 ---
 
@@ -35,11 +38,13 @@
 
 Extend the `Authentication` union on consumed HTTP adapters with two new auth types that handle automatic token acquisition, caching, and refresh — eliminating the need for external token management scripts or sidecar processes:
 
-1. **`type: "oauth2"` — OAuth 2.0 Client Credentials & Refresh Token flows** — The engine exchanges credentials at a token endpoint for an `access_token`, caches it, tracks `expires_in`, and transparently refreshes before expiry or on `401` response. Supports the two most common OAuth2 grant types for machine-to-machine and delegated-user scenarios.
+1. **`type: "oauth2-client"` — OAuth 2.0 Client Credentials & Refresh Token flows** — The engine exchanges credentials at a token endpoint for an `access_token`, caches it, tracks `expires_in`, and transparently refreshes before expiry or on `401` response. Supports the two most common OAuth2 grant types for machine-to-machine and delegated-user scenarios.
 
 2. **`type: "custom-token"` — Proprietary token endpoint flows** — For APIs that use non-standard authentication (custom login endpoints, session tokens, JWT exchange) the engine calls a user-defined consumed operation to obtain a token, extracts the token and optional TTL from the response, and applies the same cache-and-refresh lifecycle.
 
 Both types integrate with the existing `binds` system for secret injection and the existing `Resolver.resolveMustacheTemplate()` pipeline for value resolution. No changes to the orchestration engine (`steps`/`call`/`with`) are needed — token management is handled internally by `HttpClientAdapter` before any request is dispatched.
+
+> **Naming note**: The type is `oauth2-client` (not `oauth2`) because `type: "oauth2"` already exists in the shared `Authentication` union — it is used on the **exposes** side for OAuth 2.1 resource server authentication (JWT validation via JWKS). The `-client` suffix makes the directionality explicit: this type *acquires* tokens as a client, while the existing `oauth2` type *validates* tokens as a server.
 
 ### What This Does NOT Do
 
@@ -47,7 +52,7 @@ Both types integrate with the existing `binds` system for secret injection and t
 - **No PKCE** — Proof Key for Code Exchange is relevant only for public clients with interactive flows.
 - **No Device Authorization Grant** — device code flows require user interaction on a secondary device.
 - **No token persistence across restarts** — tokens are cached in memory only. On restart, the engine re-acquires tokens. Persistent token storage (encrypted file, external vault) is a future extension.
-- **No changes to exposed adapter authentication** — this proposal targets the consumes (outbound) side only.
+- **No changes to exposed adapter authentication** — OAuth 2.1 resource server auth (`type: "oauth2"`) is already implemented on the exposes side (`OAuth2AuthenticationRestlet`, `McpOAuth2Restlet`). This proposal targets the consumes (outbound) side only.
 - **No changes to CI/CD workflows** or branch protection rules.
 
 ### Business Value
@@ -68,9 +73,11 @@ Both types integrate with the existing `binds` system for secret injection and t
 
 3. **One token per consumed adapter**: Each `consumes` entry with an `oauth2` or `custom-token` authentication block manages its own independent token lifecycle. No sharing across namespaces.
 
-4. **Thread-safe, lazy acquisition**: The first request triggers token acquisition. Concurrent requests wait for the same acquisition (no thundering herd). Subsequent requests reuse the cached token until refresh is needed.
+4. **Thread-safe, lazy acquisition**: The first request triggers token acquisition. Concurrent requests wait for the same acquisition (no thundering herd). Subsequent requests reuse the cached token until refresh is needed. This mirrors the lazy-initialization pattern already established by `OAuth2AuthenticationRestlet.ensureInitialized()` on the server side.
 
 5. **`custom-token` reuses consumed operations**: Instead of inventing a new HTTP call mechanism for proprietary auth endpoints, `custom-token` references an existing consumed operation via `call`. This is consistent with how webhooks reuse consumed operations for registration.
+
+6. **Consistent HTTP client**: Token endpoint calls use the Restlet `Client` — the same HTTP client already used by `HttpClientAdapter` for all consumed API calls. This keeps the consumes side on a single HTTP stack and avoids mixing Restlet with `java.net.http`.
 
 ### Risk Assessment
 
@@ -198,7 +205,7 @@ This defeats the "zero-glue" promise of Naftiko.
 ```
                              ┌──────────────────────────────┐
                              │  Naftiko Engine               │
-                             │  (oauth2 / custom-token)      │
+                             │  (oauth2-client / custom-token) │
                              │                                │
                              │  ┌──────────────────────────┐ │
                              │  │  TokenManager             │ │
@@ -228,13 +235,13 @@ This defeats the "zero-glue" promise of Naftiko.
 
 The existing `type: "bearer"` authentication is like a physical key: you cut it once, it works until the lock is changed, and if it breaks you need a locksmith (manual token rotation).
 
-The proposed `type: "oauth2"` authentication is like a hotel key card system: you check in (client credentials), get a card (access token) that works for a limited time (expires_in), and when it expires you go back to the front desk (token endpoint) to get a new one — automatically, without checking out and back in.
+The proposed `type: "oauth2-client"` authentication is like a hotel key card system: you check in (client credentials), get a card (access token) that works for a limited time (expires_in), and when it expires you go back to the front desk (token endpoint) to get a new one — automatically, without checking out and back in.
 
 The `type: "custom-token"` authentication is like a building's custom badge system: the protocol is specific to the building, but the pattern is the same — present credentials, receive a time-limited badge, renew when it expires.
 
 ### In Naftiko Terms
 
-| Concept | Bearer (current) | OAuth2 / Custom-Token (proposed) |
+| Concept | Bearer (current) | OAuth2-Client / Custom-Token (proposed) |
 |---------|------------------|----------------------------------|
 | **Token source** | Static value from `binds` | Dynamically acquired from token endpoint |
 | **Token lifetime** | Unlimited (until external rotation) | Tracked via `expires_in` or TTL |
@@ -248,7 +255,7 @@ The `type: "custom-token"` authentication is like a building's custom badge syst
 
 ### 5.1 Token Manager
 
-A new internal component in `HttpClientAdapter` responsible for the token lifecycle. One `TokenManager` per consumed adapter with `oauth2` or `custom-token` authentication.
+A new internal component in `HttpClientAdapter` responsible for the token lifecycle. One `TokenManager` per consumed adapter with `oauth2-client` or `custom-token` authentication.
 
 **Responsibilities**:
 - **Acquire**: Call the token endpoint on first use (lazy initialization)
@@ -341,7 +348,7 @@ This handles edge cases: token revoked server-side, clock skew causing early exp
 
 ### 6.1 Updated `Authentication` Union
 
-Add two new variants to the existing `oneOf`:
+Add two new variants to the existing `oneOf` (which already contains `AuthOAuth2` for server-side resource server auth):
 
 ```json
 "Authentication": {
@@ -352,21 +359,24 @@ Add two new variants to the existing `oneOf`:
     { "$ref": "#/$defs/AuthBearer" },
     { "$ref": "#/$defs/AuthDigest" },
     { "$ref": "#/$defs/AuthOAuth2" },
+    { "$ref": "#/$defs/AuthOAuth2Client" },
     { "$ref": "#/$defs/AuthCustomToken" }
   ]
 }
 ```
 
-### 6.2 `AuthOAuth2`
+> **Design note**: `AuthOAuth2` (server-side, for exposes) and `AuthOAuth2Client` (client-side, for consumes) are both in the shared union. The engine dispatches based on `type` — `"oauth2"` routes to `OAuth2AuthenticationRestlet` on the server side; `"oauth2-client"` routes to `TokenManager` on the client side. A Spectral rule ensures `oauth2` is not used on `consumes` and `oauth2-client` is not used on `exposes`.
+
+### 6.2 `AuthOAuth2Client`
 
 ```json
-"AuthOAuth2": {
+"AuthOAuth2Client": {
   "type": "object",
-  "description": "OAuth 2.0 authentication with automatic token acquisition and refresh.",
+  "description": "OAuth 2.0 client authentication with automatic token acquisition and refresh. The engine exchanges credentials at a token endpoint, caches the access token, and refreshes it proactively before expiry or reactively on 401.",
   "properties": {
     "type": {
       "type": "string",
-      "const": "oauth2"
+      "const": "oauth2-client"
     },
     "grantType": {
       "type": "string",
@@ -412,7 +422,32 @@ Add two new variants to the existing `oneOf`:
 }
 ```
 
-### 6.3 `AuthCustomToken`
+### 6.3 Existing `AuthOAuth2` (Server-Side — Unchanged)
+
+For reference, the existing `AuthOAuth2` definition (used on the **exposes** side for resource server JWT validation) remains unchanged:
+
+```json
+"AuthOAuth2": {
+  "type": "object",
+  "description": "OAuth 2.1 resource server authentication. The server validates bearer tokens issued by an external authorization server.",
+  "properties": {
+    "type": { "const": "oauth2" },
+    "authorizationServerUrl": { "type": "string", "format": "uri" },
+    "resource": { "type": "string", "format": "uri" },
+    "scopes": { "type": "array", "items": { "type": "string" } },
+    "audience": { "type": "string" },
+    "tokenValidation": { "enum": ["jwks", "introspection"], "default": "jwks" }
+  },
+  "required": ["type", "authorizationServerUrl", "resource"],
+  "additionalProperties": false
+}
+```
+
+The two definitions have no overlapping fields (except `type`) and serve opposite directions:
+- `AuthOAuth2` (exposes): "validate incoming tokens from an authorization server"
+- `AuthOAuth2Client` (consumes): "acquire outgoing tokens from an authorization server"
+
+### 6.4 `AuthCustomToken`
 
 ```json
 "AuthCustomToken": {
@@ -474,9 +509,11 @@ Add two new variants to the existing `oneOf`:
 }
 ```
 
-### 6.4 Schema Design Notes
+### 6.5 Schema Design Notes
 
-**Why `grantType` uses kebab-case (`client-credentials`) instead of the OAuth2 spec's snake_case (`client_credentials`)**: Consistency with the Naftiko schema convention. The engine maps internally to the wire format (`grant_type=client_credentials`) when constructing the token request.
+**Why `oauth2-client` and not just `oauth2`**: The `Authentication` union (`#/$defs/Authentication`) is shared between `exposes` and `consumes` in the Naftiko schema. The type `"oauth2"` is already claimed by `AuthOAuth2` for server-side resource server authentication (JWT validation via JWKS, implemented in `OAuth2AuthenticationRestlet`). Using the same type name with different fields would create ambiguity in the schema `oneOf` discriminator and in Jackson's `@JsonSubTypes` mapping. The `-client` suffix makes the directionality explicit and avoids all collision.
+
+**Why `grantType` uses kebab-case (`client-credentials`) instead of the OAuth2 spec's snake_case (`client_credentials`)**: Consistency with the Naftiko schema convention (`IdentifierKebab`). The engine maps internally to the wire format (`grant_type=client_credentials`) when constructing the token request.
 
 **Why `tokenEndpoint` is a standalone URL (not a consumed operation)**: OAuth2 token endpoints follow a standardized protocol (RFC 6749 §5). The engine knows exactly how to call them — there is no value in forcing the user to declare a consumed resource/operation for a well-defined endpoint. This also avoids circular authentication (the token endpoint itself would need auth to call).
 
@@ -488,17 +525,19 @@ Add two new variants to the existing `oneOf`:
 
 ### 7.1 `HttpClientAdapter` Extensions
 
-The core change is in `HttpClientAdapter.setChallengeResponse()`. Today, it reads the static token from the spec and applies it. With `oauth2` and `custom-token`, it delegates to the token manager:
+The core change is in `HttpClientAdapter.setChallengeResponse()`. Today, it reads the static token from the spec and applies it. With `oauth2-client` and `custom-token`, it delegates to the token manager:
 
 ```
 setChallengeResponse()
-  ├── "basic"     → (unchanged) static credentials
-  ├── "digest"    → (unchanged) static credentials
-  ├── "bearer"    → (unchanged) static token from spec
-  ├── "apikey"    → (unchanged) static key/value from spec
-  ├── "oauth2"    → tokenManager.getValidToken() → apply as Bearer
-  └── "custom-token" → tokenManager.getValidToken() → apply per placement
+  ├── "basic"         → (unchanged) static credentials
+  ├── "digest"        → (unchanged) static credentials
+  ├── "bearer"        → (unchanged) static token from spec
+  ├── "apikey"        → (unchanged) static key/value from spec
+  ├── "oauth2-client" → tokenManager.getValidToken() → apply as Bearer
+  └── "custom-token"  → tokenManager.getValidToken() → apply per placement
 ```
+
+The new `case "oauth2-client"` branch follows the same structure as the existing `case "bearer"` — it builds a `ChallengeResponse(ChallengeScheme.HTTP_OAUTH_BEARER)` and sets the raw value. The only difference is that the token comes from `TokenManager` rather than a static spec field.
 
 ### 7.2 Token Manager Lifecycle
 
@@ -545,7 +584,7 @@ execute(call, steps, parameters, entityLabel)
   ├── found.handle()
   │     └── response = HTTP call
   │
-  ├── if response.status == 401 AND auth is oauth2|custom-token:
+  ├── if response.status == 401 AND auth is oauth2-client|custom-token:
   │     ├── tokenManager.handleUnauthorized()  ← re-acquire token
   │     ├── rebuild request with new token
   │     ├── retry handle()
@@ -558,9 +597,11 @@ This is a single retry (not a loop). The retry flag is tracked per-request to pr
 
 ### 7.4 Thread Safety
 
+The server-side `OAuth2AuthenticationRestlet` already establishes the thread-safety pattern for the framework: `synchronized` blocks for initialization and refresh, `volatile` fields for cached state, and a double-check idiom to avoid redundant work. The client-side `TokenManager` follows the same pattern for consistency:
+
 ```java
 class TokenManager {
-    private final ReentrantLock lock = new ReentrantLock();
+    private final Object tokenLock = new Object();
     private volatile String accessToken;
     private volatile Instant expiresAt;
     private volatile String refreshToken;  // may be rotated by the server
@@ -569,26 +610,23 @@ class TokenManager {
         if (accessToken != null && !isExpiringSoon()) {
             return accessToken;
         }
-        lock.lock();
-        try {
+        synchronized (tokenLock) {
             // Double-check after acquiring lock
             if (accessToken != null && !isExpiringSoon()) {
                 return accessToken;
             }
             acquireToken(parameters);
             return accessToken;
-        } finally {
-            lock.unlock();
         }
     }
 }
 ```
 
-The double-check pattern ensures that if multiple threads detect an expired token simultaneously, only one performs the refresh. The others wait on the lock and then find a valid token.
+This is the same double-check pattern used by `OAuth2AuthenticationRestlet.ensureInitialized()` (with `initLock`) and `refreshJwkSet()` (with `jwkRefreshLock`). Using `synchronized` + `volatile` rather than `ReentrantLock` keeps the concurrency model uniform across the codebase.
 
 ### 7.5 Token Acquisition — OAuth2
 
-For `type: "oauth2"`, the engine constructs a standard form-encoded POST to the `tokenEndpoint`:
+For `type: "oauth2-client"`, the engine constructs a standard form-encoded POST to the `tokenEndpoint` using the Restlet `Client` — the same HTTP client already used by `HttpClientAdapter` for all consumed API calls. The `TokenManager` reuses the adapter's existing `Client` instance (`httpClient`) rather than creating a separate HTTP stack. This keeps the consumes side on a single HTTP library and benefits from any proxy, TLS, or connection-pool configuration already applied to the adapter.
 
 **Client Credentials:**
 ```
@@ -626,7 +664,7 @@ For `type: "custom-token"`, the engine delegates to the consumed operation refer
 6. Extract the TTL using `acquire.expiresInField` (JsonPath, optional)
 7. Cache and apply
 
-**Circular dependency guard**: The consumed adapter referenced by `acquire.call` must NOT itself use `oauth2` or `custom-token` authentication. If it does, the engine throws a startup error. This is validated at capability load time, not at runtime.
+**Circular dependency guard**: The consumed adapter referenced by `acquire.call` must NOT itself use `oauth2-client` or `custom-token` authentication. If it does, the engine throws a startup error. This is validated at capability load time, not at runtime.
 
 ---
 
@@ -635,7 +673,7 @@ For `type: "custom-token"`, the engine delegates to the consumed operation refer
 ### 8.1 Salesforce — OAuth2 Client Credentials
 
 ```yaml
-naftiko: "1.0.0-alpha1"
+naftiko: "1.0.0-alpha2"
 
 info:
   label: "Salesforce Integration"
@@ -685,7 +723,7 @@ capability:
       namespace: "salesforce"
       baseUri: "{{SF_INSTANCE_URL}}/services/data/v59.0"
       authentication:
-        type: "oauth2"
+        type: "oauth2-client"
         grantType: "client-credentials"
         tokenEndpoint: "{{SF_INSTANCE_URL}}/services/oauth2/token"
         clientId: "{{SF_CLIENT_ID}}"
@@ -709,7 +747,7 @@ capability:
 ### 8.2 Microsoft Graph — OAuth2 with Scopes
 
 ```yaml
-naftiko: "1.0.0-alpha1"
+naftiko: "1.0.0-alpha2"
 
 info:
   label: "Microsoft Graph Users"
@@ -754,7 +792,7 @@ capability:
       namespace: "ms-graph"
       baseUri: "https://graph.microsoft.com/v1.0"
       authentication:
-        type: "oauth2"
+        type: "oauth2-client"
         grantType: "client-credentials"
         tokenEndpoint: "https://login.microsoftonline.com/{{AZURE_TENANT_ID}}/oauth2/v2.0/token"
         clientId: "{{AZURE_CLIENT_ID}}"
@@ -775,7 +813,7 @@ capability:
 ### 8.3 HubSpot — OAuth2 Refresh Token
 
 ```yaml
-naftiko: "1.0.0-alpha1"
+naftiko: "1.0.0-alpha2"
 
 info:
   label: "HubSpot CRM Integration"
@@ -819,7 +857,7 @@ capability:
       namespace: "hubspot"
       baseUri: "https://api.hubapi.com/crm/v3"
       authentication:
-        type: "oauth2"
+        type: "oauth2-client"
         grantType: "refresh-token"
         tokenEndpoint: "https://api.hubapi.com/oauth/v1/token"
         clientId: "{{HUBSPOT_CLIENT_ID}}"
@@ -840,7 +878,7 @@ capability:
 ### 8.4 Enterprise API — Custom Token Endpoint
 
 ```yaml
-naftiko: "1.0.0-alpha1"
+naftiko: "1.0.0-alpha2"
 
 info:
   label: "Enterprise Inventory API"
@@ -975,13 +1013,13 @@ If rotation fails (old refresh token rejected, new one not received), the engine
 
 ### 9.5 Circular Authentication Prevention
 
-If `custom-token.acquire.call` references an operation on a consumed adapter that itself uses `oauth2` or `custom-token`, the engine would enter an infinite loop trying to authenticate. This MUST be detected at startup:
+If `custom-token.acquire.call` references an operation on a consumed adapter that itself uses `oauth2-client` or `custom-token`, the engine would enter an infinite loop trying to authenticate. This MUST be detected at startup:
 
 ```
 Load capability
   → For each consumed adapter with custom-token auth:
     → Resolve acquire.call to target consumed adapter
-    → If target.authentication.type ∈ {oauth2, custom-token}:
+    → If target.authentication.type ∈ {oauth2-client, custom-token}:
       → FAIL: "Circular authentication dependency: {source} → {target}"
 ```
 
@@ -991,13 +1029,17 @@ Load capability
 
 ### 10.1 Spectral Rules
 
+Rules for client-side token refresh use the `naftiko-oauth2-client-*` prefix to distinguish them from the existing server-side `naftiko-oauth2-*` rules (e.g. `naftiko-oauth2-https-authserver`, `naftiko-oauth2-resource-https`, `naftiko-oauth2-scopes-defined`).
+
 | Rule ID | Severity | Description |
 |---------|----------|-------------|
-| `naftiko-oauth2-token-endpoint-https` | error | `tokenEndpoint` must start with `https://` |
-| `naftiko-oauth2-refresh-token-required` | error | `refreshToken` required when `grantType` is `refresh-token` |
+| `naftiko-oauth2-client-token-endpoint-https` | error | `tokenEndpoint` must start with `https://` |
+| `naftiko-oauth2-client-refresh-token-required` | error | `refreshToken` required when `grantType` is `refresh-token` |
 | `naftiko-oauth2-client-secret-template` | warn | `clientSecret` should use a Mustache template (not a literal value) |
+| `naftiko-oauth2-client-not-on-exposes` | error | `type: "oauth2-client"` must not be used on an exposes adapter |
+| `naftiko-oauth2-server-not-on-consumes` | error | `type: "oauth2"` must not be used on a consumes adapter |
 | `naftiko-custom-token-no-self-ref` | error | `acquire.call` must not reference an operation on the same consumed adapter |
-| `naftiko-custom-token-no-circular-auth` | error | `acquire.call` target must not itself use `oauth2` or `custom-token` auth |
+| `naftiko-custom-token-no-circular-auth` | error | `acquire.call` target must not itself use `oauth2-client` or `custom-token` auth |
 | `naftiko-custom-token-placement-header` | error | `headerName` required when `placement` is `header` |
 | `naftiko-custom-token-placement-query` | error | `paramName` required when `placement` is `query` |
 
@@ -1010,17 +1052,61 @@ Beyond Spectral (which validates YAML structure), the engine performs runtime va
 
 ---
 
-## 11. Design Decisions & Rationale
+## 11. Existing Infrastructure (Server-Side OAuth2)
 
-### 11.1 Why Two Auth Types Instead of One?
+The OAuth 2.1 resource server authentication — already implemented on the exposes side — establishes patterns and provides reusable infrastructure that this proposal builds on directly. No new dependencies are needed.
 
-**Decision**: Separate `oauth2` and `custom-token` types.
+### 11.1 Classes Already Implemented
+
+| Class | Package | Relevance to This Proposal |
+|-------|---------|---------------------------|
+| `OAuth2AuthenticationRestlet` | `io.naftiko.engine.exposes` | Establishes JWKS caching pattern, `synchronized` + `volatile` thread safety, lazy initialization (uses `java.net.http.HttpClient` for metadata — the consumes side uses Restlet `Client` instead for consistency with `HttpClientAdapter`) |
+| `McpOAuth2Restlet` | `io.naftiko.engine.exposes.mcp` | MCP-specific OAuth2 extension — no direct reuse, but validates the adapter-specific override pattern |
+| `OAuth2AuthenticationSpec` | `io.naftiko.spec.consumes` | Server-side spec class. The new `OAuth2ClientAuthenticationSpec` follows the same conventions (package, naming, `volatile` fields) |
+| `AuthenticationSpec` | `io.naftiko.spec.consumes` | Polymorphic base with `@JsonSubTypes` — new entries for `oauth2-client` and `custom-token` are added here |
+| `ServerAdapter.buildServerChain()` | `io.naftiko.engine.exposes` | Routes `type: "oauth2"` to `OAuth2AuthenticationRestlet`. The analogous routing for `type: "oauth2-client"` happens in `HttpClientAdapter.setChallengeResponse()` |
+
+### 11.2 Dependencies Already Available
+
+| Dependency | Version | Used By (Server Side) | Reused By (Client Side) |
+|-----------|---------|----------------------|------------------------|
+| `org.restlet.Client` | 2.7.0-m2 | `HttpClientAdapter` (all consumed API calls) | `TokenManager.acquireToken()` (token endpoint POST) — reuses the adapter's existing `Client` instance |
+| `com.nimbusds:nimbus-jose-jwt` | 9.37.3 | JWT parsing, signature verification | Future: JWT Bearer Assertion signing (Phase 4) |
+| `com.fasterxml.jackson.core:jackson-databind` | 2.20.2 | `@JsonSubTypes` deserialization | Token endpoint JSON response parsing, `@JsonSubTypes` for new spec class |
+| `com.jayway.jsonpath:json-path` | 2.9.0 | Spectral rule evaluation | `custom-token` response field extraction (`tokenField`, `expiresInField`) |
+| `org.restlet` | 2.7.0-m2 | Server-side HTTP framework, `ChallengeResponse` | `HttpClientAdapter`: `ChallengeResponse(ChallengeScheme.HTTP_OAUTH_BEARER)` for applying acquired tokens |
+
+### 11.3 Patterns Established by Server-Side
+
+| Pattern | Server-Side Implementation | Client-Side Equivalent |
+|---------|---------------------------|----------------------|
+| Lazy initialization | `ensureInitialized()` with `initLock` + `volatile initialized` | `getValidToken()` with `tokenLock` + `volatile accessToken` |
+| Double-check locking | `synchronized (initLock) { if (initialized) return; ... }` | `synchronized (tokenLock) { if (!isExpiringSoon()) return; ... }` |
+| Cache with TTL | `JWKS_CACHE_TTL_MS` (5 min), `JWKS_MIN_REFRESH_MS` (30s min between refreshes) | `expiresAt` (from `expires_in`), `safetyMargin` (60s default) |
+| HTTP fetching | `fetchUrl(String url)` — `java.net.http.HttpClient`, 10s timeout, returns null on non-200 | Restlet `Client` POST with form-encoded body — same client instance as business API calls |
+| Error handling | Log at WARNING, return null/false to caller | Log at WARNING, throw to prevent request with stale token |
+
+---
+
+## 12. Design Decisions & Rationale
+
+### 12.1 Why Two Auth Types Instead of One?
+
+**Decision**: Separate `oauth2-client` and `custom-token` types.
 
 **Alternative considered**: A single `token-refresh` type that covers both OAuth2 and custom endpoints.
 
 **Rationale**: OAuth2 has a well-defined protocol (RFC 6749) — the engine knows exactly how to construct the token request (form-encoded POST, specific parameters). Merging it with custom endpoints would either force OAuth2 users to redundantly declare things the engine already knows, or make the schema so generic that it loses the guardrails OAuth2 provides. Two types give precision where it matters and flexibility where it's needed.
 
-### 11.2 Why Not Use Steps for Token Acquisition?
+### 12.2 Why `oauth2-client` Instead of `oauth2`?
+
+**Decision**: Use `type: "oauth2-client"` for client-side token acquisition, keeping `type: "oauth2"` for the existing server-side resource server auth.
+
+**Alternatives considered**: (a) Reuse `type: "oauth2"` with context-dependent fields. (b) Split the `Authentication` union into separate consumes/exposes unions.
+
+**Rationale**: Option (a) fails because the `Authentication` union is a single `oneOf` — JSON Schema cannot discriminate the same `const` value to two different definitions based on context (the schema validator doesn't know whether the parent is an `exposes` or `consumes` block). It would also confuse Jackson's `@JsonSubTypes` mapping: `name = "oauth2"` already maps to `OAuth2AuthenticationSpec` (server-side). Option (b) would be a breaking schema change, splitting a shared definition into two. The `-client` suffix is the simplest path: no breaking changes, clear semantics, and consistent with the convention that auth type names describe what they *do* (a `bearer` token is *passed*, an `oauth2` server *validates*, an `oauth2-client` *acquires*).
+
+### 12.3 Why Not Use Steps for Token Acquisition?
 
 **Decision**: Token refresh is engine-internal, not user-visible orchestration.
 
@@ -1028,7 +1114,7 @@ Beyond Spectral (which validates YAML structure), the engine performs runtime va
 
 **Rationale**: Authentication is a cross-cutting concern. Every operation on the consumed adapter needs the token — not just specific orchestrated flows. If the user had to add a token step to every operation, it would violate DRY and make capabilities fragile (forget one step → runtime failure). The engine should handle it transparently, just like it handles Basic auth today.
 
-### 11.3 Why `tokenEndpoint` Is Standalone (Not a Consumed Operation)?
+### 12.4 Why `tokenEndpoint` Is Standalone (Not a Consumed Operation)?
 
 **Decision**: OAuth2's `tokenEndpoint` is a raw URL, not a `call` reference.
 
@@ -1038,7 +1124,7 @@ Beyond Spectral (which validates YAML structure), the engine performs runtime va
 
 The `custom-token` type uses `call` because the engine does NOT know how to call a proprietary auth endpoint — the user must define it. But `call` references a *different* consumed adapter, avoiding the circular dependency.
 
-### 11.4 Why Proactive + Reactive Refresh (Not Just One)?
+### 12.5 Why Proactive + Reactive Refresh (Not Just One)?
 
 **Decision**: Refresh proactively (before `expires_in`) AND reactively (on `401`).
 
@@ -1046,7 +1132,7 @@ The `custom-token` type uses `call` because the engine does NOT know how to call
 
 **Rationale**: Proactive-only fails when the token is revoked server-side before `expires_in` (early revocation, scope changes). Reactive-only causes one failed business request per refresh cycle (the request that triggers the `401`), which may be observable to the end user. Both together give zero-downtime token management: proactive handles the normal case, reactive handles the edge cases.
 
-### 11.5 Why No Token Persistence?
+### 12.6 Why No Token Persistence?
 
 **Decision**: Tokens are cached in memory only; lost on restart.
 
@@ -1054,7 +1140,7 @@ The `custom-token` type uses `call` because the engine does NOT know how to call
 
 **Rationale**: OAuth2 tokens are cheap to re-acquire (a single HTTP POST). Re-acquisition on restart is simpler and more secure than managing encrypted storage, file permissions, and stale token cleanup. If a future use case requires persistence (e.g., refresh tokens that are single-use after rotation), it can be added as an opt-in `persistence` block without changing the core design.
 
-### 11.6 Why `safetyMargin` Has a Default (60s)?
+### 12.7 Why `safetyMargin` Has a Default (60s)?
 
 **Decision**: Default safety margin is 60 seconds.
 
@@ -1064,20 +1150,21 @@ The `custom-token` type uses `call` because the engine does NOT know how to call
 
 ---
 
-## 12. Implementation Roadmap
+## 13. Implementation Roadmap
 
 ### Phase 1 — OAuth2 Client Credentials (MVP)
 
 | Item | Scope |
 |------|-------|
-| Schema: `AuthOAuth2` definition | `naftiko-schema.json` |
-| Spec class: `OAuth2AuthenticationSpec` | `io.naftiko.spec.consumes` |
-| Token manager: acquisition + caching | `io.naftiko.engine.consumes.http` |
+| Schema: `AuthOAuth2Client` definition | `naftiko-schema.json` |
+| Spec class: `OAuth2ClientAuthenticationSpec` | `io.naftiko.spec.consumes` |
+| `@JsonSubTypes` entry: `name = "oauth2-client"` | `AuthenticationSpec` |
+| Token manager: acquisition + caching (using Restlet `Client`) | `io.naftiko.engine.consumes.http` |
 | Proactive refresh (timer-based) | `TokenManager` |
-| `setChallengeResponse()` extension | `HttpClientAdapter` |
-| Spectral rules: HTTPS, template warnings | `naftiko-rules.yml` |
+| `setChallengeResponse()` extension: `case "oauth2-client"` | `HttpClientAdapter` |
+| Spectral rules: `naftiko-oauth2-client-*` (HTTPS, template warnings, exposes/consumes guards) | `naftiko-rules.yml` |
 | Unit tests: token acquisition, expiry, refresh | `TokenManagerTest` |
-| Integration test: mock OAuth2 server | `OAuth2IntegrationTest` |
+| Integration test: mock OAuth2 server | `OAuth2ClientIntegrationTest` |
 | Example: Salesforce capability | `schemas/examples/` |
 
 ### Phase 2 — OAuth2 Refresh Token + Reactive 401
@@ -1087,8 +1174,8 @@ The `custom-token` type uses `call` because the engine does NOT know how to call
 | `grantType: "refresh-token"` support | `TokenManager` |
 | Refresh token rotation handling | `TokenManager` |
 | Reactive 401 retry | `OperationStepExecutor` / `HttpClientAdapter` |
-| Spectral rule: `refreshToken` required for grant type | `naftiko-rules.yml` |
-| Integration test: refresh token flow | `OAuth2RefreshIntegrationTest` |
+| Spectral rule: `naftiko-oauth2-client-refresh-token-required` | `naftiko-rules.yml` |
+| Integration test: refresh token flow | `OAuth2ClientRefreshIntegrationTest` |
 | Example: HubSpot capability | `schemas/examples/` |
 
 ### Phase 3 — Custom Token Endpoint
@@ -1097,6 +1184,7 @@ The `custom-token` type uses `call` because the engine does NOT know how to call
 |------|-------|
 | Schema: `AuthCustomToken` definition | `naftiko-schema.json` |
 | Spec class: `CustomTokenAuthenticationSpec` | `io.naftiko.spec.consumes` |
+| `@JsonSubTypes` entry: `name = "custom-token"` | `AuthenticationSpec` |
 | Token manager: custom call delegation | `TokenManager` |
 | Circular auth detection at startup | `Capability` loader |
 | Spectral rules: no-self-ref, no-circular, placement | `naftiko-rules.yml` |
@@ -1108,26 +1196,32 @@ The `custom-token` type uses `call` because the engine does NOT know how to call
 
 | Item | Description |
 |------|-------------|
-| JWT Bearer Assertion | `grantType: "jwt-bearer"` — sign a JWT locally, exchange at token endpoint (Google service accounts) |
+| JWT Bearer Assertion | `grantType: "jwt-bearer"` — sign a JWT locally, exchange at token endpoint (Google service accounts). The `nimbus-jose-jwt` library (9.37.3) already used by `OAuth2AuthenticationRestlet` for server-side JWT validation supports JWT signing — no new dependency needed |
 | Token persistence | Opt-in encrypted file or external vault for refresh tokens that survive restarts |
 | Client certificate auth (mTLS) | `type: "mtls"` — mutual TLS with client certificates |
 | OIDC Discovery | Auto-discover `tokenEndpoint` from `/.well-known/openid-configuration` |
 
 ---
 
-## 13. Backward Compatibility
+## 14. Backward Compatibility
 
 ### Schema
 
-- **Additive**: Two new entries in the `Authentication` union `oneOf`. Existing `basic`, `bearer`, `apikey`, `digest` types are unchanged.
+- **Additive**: Two new entries in the `Authentication` union `oneOf`: `AuthOAuth2Client` and `AuthCustomToken`. Existing `basic`, `bearer`, `apikey`, `digest`, and `oauth2` (server-side) types are unchanged.
 - **No breaking changes**: Existing capability YAML files validate without modification.
 - **Version**: No spec version bump needed — alpha allows additive changes.
 
 ### Engine
 
-- **`HttpClientAdapter.setChallengeResponse()`**: New `case` branches added to the existing `switch`. Existing branches unchanged.
+- **`HttpClientAdapter.setChallengeResponse()`**: New `case "oauth2-client"` and `case "custom-token"` branches added to the existing `switch`. Existing branches unchanged.
 - **`OperationStepExecutor`**: Reactive 401 retry wraps existing `handle()` calls — no change to the happy path.
-- **`TokenManager`**: New class, no modifications to existing classes (except `HttpClientAdapter` gaining a field).
+- **`TokenManager`**: New class in `io.naftiko.engine.consumes.http`. No modifications to existing classes (except `HttpClientAdapter` gaining a field).
+- **`OAuth2ClientAuthenticationSpec`**: New spec class in `io.naftiko.spec.consumes`. Does not modify the existing `OAuth2AuthenticationSpec` (server-side).
+- **`AuthenticationSpec`**: Two new `@JsonSubTypes` entries added (`oauth2-client`, `custom-token`). Existing entries unchanged.
+
+### Dependencies
+
+- **No new dependencies**: Restlet `Client` (already used by `HttpClientAdapter` for all consumed API calls), Jackson (already used throughout), and `json-path` (already used by Spectral rules) cover all needs. `nimbus-jose-jwt` (already present) is available for the future JWT Bearer Assertion extension.
 
 ### Tests
 
