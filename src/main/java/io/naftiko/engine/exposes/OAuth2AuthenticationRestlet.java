@@ -201,9 +201,11 @@ public class OAuth2AuthenticationRestlet extends Restlet {
         }
 
         String expectedIssuer = spec.getAuthorizationServerUri();
-        if (expectedIssuer != null && claims.getIssuer() != null
-                && !expectedIssuer.equals(claims.getIssuer())) {
-            return "Invalid issuer";
+        if (expectedIssuer != null) {
+            String iss = claims.getIssuer();
+            if (iss == null || !stripTrailingSlash(expectedIssuer).equals(stripTrailingSlash(iss))) {
+                return "Invalid issuer";
+            }
         }
 
         String expectedAudience =
