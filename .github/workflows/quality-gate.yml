@@ -226,18 +226,24 @@ jobs:
           path: trivy-report.json
           retention-days: 14
 
+      - name: Install Gitleaks
+        run: |
+          wget -q https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_x64.tar.gz
+          tar -xzf gitleaks_8.21.2_linux_x64.tar.gz
+          chmod +x gitleaks
+          sudo mv gitleaks /usr/local/bin/
+          gitleaks version
+ 
       - name: Run Gitleaks scan
         run: |
-          docker run --rm \
-            -v "${{ github.workspace }}:/path" \
-            zricethezav/gitleaks:latest detect \
-            --source /path \
-            --no-git \
-            --config /path/.github/workflows/.gitleaks.toml \
-            --gitleaks-ignore-path /path/.github/workflows/.gitleaksignore \
+          gitleaks detect \
+            --source . \
+            --config .github/workflows/.gitleaks.toml \
+            --gitleaks-ignore-path .github/workflows/.gitleaksignore \
             --report-format json \
-            --report-path /path/gitleaks-report.json \
-            --exit-code 0
+            --report-path gitleaks-report.json \
+            --exit-code 0 \
+            --verbose
 
       - name: Publish Gitleaks summary
         if: always()
