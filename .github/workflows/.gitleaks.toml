@@ -1,9 +1,10 @@
 title = "Custom Gitleaks config"
 
 [allowlist]
-description = "Ignore generated reports and build artifacts"
+description = "Ignore heavy/generated directories"
 paths = [
-  '''sonar-report/.*''',
-  '''target/.*''',
-  '''.*\.json'''
+  "^sonar-report/",
+  "^target/",
+  "^node_modules/",
+  "^.git/"
 ]
