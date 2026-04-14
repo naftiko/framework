@@ -41,7 +41,7 @@ SDI as a methodology is tool-agnostic, but it requires concrete artifacts to be 
 **The Capability as a Container for Business Context**  
 In SDI, a *capability* is more than an integration artifact — it is a container for business context. Each capability encapsulates four dimensions that together define a complete, self-contained unit of organizational worth:
 
-- **Semantics** — the shared vocabulary and domain language that give the capability meaning: how concepts are named, what upstream systems it connects to, what authentication and compliance boundaries apply, and what organizational constraints shape its behavior. Semantics answer *why this integration exists* and its expression — establishing the terms that make all other dimensions intelligible.
+- **Semantics** — the shared vocabulary and domain language that give the capability meaning: how concepts are named, what upstream systems it connects to, what authentication and compliance boundaries apply, and what organizational constraints shape its behavior. Semantics answer *why this integration exists* and *how it is expressed* — establishing the terms that make all other dimensions intelligible.
 - **Skills** — the accumulated knowledge and expertise encoded in the capability: domain rules, data interpretation patterns, transformation heuristics, and the understanding of how upstream systems actually behave beyond their documented APIs. Skills answer *how the integration reasons* — the intelligence that turns raw data into meaningful, well-shaped output.
 - **Functions** — the concrete operations the capability performs: consuming upstream APIs, transforming and composing data, and exposing well-shaped contracts to downstream consumers. Functions answer *what the integration does* — the inputs it accepts, the outputs it produces, and the logic that connects them.
 - **Events** — the signals that trigger, inform, or result from the capability's execution: webhooks, state changes, notifications, and feedback loops that tie the capability into the broader operational landscape. Events answer *when the integration acts* and *what happens as a consequence*.
@@ -53,10 +53,22 @@ This framing matters because it aligns integration boundaries with business boun
 **The Capability Engine**  
 For specifications to be executable, a runtime must interpret them directly. Rather than generating code from a spec (which reintroduces drift), the engine reads the specification at runtime and handles all integration concerns: HTTP consumption, data transformation, format conversion, and exposure via REST, MCP, A2A, or classic query interfaces such as SQL and GraphQL.
 
+Derived artifacts — client SDKs, human-readable documentation, validation schemas — are still generated, but always *from* the capability spec, which remains the single source of truth. Combined with GitOps workflows, this ensures that every derived artifact stays traceable to a specific spec version, and drift is caught as a diff rather than discovered in production.
+
 Packaging this engine as a self-contained container means any capability specification can be deployed without build pipelines, language runtimes, or bespoke infrastructure. The engine is the stable layer; the specification is the variable one.
 
+**The Capability Ship**  
+A single engine runs a single capability. In practice, organizations group related capabilities into a shared execution domain — a *ship*. Because every capability conforms to the same specification standard, ships can load, schedule, and run any combination of them without custom integration work — much as a container ship carries diverse cargo in uniform containers. A ship is an independently operated runtime cell that hosts many capability-containers at once, with its own network edge, identity and secrets domain, telemetry, and policy enforcement.
+
+This standardized container format is what makes co-location practical: capabilities from different teams or domains can share a ship's resources while remaining individually versioned, deployable, and replaceable. Grouping capabilities into ships provides a natural isolation boundary: each ship can be scaled, secured, and governed as a unit, without requiring global coordination for every change.
+
+**The Capability Fleet**  
+Ships, in turn, are federated into a *fleet* — the orchestration and governance layer that manages capabilities across teams, regions, and compliance boundaries. The Fleet coordinates placement, routing, and policy rollout across ships, providing global visibility through a manifest that tracks what is deployed, where it runs, and whether it conforms to organizational policy. Governance is structural: identity-based access controls, automated compliance gates, and immutable audit trails are applied uniformly across the fleet rather than configured per ship or capability.
+
+This matters for SDI because scaling specifications without scaling governance reintroduces the drift and fragility that specifications were designed to eliminate. The Fleet ensures that as the number of capabilities and ships grows, operational consistency grows with it — turning a collection of individual integrations into a managed supply chain of business context.
+
 **The SDI Workflow**  
-Together, these two artifacts define a concrete SDI workflow:
+Together, these layers define a concrete SDI workflow:
 
 1. **Specify** — Author a capability specification that captures the integration intent.
 2. **Validate** — Analyze the spec for completeness, consistency, and ambiguity before execution.
@@ -67,7 +79,7 @@ This cycle keeps the specification as the primary artifact throughout — ensuri
 
 ## SDI and AI Integration
 
-SDI is particularly well-suited to the demands of AI-driven architectures. Context engineering — shaping, filtering, and composing data for AI model consumption — is fundamentally an integration problem. Agent orchestration surfaces, such as MCP servers and tool-based APIs, require exactly the kind of right-sized, semantically coherent integration boundaries that SDI is designed to produce.
+SDI is particularly well-suited to the demands of AI-driven architectures. Context engineering — shaping, filtering, composing and securing data for AI model consumption — is fundamentally an integration problem. Agent orchestration surfaces, such as MCP servers and tool-based APIs, require exactly the kind of right-sized, semantically coherent integration boundaries that SDI is designed to produce.
 
 When specifications are the primary artifact, AI agents can reason about integrations, propose refinements, and validate consistency — treating the specification as a structured, inspectable contract rather than opaque runtime behavior.
 
