@@ -102,6 +102,14 @@ public class OAuth2AuthenticationRestlet extends Restlet {
     }
 
     @Override
+    public void stop() throws Exception {
+        if (httpClient != null) {
+            httpClient.stop();
+        }
+        super.stop();
+    }
+
+    @Override
     public void handle(Request request, Response response) {
         String token = extractBearerToken(request);
         if (token == null) {
