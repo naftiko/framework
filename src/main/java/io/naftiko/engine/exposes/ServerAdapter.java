@@ -196,8 +196,12 @@ public abstract class ServerAdapter extends Adapter {
         }
         Map<String, Object> env = new HashMap<>();
         if (value.contains("{{") && value.contains("}}")) {
-            for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
-                env.put(entry.getKey(), entry.getValue());
+            Set<String> allowedVariables = extractAllowedVariables(null);
+            for (String varName : allowedVariables) {
+                String varValue = System.getenv(varName);
+                if (varValue != null) {
+                    env.put(varName, varValue);
+                }
             }
         }
         return Resolver.resolveMustacheTemplate(value, env);
