@@ -148,6 +148,7 @@ public class OasImportConverter {
                     BasicAuthenticationSpec basic = new BasicAuthenticationSpec();
                     basic.setUsername("{{USERNAME}}");
                     basic.setPassword("{{PASSWORD}}".toCharArray());
+                    warnings.add("Basic authentication mapped; credentials must be configured via binds");
                     return basic;
                 } else {
                     warnings.add("Unsupported HTTP security scheme: " + scheme.getScheme());
@@ -439,12 +440,26 @@ public class OasImportConverter {
                     outParam.getProperties().addAll(nested);
                 } else if ("array".equals(resolveSchemaType(propSchema))) {
                     outParam.setType("array");
+                    outParam.setMapping(propPath + "[*]");
+
                     if (propSchema.getItems() != null) {
-                        List<OutputParameterSpec> arrayContent = convertSchemaToOutputParameters(
-                                propSchema, propPath, depth + 1, warnings);
-                        if (!arrayContent.isEmpty()) {
-                            // Array wraps its content
-                            outParam.getProperties().addAll(arrayContent);
+                        Schema<?> itemSchema = propSchema.getItems();
+
+                        if ("object".equals(resolveSchemaType(itemSchema))
+                                && itemSchema.getProperties() != null) {
+                            OutputParameterSpec itemSpec = new OutputParameterSpec();
+                            itemSpec.setType("object");
+                            List<OutputParameterSpec> itemProps =
+                                    convertSchemaToOutputParameters(
+                                            itemSchema, propPath + "[*]",
+                                            depth + 1, warnings);
+                            itemSpec.getProperties().addAll(itemProps);
+                            outParam.setItems(itemSpec);
+                        } else if (resolveSchemaType(itemSchema) != null) {
+                            OutputParameterSpec itemSpec = new OutputParameterSpec();
+                            itemSpec.setType(mapSchemaType(
+                                    resolveSchemaType(itemSchema)));
+                            outParam.setItems(itemSpec);
                         }
                     }
                 } else {
