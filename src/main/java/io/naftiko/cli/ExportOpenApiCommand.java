@@ -47,7 +47,7 @@ public class ExportOpenApiCommand implements Runnable {
     @Option(names = {"-a", "--adapter"}, description = "Namespace of the REST adapter to export")
     private String adapter;
 
-    @Option(names = {"--spec-version"}, description = "Specification version: 3.0 or 3.1 (default: 3.0)")
+    @Option(names = {"--spec-version"}, description = "OpenAPI Specification version: 3.0 or 3.1 (default: 3.0)")
     private String specVersionOption = "3.0";
 
     @Override
