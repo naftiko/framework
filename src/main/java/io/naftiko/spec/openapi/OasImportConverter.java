@@ -144,12 +144,14 @@ public class OasImportConverter {
                     digest.setPassword("{{PASSWORD}}".toCharArray());
                     warnings.add("Digest authentication mapped; credentials must be configured via binds");
                     return digest;
-                } else {
-                    // basic
+                } else if ("basic".equalsIgnoreCase(scheme.getScheme())) {
                     BasicAuthenticationSpec basic = new BasicAuthenticationSpec();
                     basic.setUsername("{{USERNAME}}");
                     basic.setPassword("{{PASSWORD}}".toCharArray());
                     return basic;
+                } else {
+                    warnings.add("Unsupported HTTP security scheme: " + scheme.getScheme());
+                    return null;
                 }
             case OAUTH2:
                 warnings.add("oauth2 authentication not yet supported — configure manually");
