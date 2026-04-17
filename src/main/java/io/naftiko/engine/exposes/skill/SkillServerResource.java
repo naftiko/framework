@@ -20,10 +20,16 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.restlet.data.MediaType;
+import org.restlet.representation.Representation;
 import org.restlet.resource.ServerResource;
 import org.restlet.service.MetadataService;
+import io.naftiko.engine.telemetry.RestletHeaderGetter;
+import io.naftiko.engine.telemetry.TelemetryBootstrap;
 import io.naftiko.spec.exposes.ExposedSkillSpec;
 import io.naftiko.spec.exposes.SkillServerSpec;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.SpanKind;
+import io.opentelemetry.context.Scope;
 
 /**
  * Abstract base for all skill server handler resources.
@@ -44,6 +50,35 @@ abstract class SkillServerResource extends ServerResource {
 
     public ObjectMapper getMapper() {
         return mapper;
+    }
+
+    @Override
+    public Representation handle() {
+        TelemetryBootstrap telemetry = TelemetryBootstrap.get();
+        io.opentelemetry.context.Context extractedContext = telemetry.getOpenTelemetry()
+                .getPropagators().getTextMapPropagator()
+                .extract(io.opentelemetry.context.Context.current(), getRequest(),
+                        RestletHeaderGetter.INSTANCE);
+
+        String operationId = getRequest().getResourceRef() != null
+                ? getRequest().getResourceRef().getPath() : "unknown";
+        Span span = telemetry.getTracer().spanBuilder("skill.request")
+                .setSpanKind(SpanKind.SERVER)
+                .setParent(extractedContext)
+                .setAttribute(TelemetryBootstrap.ATTR_ADAPTER_TYPE, "skill")
+                .setAttribute(TelemetryBootstrap.ATTR_OPERATION_ID, operationId)
+                .setAttribute(TelemetryBootstrap.ATTR_HTTP_METHOD,
+                        getRequest().getMethod().getName())
+                .startSpan();
+
+        try (Scope scope = span.makeCurrent()) {
+            return super.handle();
+        } catch (Exception e) {
+            TelemetryBootstrap.recordError(span, e);
+            throw e;
+        } finally {
+            TelemetryBootstrap.endSpan(span);
+        }
     }
 
     protected SkillServerSpec getSkillServerSpec() {

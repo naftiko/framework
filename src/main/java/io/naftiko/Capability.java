@@ -25,6 +25,7 @@ import io.naftiko.engine.aggregates.Aggregate;
 import io.naftiko.engine.aggregates.AggregateFunction;
 import io.naftiko.engine.aggregates.AggregateRefResolver;
 import io.naftiko.engine.exposes.OperationStepExecutor;
+import io.naftiko.engine.telemetry.TelemetryBootstrap;
 import io.naftiko.spec.aggregates.AggregateSpec;
 import io.naftiko.spec.util.ExecutionContext;
 import io.naftiko.engine.consumes.ClientAdapter;
@@ -231,6 +232,12 @@ public class Capability {
                 // Ignore unknown properties to handle potential Restlet framework classes
                 mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
                 NaftikoSpec spec = mapper.readValue(file, NaftikoSpec.class);
+                // Initialize OpenTelemetry with service name from spec
+                String serviceName = "naftiko";
+                if (spec.getInfo() != null && spec.getInfo().getLabel() != null) {
+                    serviceName = "naftiko-" + spec.getInfo().getLabel();
+                }
+                TelemetryBootstrap.init(serviceName);
                 // Pass the capability directory for bind file resolution
                 String capabilityDir = file.getParent();
                 Capability capability = new Capability(spec, capabilityDir);
