@@ -15,6 +15,7 @@ package io.naftiko.engine.telemetry;
 
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.SpanBuilder;
 import io.opentelemetry.api.trace.SpanKind;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
@@ -43,9 +44,9 @@ public class TelemetryBootstrap {
     public static final AttributeKey<Long> ATTR_STEP_INDEX = AttributeKey.longKey("naftiko.step.index");
     public static final AttributeKey<String> ATTR_STEP_CALL = AttributeKey.stringKey("naftiko.step.call");
     public static final AttributeKey<String> ATTR_STEP_MATCH = AttributeKey.stringKey("naftiko.step.match");
-    public static final AttributeKey<String> ATTR_HTTP_METHOD = AttributeKey.stringKey("http.method");
-    public static final AttributeKey<String> ATTR_HTTP_URL = AttributeKey.stringKey("http.url");
-    public static final AttributeKey<Long> ATTR_HTTP_STATUS_CODE = AttributeKey.longKey("http.status_code");
+    public static final AttributeKey<String> ATTR_HTTP_METHOD = AttributeKey.stringKey("http.request.method");
+    public static final AttributeKey<String> ATTR_HTTP_URL = AttributeKey.stringKey("url.full");
+    public static final AttributeKey<Long> ATTR_HTTP_STATUS_CODE = AttributeKey.longKey("http.response.status_code");
     public static final AttributeKey<String> ATTR_AGGREGATE_REF = AttributeKey.stringKey("naftiko.aggregate.ref");
 
     private static final TelemetryBootstrap NOOP = new TelemetryBootstrap(OpenTelemetry.noop());
@@ -118,7 +119,7 @@ public class TelemetryBootstrap {
     }
 
     /**
-     * Reset the global instance (for testing).
+     * Reset the global instance. <strong>Test-only</strong> — do not call from production code.
      */
     public static void reset() {
         instance = null;
@@ -141,6 +142,24 @@ public class TelemetryBootstrap {
                 .setAttribute(ATTR_ADAPTER_TYPE, adapterType)
                 .setAttribute(ATTR_OPERATION_ID, operationId != null ? operationId : "unknown")
                 .startSpan();
+    }
+
+    /**
+     * Start a SERVER span for an inbound adapter request with parent context and HTTP method.
+     */
+    public Span startServerSpan(String adapterType, String operationId,
+            io.opentelemetry.context.Context parentContext, String httpMethod) {
+        SpanBuilder builder = tracer.spanBuilder(adapterType + ".request")
+                .setSpanKind(SpanKind.SERVER)
+                .setAttribute(ATTR_ADAPTER_TYPE, adapterType)
+                .setAttribute(ATTR_OPERATION_ID, operationId != null ? operationId : "unknown");
+        if (parentContext != null) {
+            builder.setParent(parentContext);
+        }
+        if (httpMethod != null) {
+            builder.setAttribute(ATTR_HTTP_METHOD, httpMethod);
+        }
+        return builder.startSpan();
     }
 
     /**
