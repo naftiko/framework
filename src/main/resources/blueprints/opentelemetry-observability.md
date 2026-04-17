@@ -2,7 +2,7 @@
 ## Distributed Tracing, Metrics, and Structured Logging for the Naftiko Engine
 
 **Status**: Proposal  
-**Date**: April 10, 2026  
+**Date**: April 17, 2026  
 **Spec Version**: `1.0.0-alpha2`  
 **Key Concept**: Add OpenTelemetry-based observability to the Naftiko engine — distributed tracing, Prometheus-compatible metrics, and structured logging — feeding Prometheus and Datadog as primary backends, with zero changes to existing logging call sites thanks to Restlet's SLF4J extension.
 
@@ -36,7 +36,7 @@
 Add OpenTelemetry (OTel) instrumentation to the Naftiko engine, covering the three pillars of observability:
 
 1. **Traces** — Distributed spans across the full request lifecycle: server adapter → step execution → HTTP client calls to consumed APIs.
-2. **Metrics** — RED metrics (Rate, Errors, Duration) for server adapters, step execution, and HTTP client calls, exposed via Prometheus scrape endpoint and OTLP push.
+2. **Metrics** — RED metrics (Rate, Errors, Duration) for server adapters, step execution, and HTTP client calls, exposed via the [Control Port](control-port.md)'s Prometheus scrape endpoint (`/metrics`) and OTLP push.
 3. **Logs** — Structured logging through SLF4J, correlated with trace IDs for end-to-end debugging.
 
 **Prometheus alone is not enough** for this initiative: it is excellent for scrape-based metrics, but it does not model the per-request lifecycle (end-to-end span context, parent/child causality, and cross-service correlation). **OpenTelemetry fills that gap** by instrumenting the full request lifecycle (tracing) and providing **context propagation** (W3C `traceparent`) across adapter → steps → consumed HTTP calls. From there, we can export **metrics to Prometheus** (scrape) and **traces + metrics to Datadog** (OTLP ingestion) using a single OTel SDK — no vendor-specific SDKs required.
@@ -63,16 +63,17 @@ This proposal fills that gap while preserving Naftiko's zero-code philosophy: ob
 | **Zero-code instrumentation** | Existing capabilities gain observability without YAML changes |
 | **Dual backend** | Single OTel SDK feeds both Prometheus and Datadog |
 | **Context propagation** | W3C `traceparent` injected into outgoing HTTP calls — correlate with downstream services |
+| **Library-safe embedding** | OTel SDK is optional — only `opentelemetry-api` (~200 KB) is required; when SDK JARs are absent, all spans become zero-cost no-ops. Embedders (e.g. Langchain4j) can pass their own `OpenTelemetry` instance or exclude telemetry entirely |
 | **Clear stdio limitation** | For MCP stdio, there's no header/metadata carrier for parent extraction, so each tool call starts a **new root span** (new trace) — documented and explicit |
 
 ### Risk Assessment
 
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
-| OTel SDK jar size (~3 MB) | Medium | Low | Shade unused exporters; optional Maven profile if needed |
+| OTel SDK jar size (~3 MB) | Medium | Low | SDK deps are `<optional>true</optional>` — embedders only pull `opentelemetry-api` (~200 KB); standalone deployment includes all JARs via shade plugin |
 | Restlet request model lacks OTel Context carrier | Medium | Medium | Wrap with `Context.current().with(span)` at handler entry; pass via `Request.getAttributes()` |
 | Stdio transport has no HTTP headers for propagation | High | Low | Start new root span; document limitation |
-| Prometheus port conflicts with adapter ports | Low | Low | Separate metrics port with schema-level configuration |
+| Prometheus port conflicts with adapter ports | Low | Low | Metrics served via [Control Port](control-port.md) — dedicated management port, isolated from business traffic |
 | Performance overhead on hot paths | Low | Medium | Sampling via `traces.sampling` in spec or `OTEL_TRACES_SAMPLER_ARG` env var |
 
 ---
@@ -87,9 +88,10 @@ This proposal fills that gap while preserving Naftiko's zero-code philosophy: ob
     - Extract inbound `traceparent`/`tracestate` from request headers (so Naftiko continues the caller's trace tree)
     - Inject outbound `traceparent`/`tracestate` into HTTP calls to consumed APIs (so downstream services can join the same trace)
 4. For MCP stdio transport, start a **new root span** per tool call (no header/metadata carrier available for parent extraction) and document the limitation.
-5. Expose RED metrics via a Prometheus-compatible scrape endpoint and OTLP push to Datadog.
+5. Expose RED metrics via the [Control Port](control-port.md)'s Prometheus scrape endpoint (`/metrics`) and OTLP push to Datadog. The Control Port blueprint defines the hosting surface; this blueprint defines what metrics are recorded and how.
 6. Support zero-config operation via OTel environment variables (`OTEL_EXPORTER_*`) for containerized deployments.
 7. Optionally allow capability authors to tune observability settings in YAML.
+8. Support library embedding (e.g. Langchain4j): OTel SDK dependencies are optional — when absent, `TelemetryBootstrap` falls back to `OpenTelemetry.noop()` with zero overhead. Embedders can also pass their own `OpenTelemetry` instance via `TelemetryBootstrap.init(OpenTelemetry)`.
 
 ### Non-Goals (This Proposal)
 
@@ -168,7 +170,10 @@ Naftiko Engine
   │
   ├── OTel SDK (traces + metrics + logs bridge)
   │     ├── OTLP Exporter ──→ Datadog Agent (OTLP endpoint)
-  │     └── Prometheus Exporter ──→ Prometheus scrape (/metrics)
+  │     └── Prometheus MetricReader ──→ Control Port /metrics
+  │
+  ├── Control Port (type: "control" adapter)
+  │     └── GET /metrics ──→ Prometheus scrape endpoint
   │
   ├── SLF4J + Logback (structured JSON logs)
   │     └── OTel Logback Appender ──→ trace-correlated logs
@@ -176,7 +181,7 @@ Naftiko Engine
   └── jul-to-slf4j bridge (catches any stray JUL usage)
 ```
 
-Datadog natively supports [OTLP ingestion](https://docs.datadoghq.com/opentelemetry/otlp_ingest_in_the_agent/) — no vendor-specific SDK needed. Prometheus is scraped from an OTel-provided HTTP endpoint. A single OTel SDK covers both backends.
+Datadog natively supports [OTLP ingestion](https://docs.datadoghq.com/opentelemetry/otlp_ingest_in_the_agent/) — no vendor-specific SDK needed. Prometheus scrapes the `/metrics` endpoint on the [Control Port](control-port.md) — a dedicated management adapter isolated from business traffic. A single OTel SDK covers both backends.
 
 ---
 
@@ -296,30 +301,47 @@ The `trace_id` and `span_id` MDC fields are populated automatically by the OTel 
 
 Create `io.naftiko.engine.telemetry.TelemetryBootstrap`:
 
-- Initialized once in `Capability.java` during startup (next to adapter init)
+- Initialized once in `Capability.java` during startup (after spec parsing, before adapter init)
 - Uses OTel autoconfigure (`OTEL_EXPORTER_*` env vars) for zero-config in Docker/K8s
-- Fallback to programmatic config with sensible defaults
-- Service name: `naftiko-<capability.info.name>` (derived from YAML spec)
-- Exposes `Tracer` and `Meter` singletons for the engine
+- **Classpath-guarded**: checks for `AutoConfiguredOpenTelemetrySdk` via `Class.forName()` — if the SDK JARs are absent (library embedding), falls back to `OpenTelemetry.noop()` automatically
+- Service name: `naftiko-<capability.info.label>` (derived from YAML spec)
+- Singleton `Tracer` via `get()` — returns no-op instance when `init()` was never called
+- Three initialization paths:
+  1. `init(String serviceName)` — standalone mode, autoconfigure with classpath guard
+  2. `init(OpenTelemetry)` — embedder passes their own instance (or used in tests with `InMemorySpanExporter`)
+  3. Never called — `get()` returns no-op, all span calls are zero-cost
 
 ```java
-class TelemetryBootstrap {
+public class TelemetryBootstrap {
 
+    private static volatile TelemetryBootstrap instance;
     private final OpenTelemetry openTelemetry;
     private final Tracer tracer;
-    private final Meter meter;
 
-    TelemetryBootstrap(String serviceName) {
-        this.openTelemetry = AutoConfiguredOpenTelemetrySdk.builder()
-            .addResourceCustomizer((resource, config) ->
-                resource.merge(Resource.builder()
-                    .put(ServiceAttributes.SERVICE_NAME, serviceName)
-                    .build()))
-            .build()
-            .getOpenTelemetrySdk();
-
+    TelemetryBootstrap(OpenTelemetry openTelemetry) {
+        this.openTelemetry = openTelemetry;
         this.tracer = openTelemetry.getTracer("io.naftiko.engine");
-        this.meter = openTelemetry.getMeter("io.naftiko.engine");
+    }
+
+    public static TelemetryBootstrap init(String serviceName) {
+        try {
+            Class.forName("io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk");
+            instance = new TelemetryBootstrap(buildAutoConfigured(serviceName));
+        } catch (ClassNotFoundException e) {
+            logger.info("OpenTelemetry SDK not on classpath — telemetry disabled");
+            instance = new TelemetryBootstrap(OpenTelemetry.noop());
+        }
+        return instance;
+    }
+
+    public static TelemetryBootstrap init(OpenTelemetry openTelemetry) {
+        instance = new TelemetryBootstrap(openTelemetry);
+        return instance;
+    }
+
+    public static TelemetryBootstrap get() {
+        TelemetryBootstrap current = instance;
+        return current != null ? current : new TelemetryBootstrap(OpenTelemetry.noop());
     }
 }
 ```
@@ -462,22 +484,27 @@ Existing `catch` blocks in `ResourceRestlet`, `ToolHandler`, and `ProtocolDispat
 
 ## Phase 2 — Metrics
 
-**Goal**: Expose RED metrics (Rate, Errors, Duration) plus business metrics via Prometheus scrape endpoint and OTLP push to Datadog.
+**Goal**: Record RED metrics (Rate, Errors, Duration) plus business metrics via the OTel SDK, served through the [Control Port](control-port.md)'s `/metrics` endpoint and pushed via OTLP to Datadog.
 
-### Prometheus `/metrics` Endpoint
+**Dependency**: This phase requires the [Control Port](control-port.md) blueprint's Phase 2 (Metrics and Governance), which provides the `MetricsRestlet` on the `type: "control"` adapter. The OTel SDK records metrics internally; the Control Port serves them to Prometheus.
 
-- `opentelemetry-exporter-prometheus` spins up a lightweight HTTP server
+### How Metrics Reach Prometheus (via Control Port)
 
-**What "exporter" means here:** Prometheus can only scrape metrics that are exposed in the **Prometheus text exposition format** (the `/metrics` format it understands). The OpenTelemetry SDK records metrics using OTel's internal data model; the **Prometheus exporter** is the component that:
+The OTel SDK records metrics using its internal `Meter` API. The **Prometheus metric reader** (`opentelemetry-exporter-prometheus`) collects those metrics and translates them into Prometheus text exposition format. Instead of spinning up a standalone HTTP server (as the OTel library does by default), the Control Port's `MetricsRestlet` calls the reader directly and writes the exposition-format output to the response:
 
-- Collects those OTel metrics from the SDK's `Meter`
-- Translates them into Prometheus' exposition format (names, labels, types)
-- Exposes them over HTTP at `/metrics`, so Prometheus can **pull** (scrape) them on an interval
+```
+OTel Meter API                Control Port                       Prometheus
+────────────                  ────────────                       ──────────
+counter.add(1, labels)  ──►  GET /metrics                  ──►  scrape interval
+histogram.record(0.3s)  ──►    └── PrometheusMetricReader  ──►  pull :9090/metrics
+                                     └── exposition format
+```
 
-Without this exporter, Prometheus has nothing to scrape — the service may be recording metrics internally, but they are not available in a Prometheus-compatible format/endpoint.
-
-- Binds to a separate configurable port (default `9464`) — isolated from adapter traffic
-- Prometheus scrapes this endpoint at its configured interval
+This consolidation means:
+- **One management port** — no separate `:9464` for Prometheus. Metrics live alongside health, info, and governance on the Control Port.
+- **Prometheus scrape config** points to `<host>:<control-port>/metrics`.
+- The OTel SDK still records metrics via `Meter`; the Control Port simply serves them.
+- When no Control Port is declared, metrics fall back to OTel's default standalone exporter (if configured via `OTEL_EXPORTER_PROMETHEUS_PORT` env var).
 
 ### Metric Definitions
 
@@ -524,15 +551,18 @@ capability:
     name: my-capability
   observability:
     enabled: true
-    metrics:
-      port: 9464
     traces:
       sampling: 0.1        # 10% sampling rate (default: 1.0 = all)
       propagation: w3c      # w3c | b3 (default: w3c)
     exporters:
       otlp:
         endpoint: "{{OTEL_EXPORTER_OTLP_ENDPOINT}}"
+  exposes:
+    - type: control
+      port: 9090            # Prometheus /metrics served here
 ```
+
+> **Note**: The `observability.metrics.port` field from earlier drafts has been **removed**. The Prometheus scrape endpoint is now hosted by the [Control Port](control-port.md) adapter — its port is determined by `exposes[type=control].port`, not by an observability-level setting. This avoids having two competing port configurations for the same endpoint.
 
 ### Design Principles
 
@@ -540,6 +570,7 @@ capability:
 - `binds` integration: exporter endpoints can reference bound secrets (e.g., `{{DD_API_KEY}}`)
 - When `observability` is absent, telemetry is still active if OTel env vars are set (zero-config for containerized deployments)
 - When `observability.enabled` is `false`, telemetry is disabled entirely (no SDK init, no overhead)
+- Prometheus metrics port is **not** configured here — it is determined by the [Control Port](control-port.md) adapter's `port` field. If no Control Port is declared, metrics fall back to OTel's standalone exporter via `OTEL_EXPORTER_PROMETHEUS_PORT`.
 
 ### Schema Definition
 
@@ -552,26 +583,11 @@ capability:
       "default": true,
       "description": "Enable or disable observability. Defaults to true."
     },
-    "metrics": {
-      "$ref": "#/$defs/ObservabilityMetricsSpec"
-    },
     "traces": {
       "$ref": "#/$defs/ObservabilityTracesSpec"
     },
     "exporters": {
       "$ref": "#/$defs/ObservabilityExportersSpec"
-    }
-  },
-  "unevaluatedProperties": false
-}
-
-"ObservabilityMetricsSpec": {
-  "type": "object",
-  "properties": {
-    "port": {
-      "type": "integer",
-      "default": 9464,
-      "description": "Port for the Prometheus scrape endpoint."
     }
   },
   "unevaluatedProperties": false
@@ -625,7 +641,6 @@ capability:
 | Class | Package | Description |
 |---|---|---|
 | `ObservabilitySpec` | `io.naftiko.spec` | Root observability configuration |
-| `ObservabilityMetricsSpec` | `io.naftiko.spec` | Metrics port configuration |
 | `ObservabilityTracesSpec` | `io.naftiko.spec` | Sampling rate and propagation format |
 | `ObservabilityExportersSpec` | `io.naftiko.spec` | Exporter configuration container |
 | `ObservabilityOtlpExporterSpec` | `io.naftiko.spec` | OTLP endpoint configuration |
@@ -644,6 +659,8 @@ capability:
 | Prometheus alerting rules | `demo/observability/alerts.yml` | High error rate, latency P99 thresholds |
 
 ### Docker Compose Dev Stack
+
+> **Note**: Prometheus scrapes the Control Port's `/metrics` endpoint. The `prometheus.yml` target should point to `<capability-host>:<control-port>/metrics` (e.g., `host.docker.internal:9090/metrics`).
 
 ```yaml
 services:
@@ -702,57 +719,55 @@ services:
 </dependency>
 ```
 
-### Phase 1 — Tracing + Metrics
+### Phase 1 — Tracing
 
 ```xml
-<!-- BOM for consistent versions -->
-<dependencyManagement>
-    <dependency>
-        <groupId>io.opentelemetry</groupId>
-        <artifactId>opentelemetry-bom</artifactId>
-        <version>1.48.0</version>
-        <type>pom</type>
-        <scope>import</scope>
-    </dependency>
-</dependencyManagement>
-
-<!-- Core SDK -->
+<!-- Required — the only mandatory OTel dependency (~200 KB).
+     Provides the API surface (Tracer, Span, Context) and OpenTelemetry.noop() fallback.
+     Versions managed via ${opentelemetry.version} property (1.48.0). -->
 <dependency>
     <groupId>io.opentelemetry</groupId>
     <artifactId>opentelemetry-api</artifactId>
+    <version>${opentelemetry.version}</version>
 </dependency>
+
+<!-- Optional — SDK + autoconfigure + exporter + log appender.
+     Pulled automatically in standalone deployment (shade plugin).
+     Embedders can exclude these — TelemetryBootstrap falls back to OpenTelemetry.noop(). -->
 <dependency>
     <groupId>io.opentelemetry</groupId>
     <artifactId>opentelemetry-sdk</artifactId>
+    <version>${opentelemetry.version}</version>
+    <optional>true</optional>
 </dependency>
 <dependency>
     <groupId>io.opentelemetry</groupId>
     <artifactId>opentelemetry-sdk-extension-autoconfigure</artifactId>
+    <version>${opentelemetry.version}</version>
+    <optional>true</optional>
 </dependency>
-
-<!-- Exporters -->
 <dependency>
     <groupId>io.opentelemetry</groupId>
     <artifactId>opentelemetry-exporter-otlp</artifactId>
+    <version>${opentelemetry.version}</version>
+    <optional>true</optional>
 </dependency>
-
-<!-- Context propagation -->
-<dependency>
-    <groupId>io.opentelemetry</groupId>
-    <artifactId>opentelemetry-context</artifactId>
-</dependency>
-
-<!-- Log-trace correlation -->
 <dependency>
     <groupId>io.opentelemetry.instrumentation</groupId>
     <artifactId>opentelemetry-logback-appender-1.0</artifactId>
     <version>2.14.0-alpha</version>
+    <optional>true</optional>
 </dependency>
 ```
 
-### Phase 2 — Prometheus Exporter
+**Embedding note:** When Naftiko is used as a library (e.g. inside Langchain4j), only `opentelemetry-api` is transitively required. The optional SDK JARs are not pulled. `TelemetryBootstrap.init(String)` detects the SDK absence via `Class.forName()` and falls back to `OpenTelemetry.noop()`. Embedders can also call `TelemetryBootstrap.init(OpenTelemetry)` to supply their own instance.
+
+### Phase 2 — Prometheus Metric Reader (served by Control Port)
 
 ```xml
+<!-- Prometheus metric reader — translates OTel metrics to Prometheus exposition format.
+     The Control Port's MetricsRestlet calls this reader to serve /metrics.
+     No standalone HTTP server is spun up — the Control Port hosts the endpoint. -->
 <dependency>
     <groupId>io.opentelemetry</groupId>
     <artifactId>opentelemetry-exporter-prometheus</artifactId>
@@ -761,16 +776,18 @@ services:
 
 ### JAR Size Impact
 
-| Dependency | Approximate Size |
-|---|---|
-| `org.restlet.ext.slf4j` | ~50 KB |
-| `logback-classic` + `logback-core` | ~1.2 MB |
-| `jul-to-slf4j` | ~10 KB |
-| OTel SDK + API + autoconfigure | ~3 MB |
-| OTel OTLP exporter (HTTP/protobuf) | ~1.5 MB |
-| OTel Prometheus exporter | ~500 KB |
-| OTel Logback appender | ~100 KB |
-| **Total** | **~6.4 MB** |
+| Dependency | Approximate Size | Required? |
+|---|---|---|
+| `org.restlet.ext.slf4j` | ~50 KB | Yes |
+| `logback-classic` + `logback-core` | ~1.2 MB | Yes |
+| `jul-to-slf4j` | ~10 KB | Yes |
+| `opentelemetry-api` | ~200 KB | **Yes** (only mandatory OTel dep) |
+| OTel SDK + autoconfigure | ~2.8 MB | Optional |
+| OTel OTLP exporter (HTTP/protobuf) | ~1.5 MB | Optional |
+| OTel Prometheus exporter | ~500 KB | Optional |
+| OTel Logback appender | ~100 KB | Optional |
+| **Total (standalone)** | **~6.4 MB** | |
+| **Total (embedded, no SDK)** | **~1.5 MB** | |
 
 ---
 
@@ -851,8 +868,8 @@ All tests use OTel's `InMemorySpanExporter` and `InMemoryMetricReader` — no ex
 
 | Task | Component | Description |
 |---|---|---|
-| 1.1 | Dependencies | Add OTel BOM, SDK, OTLP exporter, context, Logback appender |
-| 1.2 | Bootstrap | Create `TelemetryBootstrap` — OTel SDK init, `Tracer`/`Meter` singletons |
+| 1.1 | Dependencies | Add `opentelemetry-api` (required) + SDK, autoconfigure, OTLP exporter, Logback appender as `<optional>true</optional>` |
+| 1.2 | Bootstrap | Create `TelemetryBootstrap` — classpath-guarded SDK init via `Class.forName()`, no-op fallback, `init(OpenTelemetry)` for embedders |
 | 1.3 | Server spans | Instrument `ResourceRestlet.handle()`, `ToolHandler.handleToolCall()`, `SkillServerResource.handle()` with `SERVER` spans |
 | 1.4 | Step spans | Instrument `OperationStepExecutor.executeStep()` with `INTERNAL` spans per step type |
 | 1.5 | Client spans | Instrument `HttpClientAdapter.handle()` with `CLIENT` spans |
@@ -865,20 +882,21 @@ All tests use OTel's `InMemorySpanExporter` and `InMemoryMetricReader` — no ex
 
 | Task | Component | Description |
 |---|---|---|
-| 2.1 | Dependencies | Add `opentelemetry-exporter-prometheus` |
+| 2.1 | Dependencies | Add `opentelemetry-exporter-prometheus` (metric reader only — no standalone server) |
 | 2.2 | Metrics registry | Define counters and histograms in `TelemetryBootstrap` |
 | 2.3 | Server metrics | Record `naftiko.request.total`, `naftiko.request.duration`, `naftiko.request.errors` in adapter handlers |
 | 2.4 | Step metrics | Record `naftiko.step.duration` in `OperationStepExecutor` |
 | 2.5 | Client metrics | Record `naftiko.http.client.total`, `naftiko.http.client.duration` in `HttpClientAdapter` |
-| 2.6 | Prometheus endpoint | Configure Prometheus exporter on separate port |
-| 2.7 | Tests | Verify metric registration and recording with in-memory reader |
+| 2.6 | Control Port integration | Wire `PrometheusMetricReader` into the [Control Port](control-port.md)'s `MetricsRestlet` — no standalone Prometheus HTTP server |
+| 2.7 | Fallback | When no Control Port is declared, fall back to OTel standalone exporter via `OTEL_EXPORTER_PROMETHEUS_PORT` env var |
+| 2.8 | Tests | Verify metric registration and recording with in-memory reader; integration test via Control Port `/metrics` |
 
 ### Phase 3 — Spec-Driven Configuration
 
 | Task | Component | Description |
 |---|---|---|
-| 3.1 | Schema | Add `ObservabilitySpec` and related definitions to `naftiko-schema.json` |
-| 3.2 | Spec classes | Create `ObservabilitySpec`, `ObservabilityMetricsSpec`, `ObservabilityTracesSpec`, `ObservabilityExportersSpec` |
+| 3.1 | Schema | Add `ObservabilitySpec` and related definitions to `naftiko-schema.json` (no `metrics.port` — superseded by Control Port) |
+| 3.2 | Spec classes | Create `ObservabilitySpec`, `ObservabilityTracesSpec`, `ObservabilityExportersSpec` |
 | 3.3 | Bootstrap | Wire spec-level config into `TelemetryBootstrap` (sampling, propagation, endpoint) |
 | 3.4 | Tests | Deserialization tests + integration tests with different configurations |
 
@@ -897,7 +915,7 @@ All tests use OTel's `InMemorySpanExporter` and `InMemoryMetricReader` — no ex
 |---|---|---|---|---|
 | 1st | **Phase 0** (Logging) | Low | Medium | Foundation for everything else; unblocks log-trace correlation; zero risk |
 | 2nd | **Phase 1** (Tracing) | Medium | **Highest** | Distributed traces provide immediate debugging value; Datadog APM lights up; context propagation enables cross-service correlation |
-| 3rd | **Phase 2** (Metrics) | Medium | High | RED metrics + Prometheus scrape enable SRE dashboards and alerting |
+| 3rd | **Phase 2** (Metrics) | Medium | High | RED metrics + Prometheus scrape via [Control Port](control-port.md) enable SRE dashboards and alerting |
 | 4th | **Phase 3** (Spec config) | Low | Medium | Declarative config aligns with Naftiko philosophy but OTel env vars already cover most needs |
 | 5th | **Phase 4** (Dashboards) | Low | Medium | Not engine code — can be contributed incrementally |
 
@@ -935,10 +953,10 @@ Yes — this proposal should explicitly include a mechanism to **avoid exporting
 
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
-| **OTel SDK jar size** (~6.4 MB total) | Medium | Low | Acceptable for a server-side framework; optional Maven profile if native binary size is a concern |
+| **OTel SDK jar size** (~6.4 MB total) | Medium | Low | SDK deps are `<optional>true</optional>` — only `opentelemetry-api` (~200 KB) is mandatory; `TelemetryBootstrap` classpath-guards the autoconfigure call and falls back to no-op. Standalone deployment shades all JARs |
 | **Restlet's request model doesn't carry OTel `Context`** | Medium | Medium | Wrap with `Context.current().with(span)` at handler entry; pass via `Request.getAttributes()` or `ThreadLocal` |
 | **Stdio transport has no HTTP headers for propagation** | High | Low | Start new root span; document limitation; explore MCP `_meta` extension |
-| **Prometheus port conflicts with adapter ports** | Low | Low | Separate metrics port with schema-level `observability.metrics.port` configuration |
+| **Prometheus port conflicts with adapter ports** | Low | Low | **Eliminated** — Prometheus metrics are served by the [Control Port](control-port.md) on its dedicated management port; no separate metrics port to conflict |
 | **Performance overhead on hot paths** | Low | Medium | Sampling via `traces.sampling` in spec or `OTEL_TRACES_SAMPLER_ARG` env var; benchmark before/after |
 | **GraalVM native-image compatibility** | Medium | Medium | Prefer HTTP/protobuf OTLP over gRPC; add `reflect-config.json`; test with native profile |
 | **Logback conflicts with existing JUL config** | Low | Low | `Slf4jLoggerFacade` takes priority; `SLF4JBridgeHandler` catches remaining JUL |
@@ -965,13 +983,16 @@ Yes — this proposal should explicitly include a mechanism to **avoid exporting
 6. Failed operations set `StatusCode.ERROR` and record exceptions on spans.
 7. Log entries carry `trace_id` and `span_id` via MDC.
 8. All tests pass with `InMemorySpanExporter`.
+9. When OTel SDK JARs are absent from the classpath, `TelemetryBootstrap.init(String)` falls back to `OpenTelemetry.noop()` — zero overhead, no `ClassNotFoundException`.
+10. Embedders can supply their own `OpenTelemetry` instance via `TelemetryBootstrap.init(OpenTelemetry)` and all engine spans participate in the host application's traces.
 
 ### Phase 2
 
-1. Prometheus `/metrics` endpoint serves all defined metrics.
+1. Prometheus `/metrics` endpoint on the [Control Port](control-port.md) serves all defined metrics in exposition format.
 2. Metrics are recorded with correct labels on every request.
 3. OTLP push exports metrics to configured endpoint.
 4. `naftiko.capability.active` increments on start and decrements on stop.
+5. When no Control Port is declared, metrics fall back to OTel standalone exporter via `OTEL_EXPORTER_PROMETHEUS_PORT`.
 
 ### Phase 3
 
@@ -980,6 +1001,7 @@ Yes — this proposal should explicitly include a mechanism to **avoid exporting
 3. `observability.traces.sampling` controls the sampling rate.
 4. `observability.exporters.otlp.endpoint` supports Mustache expressions for binds.
 5. Absent `observability` block defaults to OTel env var configuration.
+6. No `observability.metrics.port` field — Prometheus port is determined by the Control Port adapter.
 
 ### Phase 4
 

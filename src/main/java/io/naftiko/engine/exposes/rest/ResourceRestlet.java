@@ -25,6 +25,8 @@ import io.naftiko.engine.aggregates.FunctionResult;
 import io.naftiko.engine.consumes.ClientAdapter;
 import io.naftiko.engine.consumes.http.HttpClientAdapter;
 import io.naftiko.engine.exposes.OperationStepExecutor;
+import io.naftiko.engine.telemetry.RestletHeaderGetter;
+import io.naftiko.engine.telemetry.TelemetryBootstrap;
 import io.naftiko.engine.util.Converter;
 import io.naftiko.engine.util.Resolver;
 import io.naftiko.spec.OutputParameterSpec;
@@ -32,6 +34,8 @@ import io.naftiko.spec.exposes.RestServerForwardSpec;
 import io.naftiko.spec.exposes.RestServerOperationSpec;
 import io.naftiko.spec.exposes.RestServerResourceSpec;
 import io.naftiko.spec.exposes.RestServerSpec;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.context.Scope;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.NullNode;
@@ -59,17 +63,40 @@ public class ResourceRestlet extends Restlet {
 
     @Override
     public void handle(Request request, Response response) {
-        boolean handled = handleFromOperationSpec(request, response);
+        // Extract W3C traceparent from inbound headers
+        TelemetryBootstrap telemetry = TelemetryBootstrap.get();
+        io.opentelemetry.context.Context extractedContext = telemetry.getOpenTelemetry()
+                .getPropagators().getTextMapPropagator()
+                .extract(io.opentelemetry.context.Context.current(), request,
+                        RestletHeaderGetter.INSTANCE);
 
-        if (!handled && getResourceSpec().getForward() != null) {
-            handled = handleFromForwardSpec(request, response);
-        }
+        String operationId = resourceSpec.getPath() + " " + request.getMethod().getName();
+        Span span = telemetry.getTracer().spanBuilder("rest.request")
+                .setSpanKind(io.opentelemetry.api.trace.SpanKind.SERVER)
+                .setParent(extractedContext)
+                .setAttribute(TelemetryBootstrap.ATTR_ADAPTER_TYPE, "rest")
+                .setAttribute(TelemetryBootstrap.ATTR_OPERATION_ID, operationId)
+                .setAttribute(TelemetryBootstrap.ATTR_HTTP_METHOD, request.getMethod().getName())
+                .startSpan();
 
-        if (!handled) {
-            response.setStatus(Status.CLIENT_ERROR_NOT_FOUND);
-            response.setEntity(
-                    "Unable to handle the request. Please check the capability specification.",
-                    MediaType.TEXT_PLAIN);
+        try (Scope scope = span.makeCurrent()) {
+            boolean handled = handleFromOperationSpec(request, response);
+
+            if (!handled && getResourceSpec().getForward() != null) {
+                handled = handleFromForwardSpec(request, response);
+            }
+
+            if (!handled) {
+                response.setStatus(Status.CLIENT_ERROR_NOT_FOUND);
+                response.setEntity(
+                        "Unable to handle the request. Please check the capability specification.",
+                        MediaType.TEXT_PLAIN);
+            }
+        } catch (Exception e) {
+            TelemetryBootstrap.recordError(span, e);
+            throw e;
+        } finally {
+            TelemetryBootstrap.endSpan(span);
         }
     }
 

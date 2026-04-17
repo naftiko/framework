@@ -25,8 +25,11 @@ import io.naftiko.Capability;
 import io.naftiko.engine.aggregates.AggregateFunction;
 import io.naftiko.engine.aggregates.FunctionResult;
 import io.naftiko.engine.exposes.OperationStepExecutor;
+import io.naftiko.engine.telemetry.TelemetryBootstrap;
 import io.naftiko.engine.util.Resolver;
 import io.naftiko.spec.exposes.McpServerToolSpec;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.context.Scope;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -69,6 +72,20 @@ public class ToolHandler {
      * @return the tool result
      */
     public McpSchema.CallToolResult handleToolCall(String toolName, Map<String, Object> arguments)
+            throws Exception {
+
+        Span span = TelemetryBootstrap.get().startServerSpan("mcp", toolName);
+        try (Scope scope = span.makeCurrent()) {
+            return doHandleToolCall(toolName, arguments);
+        } catch (Exception e) {
+            TelemetryBootstrap.recordError(span, e);
+            throw e;
+        } finally {
+            TelemetryBootstrap.endSpan(span);
+        }
+    }
+
+    McpSchema.CallToolResult doHandleToolCall(String toolName, Map<String, Object> arguments)
             throws Exception {
 
         McpServerToolSpec toolSpec = toolSpecs.get(toolName);

@@ -19,6 +19,7 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.naftiko.engine.exposes.OperationStepExecutor;
+import io.naftiko.engine.telemetry.TelemetryBootstrap;
 import io.naftiko.engine.util.Resolver;
 import io.naftiko.spec.aggregates.AggregateFunctionSpec;
 import io.naftiko.spec.InputParameterSpec;
@@ -27,6 +28,8 @@ import io.naftiko.spec.aggregates.SemanticsSpec;
 import io.naftiko.spec.exposes.OperationStepSpec;
 import io.naftiko.spec.exposes.ServerCallSpec;
 import io.naftiko.spec.exposes.StepOutputMappingSpec;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.context.Scope;
 
 /**
  * Runtime-executable wrapper around an {@link AggregateFunctionSpec}.
@@ -98,6 +101,19 @@ public class AggregateFunction {
      * @return a transport-neutral {@link FunctionResult}
      */
     public FunctionResult execute(Map<String, Object> parameters) throws Exception {
+        String ref = namespace + "." + spec.getName();
+        Span span = TelemetryBootstrap.get().startAggregateFunctionSpan(ref);
+        try (Scope scope = span.makeCurrent()) {
+            return doExecute(parameters);
+        } catch (Exception e) {
+            TelemetryBootstrap.recordError(span, e);
+            throw e;
+        } finally {
+            TelemetryBootstrap.endSpan(span);
+        }
+    }
+
+    FunctionResult doExecute(Map<String, Object> parameters) throws Exception {
         Map<String, Object> merged = new HashMap<>();
         if (parameters != null) {
             merged.putAll(parameters);

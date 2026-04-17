@@ -32,6 +32,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.naftiko.Capability;
 import io.naftiko.engine.consumes.ClientAdapter;
 import io.naftiko.engine.consumes.http.HttpClientAdapter;
+import io.naftiko.engine.telemetry.RestletHeaderSetter;
+import io.naftiko.engine.telemetry.TelemetryBootstrap;
 import io.naftiko.engine.util.LookupExecutor;
 import io.naftiko.engine.util.Resolver;
 import io.naftiko.engine.util.StepExecutionContext;
@@ -46,6 +48,8 @@ import io.naftiko.spec.exposes.OperationStepSpec;
 import io.naftiko.spec.exposes.OperationStepCallSpec;
 import io.naftiko.spec.exposes.OperationStepLookupSpec;
 import io.naftiko.spec.exposes.StepOutputMappingSpec;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.context.Scope;
 
 /**
  * Executor for orchestrated operation steps.
@@ -163,85 +167,109 @@ public class OperationStepExecutor {
             return new StepExecutionResult(lastContext, stepContext);
         }
 
-        for (OperationStepSpec step : steps) {
+        for (int stepIndex = 0; stepIndex < steps.size(); stepIndex++) {
+            OperationStepSpec step = steps.get(stepIndex);
             switch (step) {
                 case OperationStepCallSpec callStep -> {
-                    lastContext = executeCallStep(callStep, runtimeParameters);
+                    Span stepSpan = TelemetryBootstrap.get()
+                            .startStepCallSpan(stepIndex, callStep.getCall());
+                    try (Scope stepScope = stepSpan.makeCurrent()) {
+                        lastContext = executeCallStep(callStep, runtimeParameters);
 
-                    if (lastContext == null) {
-                        throw new IllegalArgumentException("Invalid call format: "
-                                + (callStep.getCall() != null ? callStep.getCall() : "null"));
-                    }
-
-                    try {
-                        lastContext.handle();
-                    } catch (Exception e) {
-                        throw new RuntimeException("Error while handling an HTTP client call", e);
-                    }
-
-                    // Store call output for lookup references when response is valid JSON
-                    if (lastContext.clientResponse != null
-                            && lastContext.clientResponse.getEntity() != null) {
-                        try {
-                            if (!(lastContext.clientResponse
-                                    .getEntity() instanceof StringRepresentation)) {
-                                lastContext.clientResponse.setEntity(new StringRepresentation(
-                                        lastContext.clientResponse.getEntity().getText(),
-                                        lastContext.clientResponse.getEntity().getMediaType()));
-                            }
-
-                            JsonNode rawOutput = mapper
-                                    .readTree(lastContext.clientResponse.getEntity().getReader());
-                            JsonNode stepOutput = resolveStepOutput(lastContext, rawOutput);
-                            stepContext.storeStepOutput(callStep.getName(), stepOutput);
-                            addStepOutputToParameters(runtimeParameters, callStep.getName(),
-                                    stepOutput);
-                        } catch (Exception ignoreJsonParseError) {
-                            // Ignore non-JSON call output for lookup indexing
+                        if (lastContext == null) {
+                            throw new IllegalArgumentException("Invalid call format: "
+                                    + (callStep.getCall() != null ? callStep.getCall() : "null"));
                         }
+
+                        try {
+                            lastContext.handle();
+                        } catch (Exception e) {
+                            throw new RuntimeException(
+                                    "Error while handling an HTTP client call", e);
+                        }
+
+                        // Store call output for lookup references when response is valid JSON
+                        if (lastContext.clientResponse != null
+                                && lastContext.clientResponse.getEntity() != null) {
+                            try {
+                                if (!(lastContext.clientResponse
+                                        .getEntity() instanceof StringRepresentation)) {
+                                    lastContext.clientResponse
+                                            .setEntity(new StringRepresentation(
+                                                    lastContext.clientResponse.getEntity()
+                                                            .getText(),
+                                                    lastContext.clientResponse.getEntity()
+                                                            .getMediaType()));
+                                }
+
+                                JsonNode rawOutput = mapper.readTree(
+                                        lastContext.clientResponse.getEntity().getReader());
+                                JsonNode stepOutput =
+                                        resolveStepOutput(lastContext, rawOutput);
+                                stepContext.storeStepOutput(callStep.getName(), stepOutput);
+                                addStepOutputToParameters(runtimeParameters,
+                                        callStep.getName(), stepOutput);
+                            } catch (Exception ignoreJsonParseError) {
+                                // Ignore non-JSON call output for lookup indexing
+                            }
+                        }
+                    } catch (Exception e) {
+                        TelemetryBootstrap.recordError(stepSpan, e);
+                        throw e;
+                    } finally {
+                        TelemetryBootstrap.endSpan(stepSpan);
                     }
                 }
                 case OperationStepLookupSpec lookupStep -> {
-                    JsonNode indexData = stepContext.getStepOutput(lookupStep.getIndex());
+                    Span stepSpan = TelemetryBootstrap.get()
+                            .startStepLookupSpan(stepIndex, lookupStep.getMatch());
+                    try (Scope stepScope = stepSpan.makeCurrent()) {
+                        JsonNode indexData = stepContext.getStepOutput(lookupStep.getIndex());
 
-                    if (indexData == null) {
-                        throw new IllegalArgumentException(
-                                "Lookup step references non-existent step: "
-                                        + lookupStep.getIndex());
-                    }
-
-                    String resolvedLookupValue = Resolver.resolveMustacheTemplate(
-                            lookupStep.getLookupValue(), runtimeParameters);
-
-                    // Resolve lookup value from step context (JsonPath) when applicable
-                    JsonNode lookupValueNode = resolveJsonPathFromStepContext(
-                            lookupStep.getLookupValue(), stepContext);
-
-                    JsonNode lookupResult;
-                    if (lookupValueNode != null && lookupValueNode.isArray()) {
-                        // Multi-value lookup: collect results into an array
-                        ArrayNode resultArray = mapper.createArrayNode();
-                        for (JsonNode item : lookupValueNode) {
-                            JsonNode match = LookupExecutor.executeLookup(indexData,
-                                    lookupStep.getMatch(), item.asText(),
-                                    lookupStep.getOutputParameters());
-                            if (match != null) {
-                                resultArray.add(match);
-                            }
+                        if (indexData == null) {
+                            throw new IllegalArgumentException(
+                                    "Lookup step references non-existent step: "
+                                            + lookupStep.getIndex());
                         }
-                        lookupResult = resultArray.isEmpty() ? null : resultArray;
-                    } else if (lookupValueNode != null) {
-                        lookupResult = LookupExecutor.executeLookup(indexData,
-                                lookupStep.getMatch(), lookupValueNode.asText(),
-                                lookupStep.getOutputParameters());
-                    } else {
-                        lookupResult = LookupExecutor.executeLookup(indexData,
-                                lookupStep.getMatch(), resolvedLookupValue,
-                                lookupStep.getOutputParameters());
-                    }
 
-                    if (lookupResult != null) {
-                        stepContext.storeStepOutput(lookupStep.getName(), lookupResult);
+                        String resolvedLookupValue = Resolver.resolveMustacheTemplate(
+                                lookupStep.getLookupValue(), runtimeParameters);
+
+                        // Resolve lookup value from step context (JsonPath) when applicable
+                        JsonNode lookupValueNode = resolveJsonPathFromStepContext(
+                                lookupStep.getLookupValue(), stepContext);
+
+                        JsonNode lookupResult;
+                        if (lookupValueNode != null && lookupValueNode.isArray()) {
+                            // Multi-value lookup: collect results into an array
+                            ArrayNode resultArray = mapper.createArrayNode();
+                            for (JsonNode item : lookupValueNode) {
+                                JsonNode match = LookupExecutor.executeLookup(indexData,
+                                        lookupStep.getMatch(), item.asText(),
+                                        lookupStep.getOutputParameters());
+                                if (match != null) {
+                                    resultArray.add(match);
+                                }
+                            }
+                            lookupResult = resultArray.isEmpty() ? null : resultArray;
+                        } else if (lookupValueNode != null) {
+                            lookupResult = LookupExecutor.executeLookup(indexData,
+                                    lookupStep.getMatch(), lookupValueNode.asText(),
+                                    lookupStep.getOutputParameters());
+                        } else {
+                            lookupResult = LookupExecutor.executeLookup(indexData,
+                                    lookupStep.getMatch(), resolvedLookupValue,
+                                    lookupStep.getOutputParameters());
+                        }
+
+                        if (lookupResult != null) {
+                            stepContext.storeStepOutput(lookupStep.getName(), lookupResult);
+                        }
+                    } catch (Exception e) {
+                        TelemetryBootstrap.recordError(stepSpan, e);
+                        throw e;
+                    } finally {
+                        TelemetryBootstrap.endSpan(stepSpan);
                     }
                 }
                 default -> {
@@ -712,7 +740,35 @@ public class OperationStepExecutor {
         public Response clientResponse;
 
         public void handle() {
-            clientAdapter.getHttpClient().handle(clientRequest, clientResponse);
+            // Inject W3C trace context into outbound request headers
+            TelemetryBootstrap telemetry = TelemetryBootstrap.get();
+            telemetry.getOpenTelemetry().getPropagators().getTextMapPropagator()
+                    .inject(io.opentelemetry.context.Context.current(), clientRequest,
+                            RestletHeaderSetter.INSTANCE);
+
+            String method = clientRequest.getMethod() != null
+                    ? clientRequest.getMethod().getName() : "UNKNOWN";
+            String url = clientRequest.getResourceRef() != null
+                    ? clientRequest.getResourceRef().toString() : "unknown";
+
+            Span span = telemetry.startClientSpan(method, url);
+            try (Scope scope = span.makeCurrent()) {
+                clientAdapter.getHttpClient().handle(clientRequest, clientResponse);
+
+                if (clientResponse != null && clientResponse.getStatus() != null) {
+                    int statusCode = clientResponse.getStatus().getCode();
+                    span.setAttribute(TelemetryBootstrap.ATTR_HTTP_STATUS_CODE, statusCode);
+                    if (statusCode >= 500) {
+                        span.setStatus(io.opentelemetry.api.trace.StatusCode.ERROR,
+                                "HTTP " + statusCode);
+                    }
+                }
+            } catch (Exception e) {
+                TelemetryBootstrap.recordError(span, e);
+                throw e;
+            } finally {
+                TelemetryBootstrap.endSpan(span);
+            }
         }
     }
 
