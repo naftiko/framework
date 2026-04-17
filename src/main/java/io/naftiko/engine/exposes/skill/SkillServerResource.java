@@ -28,7 +28,6 @@ import io.naftiko.engine.telemetry.TelemetryBootstrap;
 import io.naftiko.spec.exposes.ExposedSkillSpec;
 import io.naftiko.spec.exposes.SkillServerSpec;
 import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.SpanKind;
 import io.opentelemetry.context.Scope;
 
 /**
@@ -63,14 +62,8 @@ abstract class SkillServerResource extends ServerResource {
 
         String operationId = getRequest().getResourceRef() != null
                 ? getRequest().getResourceRef().getPath() : "unknown";
-        Span span = telemetry.getTracer().spanBuilder("skill.request")
-                .setSpanKind(SpanKind.SERVER)
-                .setParent(extractedContext)
-                .setAttribute(TelemetryBootstrap.ATTR_ADAPTER_TYPE, "skill")
-                .setAttribute(TelemetryBootstrap.ATTR_OPERATION_ID, operationId)
-                .setAttribute(TelemetryBootstrap.ATTR_HTTP_METHOD,
-                        getRequest().getMethod().getName())
-                .startSpan();
+        Span span = telemetry.startServerSpan("skill", operationId, extractedContext,
+                getRequest().getMethod().getName());
 
         try (Scope scope = span.makeCurrent()) {
             return super.handle();

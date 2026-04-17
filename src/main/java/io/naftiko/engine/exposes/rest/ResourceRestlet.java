@@ -62,6 +62,7 @@ public class ResourceRestlet extends Restlet {
     }
 
     @Override
+    @SuppressWarnings("null")
     public void handle(Request request, Response response) {
         // Extract W3C traceparent from inbound headers
         TelemetryBootstrap telemetry = TelemetryBootstrap.get();
@@ -71,13 +72,8 @@ public class ResourceRestlet extends Restlet {
                         RestletHeaderGetter.INSTANCE);
 
         String operationId = resourceSpec.getPath() + " " + request.getMethod().getName();
-        Span span = telemetry.getTracer().spanBuilder("rest.request")
-                .setSpanKind(io.opentelemetry.api.trace.SpanKind.SERVER)
-                .setParent(extractedContext)
-                .setAttribute(TelemetryBootstrap.ATTR_ADAPTER_TYPE, "rest")
-                .setAttribute(TelemetryBootstrap.ATTR_OPERATION_ID, operationId)
-                .setAttribute(TelemetryBootstrap.ATTR_HTTP_METHOD, request.getMethod().getName())
-                .startSpan();
+        Span span = telemetry.startServerSpan("rest", operationId, extractedContext,
+                request.getMethod().getName());
 
         try (Scope scope = span.makeCurrent()) {
             boolean handled = handleFromOperationSpec(request, response);
