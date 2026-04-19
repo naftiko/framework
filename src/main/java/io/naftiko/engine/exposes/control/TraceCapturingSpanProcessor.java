@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -62,7 +63,7 @@ public class TraceCapturingSpanProcessor implements SpanProcessor {
         SpanData data = span.toSpanData();
         String traceId = data.getTraceId();
 
-        pendingSpans.computeIfAbsent(traceId, k -> new ArrayList<>()).add(data);
+        pendingSpans.computeIfAbsent(traceId, k -> new CopyOnWriteArrayList<>()).add(data);
 
         // A root span has no valid parent span ID or its parent is remote
         boolean isRoot = !data.getParentSpanContext().isValid()
@@ -117,7 +118,9 @@ public class TraceCapturingSpanProcessor implements SpanProcessor {
                 rootSpan.getName(),
                 durationMs,
                 toStatusString(rootSpan.getStatus().getStatusCode()),
-                Instant.ofEpochSecond(0, startEpochNanos),
+                Instant.ofEpochSecond(
+                        TimeUnit.NANOSECONDS.toSeconds(startEpochNanos),
+                        startEpochNanos % 1_000_000_000L),
                 allSpans.size(),
                 spanSummaries);
     }

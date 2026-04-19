@@ -105,13 +105,24 @@ public class EngineMetrics {
 
     /**
      * Record a completed outbound HTTP client call.
+     *
+     * <p>When {@code statusCode} is {@code 0} (transport failure — no HTTP response received),
+     * the {@code http.response.status_code} attribute is omitted and an {@code error.type}
+     * attribute is set to {@code "transport"} instead. This avoids polluting metrics with a
+     * non-HTTP status value.</p>
      */
     public void recordHttpClient(String method, String host, int statusCode,
             double durationSec) {
-        Attributes attrs = Attributes.of(
-                TelemetryBootstrap.ATTR_HTTP_METHOD, method,
-                io.opentelemetry.api.common.AttributeKey.stringKey("server.address"), host,
-                TelemetryBootstrap.ATTR_HTTP_STATUS_CODE, (long) statusCode);
+        var builder = Attributes.builder()
+                .put(TelemetryBootstrap.ATTR_HTTP_METHOD, method)
+                .put(io.opentelemetry.api.common.AttributeKey.stringKey("server.address"), host);
+        if (statusCode > 0) {
+            builder.put(TelemetryBootstrap.ATTR_HTTP_STATUS_CODE, (long) statusCode);
+        } else {
+            builder.put(io.opentelemetry.api.common.AttributeKey.stringKey("error.type"),
+                    "transport");
+        }
+        Attributes attrs = builder.build();
         httpClientTotal.add(1, attrs);
         httpClientDuration.record(durationSec, attrs);
     }
