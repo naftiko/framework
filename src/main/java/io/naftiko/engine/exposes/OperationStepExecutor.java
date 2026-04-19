@@ -347,6 +347,30 @@ public class OperationStepExecutor {
             return rawOutput;
         }
 
+        // When the raw output is an array, augment each element with projected fields
+        // instead of applying the mapping to the array root (which would collapse it).
+        if (rawOutput.isArray()) {
+            ArrayNode resultArray = mapper.createArrayNode();
+            for (JsonNode element : rawOutput) {
+                ObjectNode augmented =
+                        element.isObject() ? ((ObjectNode) element).deepCopy()
+                                : mapper.createObjectNode();
+                for (OutputParameterSpec outputParameter : context.clientOperation
+                        .getOutputParameters()) {
+                    if (outputParameter.getName() != null
+                            && !outputParameter.getName().isBlank()) {
+                        JsonNode mapped = Resolver.resolveOutputMappings(outputParameter, element,
+                                mapper);
+                        if (mapped != null) {
+                            augmented.set(outputParameter.getName(), mapped);
+                        }
+                    }
+                }
+                resultArray.add(augmented);
+            }
+            return resultArray;
+        }
+
         ObjectNode projected = mapper.createObjectNode();
         JsonNode unnamed = null;
 
@@ -565,11 +589,42 @@ public class OperationStepExecutor {
         for (StepOutputMappingSpec mapping : mappings) {
             JsonNode resolved = resolveJsonPathFromStepContext(mapping.getValue(), stepContext);
             if (resolved != null) {
-                result.set(mapping.getTargetName(), resolved);
+                setNestedField(result, mapping.getTargetName(), resolved);
             }
         }
 
         return result.isEmpty() ? null : mapper.writeValueAsString(result);
+    }
+
+    /**
+     * Set a potentially nested field on an ObjectNode using dot-notation.
+     *
+     * <p>For example, {@code "route.from"} creates {@code {"route":{"from": value}}}.</p>
+     */
+    private void setNestedField(ObjectNode root, String path, JsonNode value) {
+        if (path == null || path.isEmpty()) {
+            return;
+        }
+
+        int dotIndex = path.indexOf('.');
+        if (dotIndex == -1) {
+            root.set(path, value);
+            return;
+        }
+
+        String head = path.substring(0, dotIndex);
+        String tail = path.substring(dotIndex + 1);
+
+        JsonNode existing = root.get(head);
+        ObjectNode child;
+        if (existing != null && existing.isObject()) {
+            child = (ObjectNode) existing;
+        } else {
+            child = mapper.createObjectNode();
+            root.set(head, child);
+        }
+
+        setNestedField(child, tail, value);
     }
 
     /**

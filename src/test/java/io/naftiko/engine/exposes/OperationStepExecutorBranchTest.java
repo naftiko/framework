@@ -33,6 +33,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.naftiko.Capability;
+import io.naftiko.engine.util.StepExecutionContext;
 import io.naftiko.spec.NaftikoSpec;
 import io.naftiko.spec.OutputParameterSpec;
 import io.naftiko.spec.consumes.HttpClientOperationSpec;
@@ -40,6 +41,7 @@ import io.naftiko.spec.exposes.OperationStepCallSpec;
 import io.naftiko.spec.exposes.RestServerOperationSpec;
 import io.naftiko.spec.exposes.RestServerResourceSpec;
 import io.naftiko.spec.exposes.RestServerSpec;
+import io.naftiko.spec.exposes.StepOutputMappingSpec;
 import io.naftiko.util.VersionHelper;
 
 class OperationStepExecutorBranchTest {
@@ -357,6 +359,128 @@ class OperationStepExecutorBranchTest {
         assertEquals("VOY-2026-042", executor.capturedParams.get("voyageId"),
                 "Namespace-qualified reference 'shipyard-tools.voyageId' should resolve to "
                         + "the caller's argument value, not be passed as a literal string");
+    }
+
+    /**
+     * Regression test for #329 — Bug 1: resolveStepOutput must augment array elements
+     * with projected fields instead of collapsing the array.
+     *
+     * When a consumed operation (e.g. list-ships) declares an outputParameter that renames
+     * a field (imo_number → imo-number), the projection must iterate over each element of
+     * the array and add the renamed field while preserving the original fields. Before the
+     * fix, the method applied the mapping to the array root, producing { "imo-number": null }.
+     */
+    @Test
+    void resolveStepOutputShouldAugmentArrayElementsWithProjectedFields() throws Exception {
+        OperationStepExecutor executor = executorFromYaml("""
+                naftiko: "%s"
+                capability:
+                  exposes:
+                    - type: "rest"
+                      address: "localhost"
+                      port: 0
+                      namespace: "test"
+                      resources:
+                        - path: "/x"
+                          operations:
+                            - method: "GET"
+                              name: "x"
+                  consumes: []
+                """.formatted(schemaVersion));
+
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode raw = mapper.readTree("""
+                [
+                  {"imo_number": "IMO-123", "vessel_name": "Star", "flag_code": "NO"},
+                  {"imo_number": "IMO-456", "vessel_name": "Dawn", "flag_code": "SG"}
+                ]
+                """);
+
+        OperationStepExecutor.HandlingContext ctx = new OperationStepExecutor.HandlingContext();
+        HttpClientOperationSpec operation = new HttpClientOperationSpec();
+
+        OutputParameterSpec renamed = new OutputParameterSpec();
+        renamed.setName("imo-number");
+        renamed.setType("string");
+        renamed.setMapping("$.imo_number");
+
+        operation.getOutputParameters().add(renamed);
+        ctx.clientOperation = operation;
+
+        JsonNode result = executor.resolveStepOutput(ctx, raw);
+
+        assertTrue(result.isArray(), "result must remain an array");
+        assertEquals(2, result.size(), "array must keep both elements");
+
+        assertEquals("IMO-123", result.get(0).path("imo-number").asText(),
+                "projected field must be present on first element");
+        assertEquals("Star", result.get(0).path("vessel_name").asText(),
+                "original fields must be preserved on first element");
+        assertEquals("NO", result.get(0).path("flag_code").asText(),
+                "original fields must be preserved on first element");
+
+        assertEquals("IMO-456", result.get(1).path("imo-number").asText(),
+                "projected field must be present on second element");
+        assertEquals("Dawn", result.get(1).path("vessel_name").asText(),
+                "original fields must be preserved on second element");
+    }
+
+    /**
+     * Regression test for #329 — Bug 2: resolveStepMappings must support dot-notation
+     * in targetName to create nested objects.
+     *
+     * When a mapping uses "route.from" as targetName, the result must contain a nested
+     * "route" object with a "from" field, rather than a flat "route.from" key.
+     */
+    @Test
+    void resolveStepMappingsShouldCreateNestedObjectsFromDotNotation() throws Exception {
+        OperationStepExecutor executor = executorFromYaml("""
+                naftiko: "%s"
+                capability:
+                  exposes:
+                    - type: "rest"
+                      address: "localhost"
+                      port: 0
+                      namespace: "test"
+                      resources:
+                        - path: "/x"
+                          operations:
+                            - method: "GET"
+                              name: "x"
+                  consumes: []
+                """.formatted(schemaVersion));
+
+        ObjectMapper mapper = new ObjectMapper();
+        StepExecutionContext stepContext = new StepExecutionContext();
+        stepContext.storeStepOutput("voyage", mapper.readTree("""
+                {"departurePort": "Oslo", "arrivalPort": "Singapore", "status": "planned"}
+                """));
+        stepContext.storeStepOutput("ship", mapper.readTree("""
+                {"vessel_name": "Northern Star", "vessel_type": "cargo", "flag_code": "NO"}
+                """));
+
+        List<StepOutputMappingSpec> mappings = List.of(
+                new StepOutputMappingSpec("status", "$.voyage.status"),
+                new StepOutputMappingSpec("route.from", "$.voyage.departurePort"),
+                new StepOutputMappingSpec("route.to", "$.voyage.arrivalPort"),
+                new StepOutputMappingSpec("ship.name", "$.ship.vessel_name"),
+                new StepOutputMappingSpec("ship.type", "$.ship.vessel_type"),
+                new StepOutputMappingSpec("ship.flag", "$.ship.flag_code"));
+
+        String result = executor.resolveStepMappings(mappings, stepContext);
+        JsonNode json = mapper.readTree(result);
+
+        assertEquals("planned", json.path("status").asText(),
+                "flat mapping must still work");
+        assertTrue(json.path("route").isObject(),
+                "dot-notation must create a nested object");
+        assertEquals("Oslo", json.path("route").path("from").asText());
+        assertEquals("Singapore", json.path("route").path("to").asText());
+        assertTrue(json.path("ship").isObject(),
+                "dot-notation must create a nested object for ship");
+        assertEquals("Northern Star", json.path("ship").path("name").asText());
+        assertEquals("cargo", json.path("ship").path("type").asText());
+        assertEquals("NO", json.path("ship").path("flag").asText());
     }
 
     private static OperationStepExecutor executorFromYaml(String yaml) throws Exception {
