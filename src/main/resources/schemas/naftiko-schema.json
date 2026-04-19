@@ -1873,8 +1873,9 @@
       "description": "Describes how to map the output of an operation step to the input of another step or to the output of the exposed operation",
       "properties": {
         "targetName": {
-          "$ref": "#/$defs/IdentifierExtended",
-          "description": "The name of the parameter to map to. It can be an input parameter of a next step or an output parameter of the exposed operation"
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9-_.]+$",
+          "description": "The name of the parameter to map to. Supports dot-notation for nested objects (e.g. route.from). It can be an input parameter of a next step or an output parameter of the exposed operation"
         },
         "value": {
           "type": "string",

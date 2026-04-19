@@ -343,15 +343,15 @@ capability:
               value: "$.get-voyage.voyageId"
             - targetName: status
               value: "$.get-voyage.status"
-            - targetName: departurePort
+            - targetName: route.from
               value: "$.get-voyage.departurePort"
-            - targetName: arrivalPort
+            - targetName: route.to
               value: "$.get-voyage.arrivalPort"
-            - targetName: shipName
+            - targetName: ship.name
               value: "$.resolve-ship.vessel_name"
-            - targetName: shipType
+            - targetName: ship.type
               value: "$.resolve-ship.vessel_type"
-            - targetName: shipFlag
+            - targetName: ship.flag
               value: "$.resolve-ship.flag_code"
             - targetName: crew
               value: "$.resolve-crew"
@@ -362,16 +362,27 @@ capability:
               type: string
             - name: status
               type: string
-            - name: departurePort
-              type: string
-            - name: arrivalPort
-              type: string
-            - name: shipName
-              type: string
-            - name: shipType
-              type: string
-            - name: shipFlag
-              type: string
+            - name: route
+              type: object
+              properties:
+                from:
+                  name: from
+                  type: string
+                to:
+                  name: to
+                  type: string
+            - name: ship
+              type: object
+              properties:
+                name:
+                  name: name
+                  type: string
+                type:
+                  name: type
+                  type: string
+                flag:
+                  name: flag
+                  type: string
             - name: crew
               type: array
               items:
