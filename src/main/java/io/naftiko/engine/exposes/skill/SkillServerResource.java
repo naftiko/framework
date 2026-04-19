@@ -68,17 +68,20 @@ abstract class SkillServerResource extends ServerResource {
                 getRequest().getMethod().getName(), capabilityName);
 
         long startNanos = System.nanoTime();
+        boolean error = false;
         try (Scope scope = span.makeCurrent()) {
             return super.handle();
         } catch (Exception e) {
+            error = true;
             TelemetryBootstrap.recordError(span, e);
             telemetry.getMetrics().recordRequestError("skill", operationId,
                     e.getClass().getSimpleName());
             throw e;
         } finally {
             double durationSec = (System.nanoTime() - startNanos) / 1_000_000_000.0;
-            String status = getResponse() != null && getResponse().getStatus() != null
-                    ? String.valueOf(getResponse().getStatus().getCode()) : "200";
+            String status = error ? "500"
+                    : getResponse() != null && getResponse().getStatus() != null
+                            ? String.valueOf(getResponse().getStatus().getCode()) : "200";
             telemetry.getMetrics().recordRequest("skill", operationId, status, durationSec);
             TelemetryBootstrap.endSpan(span);
         }

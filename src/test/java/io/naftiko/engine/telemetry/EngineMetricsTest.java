@@ -142,6 +142,27 @@ class EngineMetricsTest {
     }
 
     @Test
+    void recordHttpClientShouldOmitStatusCodeOnTransportFailure() {
+        metrics.recordHttpClient("GET", "unreachable.host", 0, 0.05);
+
+        Collection<MetricData> data = metricReader.collectAllMetrics();
+        MetricData total = findMetric(data, "naftiko.http.client.total");
+        assertNotNull(total, "Should find naftiko.http.client.total metric");
+
+        boolean hasErrorType = total.getLongSumData().getPoints().stream()
+                .anyMatch(p -> "transport".equals(p.getAttributes()
+                        .get(io.opentelemetry.api.common.AttributeKey.stringKey("error.type"))));
+        assertTrue(hasErrorType,
+                "Counter should have error.type=transport attribute for status code 0");
+
+        boolean hasStatusCode = total.getLongSumData().getPoints().stream()
+                .anyMatch(p -> p.getAttributes()
+                        .get(TelemetryBootstrap.ATTR_HTTP_STATUS_CODE) != null);
+        assertFalse(hasStatusCode,
+                "Counter should NOT have http.response.status_code attribute for transport failure");
+    }
+
+    @Test
     void multipleRecordCallsShouldAccumulate() {
         metrics.recordRequest("rest", "/api GET", "200", 0.1);
         metrics.recordRequest("rest", "/api GET", "200", 0.2);

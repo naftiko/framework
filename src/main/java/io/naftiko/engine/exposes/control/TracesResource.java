@@ -16,6 +16,7 @@ package io.naftiko.engine.exposes.control;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.naftiko.engine.telemetry.TelemetryBootstrap;
 import org.restlet.data.MediaType;
 import org.restlet.data.Status;
 import org.restlet.representation.Representation;
@@ -34,6 +35,14 @@ public class TracesResource extends ServerResource {
 
     @Get("json")
     public Representation getTraces() {
+        if (!TelemetryBootstrap.get().isSdkActive()) {
+            setStatus(Status.SERVER_ERROR_SERVICE_UNAVAILABLE);
+            return new StringRepresentation(
+                    "{\"error\":\"OpenTelemetry is not active. "
+                            + "Traces require the OTel SDK on the classpath.\"}",
+                    MediaType.APPLICATION_JSON);
+        }
+
         TraceRingBuffer ringBuffer =
                 (TraceRingBuffer) getContext().getAttributes().get("traceRingBuffer");
 

@@ -217,6 +217,13 @@ public class TelemetryBootstrap {
     }
 
     /**
+     * Returns {@code true} when the OTel SDK is active (not noop mode).
+     */
+    public boolean isSdkActive() {
+        return delegatingSpanProcessor != null;
+    }
+
+    /**
      * Collect all OTel metrics and serialize them in Prometheus exposition text format.
      * Returns {@code null} when the OTel SDK is not active (noop mode).
      */

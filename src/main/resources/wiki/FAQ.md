@@ -579,7 +579,7 @@ This mirrors the REST mock pattern (`no-adapter.yml`) and is useful for prototyp
 
 ---
 
-## � Control Port & Observability
+## ⚙️ Control Port & Observability
 
 ### Q: What is the control port?
 **A:** The control port is a built-in management plane (`type: "control"` in `capability.exposes`). It provides engine-provided endpoints for health checks, Prometheus metrics, distributed traces, runtime status, configuration reload, log level control, and log streaming — without writing any code.
@@ -658,7 +658,7 @@ A sample Grafana dashboard is provided in `demo/shared/observability/grafana-naf
 
 ---
 
-## �🔭 Troubleshooting & Debugging
+## 🔭 Troubleshooting & Debugging
 
 ### Q: My capability won't start. How do I debug it?
 **A:** 
