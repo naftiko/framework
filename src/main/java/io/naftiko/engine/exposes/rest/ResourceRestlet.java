@@ -72,8 +72,10 @@ public class ResourceRestlet extends Restlet {
                         RestletHeaderGetter.INSTANCE);
 
         String operationId = resourceSpec.getPath() + " " + request.getMethod().getName();
+        String capabilityName = capability.getSpec().getInfo() != null
+                ? capability.getSpec().getInfo().getLabel() : null;
         Span span = telemetry.startServerSpan("rest", operationId, extractedContext,
-                request.getMethod().getName());
+                request.getMethod().getName(), capabilityName);
 
         try (Scope scope = span.makeCurrent()) {
             boolean handled = handleFromOperationSpec(request, response);

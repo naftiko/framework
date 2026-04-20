@@ -134,23 +134,22 @@ public class TelemetryBootstrap {
     }
 
     /**
-     * Start a SERVER span for an inbound adapter request.
-     */
-    public Span startServerSpan(String adapterType, String operationId) {
-        return tracer.spanBuilder(adapterType + ".request")
-                .setSpanKind(SpanKind.SERVER)
-                .setAttribute(ATTR_ADAPTER_TYPE, adapterType)
-                .setAttribute(ATTR_OPERATION_ID, operationId != null ? operationId : "unknown")
-                .startSpan();
-    }
-
-    /**
-     * Start a SERVER span for an inbound adapter request with parent context and HTTP method.
+     * Start a span for an inbound adapter request with parent context and HTTP method.
+     *
+     * <p>When the extracted context carries a valid remote parent (i.e. the inbound request
+     * contained a {@code traceparent} header), the span is INTERNAL because the true SERVER
+     * span lives in the upstream caller.  Otherwise this is the entry point and the span
+     * is SERVER.</p>
      */
     public Span startServerSpan(String adapterType, String operationId,
-            io.opentelemetry.context.Context parentContext, String httpMethod) {
+            io.opentelemetry.context.Context parentContext, String httpMethod,
+            String capabilityName) {
+        boolean hasRemoteParent = parentContext != null
+                && Span.fromContext(parentContext).getSpanContext().isValid()
+                && Span.fromContext(parentContext).getSpanContext().isRemote();
+        SpanKind kind = hasRemoteParent ? SpanKind.INTERNAL : SpanKind.SERVER;
         SpanBuilder builder = tracer.spanBuilder(adapterType + ".request")
-                .setSpanKind(SpanKind.SERVER)
+                .setSpanKind(kind)
                 .setAttribute(ATTR_ADAPTER_TYPE, adapterType)
                 .setAttribute(ATTR_OPERATION_ID, operationId != null ? operationId : "unknown");
         if (parentContext != null) {
@@ -159,18 +158,24 @@ public class TelemetryBootstrap {
         if (httpMethod != null) {
             builder.setAttribute(ATTR_HTTP_METHOD, httpMethod);
         }
+        if (capabilityName != null) {
+            builder.setAttribute(ATTR_CAPABILITY, capabilityName);
+        }
         return builder.startSpan();
     }
 
     /**
      * Start an INTERNAL span for a call step.
      */
-    public Span startStepCallSpan(int stepIndex, String call) {
-        return tracer.spanBuilder("step.call")
+    public Span startStepCallSpan(int stepIndex, String call, String namespace) {
+        SpanBuilder builder = tracer.spanBuilder("step.call")
                 .setSpanKind(SpanKind.INTERNAL)
                 .setAttribute(ATTR_STEP_INDEX, stepIndex)
-                .setAttribute(ATTR_STEP_CALL, call != null ? call : "unknown")
-                .startSpan();
+                .setAttribute(ATTR_STEP_CALL, call != null ? call : "unknown");
+        if (namespace != null) {
+            builder.setAttribute(ATTR_NAMESPACE, namespace);
+        }
+        return builder.startSpan();
     }
 
     /**
@@ -195,14 +200,31 @@ public class TelemetryBootstrap {
     }
 
     /**
+     * Start an INTERNAL span for MCP tool handling.
+     *
+     * <p>ToolHandler is not a network entry point — the SERVER span belongs
+     * to McpServerResource.  This span captures the tool-dispatch logic.</p>
+     */
+    public Span startToolHandlerSpan(String toolName) {
+        return tracer.spanBuilder("mcp.tool")
+                .setSpanKind(SpanKind.INTERNAL)
+                .setAttribute(ATTR_ADAPTER_TYPE, "mcp")
+                .setAttribute(ATTR_OPERATION_ID, toolName != null ? toolName : "unknown")
+                .startSpan();
+    }
+
+    /**
      * Start a CLIENT span for an outbound HTTP call.
      */
-    public Span startClientSpan(String method, String url) {
-        return tracer.spanBuilder("http.client." + (method != null ? method : "UNKNOWN"))
+    public Span startClientSpan(String method, String url, String namespace) {
+        SpanBuilder builder = tracer.spanBuilder("http.client." + (method != null ? method : "UNKNOWN"))
                 .setSpanKind(SpanKind.CLIENT)
                 .setAttribute(ATTR_HTTP_METHOD, method != null ? method : "UNKNOWN")
-                .setAttribute(ATTR_HTTP_URL, url != null ? url : "unknown")
-                .startSpan();
+                .setAttribute(ATTR_HTTP_URL, url != null ? url : "unknown");
+        if (namespace != null) {
+            builder.setAttribute(ATTR_NAMESPACE, namespace);
+        }
+        return builder.startSpan();
     }
 
     /**

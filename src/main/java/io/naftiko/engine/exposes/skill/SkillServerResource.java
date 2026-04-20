@@ -62,8 +62,9 @@ abstract class SkillServerResource extends ServerResource {
 
         String operationId = getRequest().getResourceRef() != null
                 ? getRequest().getResourceRef().getPath() : "unknown";
+        String capabilityName = (String) getContext().getAttributes().get("capabilityName");
         Span span = telemetry.startServerSpan("skill", operationId, extractedContext,
-                getRequest().getMethod().getName());
+                getRequest().getMethod().getName(), capabilityName);
 
         try (Scope scope = span.makeCurrent()) {
             return super.handle();

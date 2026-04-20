@@ -65,7 +65,7 @@ public class TelemetryBootstrapTest {
     @Test
     void noOpInstanceShouldProduceInvalidSpans() {
         TelemetryBootstrap bootstrap = TelemetryBootstrap.get();
-        Span span = bootstrap.startServerSpan("rest", "test-op");
+        Span span = bootstrap.startServerSpan("rest", "test-op", null, null, null);
         assertNotNull(span);
         assertFalse(span.getSpanContext().isValid(),
                 "No-op tracer should produce spans with invalid context");
@@ -91,7 +91,7 @@ public class TelemetryBootstrapTest {
         TelemetryBootstrap.reset();
         // After reset, get() should return a new no-op instance
         TelemetryBootstrap after = TelemetryBootstrap.get();
-        Span span = after.startServerSpan("rest", "test-op");
+        Span span = after.startServerSpan("rest", "test-op", null, null, null);
         assertFalse(span.getSpanContext().isValid());
         span.end();
     }
@@ -102,7 +102,8 @@ public class TelemetryBootstrapTest {
     void startServerSpanShouldCreateSpanWithCorrectAttributes() {
         initWithInMemoryExporter();
 
-        Span span = TelemetryBootstrap.get().startServerSpan("rest", "GET /orders");
+        Span span = TelemetryBootstrap.get().startServerSpan("rest", "GET /orders",
+                null, null, "my-capability");
         span.end();
 
         List<SpanData> spans = exporter.getFinishedSpanItems();
@@ -114,17 +115,20 @@ public class TelemetryBootstrapTest {
         assertEquals("rest", data.getAttributes().get(TelemetryBootstrap.ATTR_ADAPTER_TYPE));
         assertEquals("GET /orders",
                 data.getAttributes().get(TelemetryBootstrap.ATTR_OPERATION_ID));
+        assertEquals("my-capability",
+                data.getAttributes().get(TelemetryBootstrap.ATTR_CAPABILITY));
     }
 
     @Test
     void startServerSpanShouldDefaultOperationIdWhenNull() {
         initWithInMemoryExporter();
 
-        Span span = TelemetryBootstrap.get().startServerSpan("mcp", null);
+        Span span = TelemetryBootstrap.get().startServerSpan("mcp", null, null, null, null);
         span.end();
 
         SpanData data = exporter.getFinishedSpanItems().get(0);
         assertEquals("unknown", data.getAttributes().get(TelemetryBootstrap.ATTR_OPERATION_ID));
+        assertNull(data.getAttributes().get(TelemetryBootstrap.ATTR_CAPABILITY));
     }
 
     // ── Step call span factory ──
@@ -133,7 +137,8 @@ public class TelemetryBootstrapTest {
     void startStepCallSpanShouldCreateInternalSpanWithAttributes() {
         initWithInMemoryExporter();
 
-        Span span = TelemetryBootstrap.get().startStepCallSpan(0, "weather-api.get-forecast");
+        Span span = TelemetryBootstrap.get().startStepCallSpan(0, "weather-api.get-forecast",
+                "weather-ns");
         span.end();
 
         SpanData data = exporter.getFinishedSpanItems().get(0);
@@ -142,6 +147,8 @@ public class TelemetryBootstrapTest {
         assertEquals(0L, data.getAttributes().get(TelemetryBootstrap.ATTR_STEP_INDEX));
         assertEquals("weather-api.get-forecast",
                 data.getAttributes().get(TelemetryBootstrap.ATTR_STEP_CALL));
+        assertEquals("weather-ns",
+                data.getAttributes().get(TelemetryBootstrap.ATTR_NAMESPACE));
     }
 
     // ── Step lookup span factory ──
@@ -195,7 +202,7 @@ public class TelemetryBootstrapTest {
         initWithInMemoryExporter();
 
         Span span = TelemetryBootstrap.get()
-                .startClientSpan("GET", "http://api.example.com/forecast");
+                .startClientSpan("GET", "http://api.example.com/forecast", "weather-api");
         span.end();
 
         SpanData data = exporter.getFinishedSpanItems().get(0);
@@ -204,19 +211,22 @@ public class TelemetryBootstrapTest {
         assertEquals("GET", data.getAttributes().get(TelemetryBootstrap.ATTR_HTTP_METHOD));
         assertEquals("http://api.example.com/forecast",
                 data.getAttributes().get(TelemetryBootstrap.ATTR_HTTP_URL));
+        assertEquals("weather-api",
+                data.getAttributes().get(TelemetryBootstrap.ATTR_NAMESPACE));
     }
 
     @Test
     void startClientSpanShouldDefaultMethodWhenNull() {
         initWithInMemoryExporter();
 
-        Span span = TelemetryBootstrap.get().startClientSpan(null, null);
+        Span span = TelemetryBootstrap.get().startClientSpan(null, null, null);
         span.end();
 
         SpanData data = exporter.getFinishedSpanItems().get(0);
         assertEquals("http.client.UNKNOWN", data.getName());
         assertEquals("UNKNOWN", data.getAttributes().get(TelemetryBootstrap.ATTR_HTTP_METHOD));
         assertEquals("unknown", data.getAttributes().get(TelemetryBootstrap.ATTR_HTTP_URL));
+        assertNull(data.getAttributes().get(TelemetryBootstrap.ATTR_NAMESPACE));
     }
 
     // ── Error recording ──
@@ -225,7 +235,8 @@ public class TelemetryBootstrapTest {
     void recordErrorShouldSetStatusAndRecordException() {
         initWithInMemoryExporter();
 
-        Span span = TelemetryBootstrap.get().startServerSpan("rest", "test-op");
+        Span span = TelemetryBootstrap.get().startServerSpan("rest", "test-op",
+                null, null, null);
         TelemetryBootstrap.recordError(span, new RuntimeException("test failure"));
         span.end();
 
@@ -243,7 +254,8 @@ public class TelemetryBootstrapTest {
     @Test
     void recordErrorShouldHandleNullErrorSafely() {
         initWithInMemoryExporter();
-        Span span = TelemetryBootstrap.get().startServerSpan("rest", "test-op");
+        Span span = TelemetryBootstrap.get().startServerSpan("rest", "test-op",
+                null, null, null);
         assertDoesNotThrow(() -> TelemetryBootstrap.recordError(span, null));
         span.end();
     }
@@ -261,12 +273,13 @@ public class TelemetryBootstrapTest {
     void childSpansShouldBeParentedCorrectly() {
         initWithInMemoryExporter();
 
-        Span serverSpan = TelemetryBootstrap.get().startServerSpan("mcp", "query-database");
+        Span serverSpan = TelemetryBootstrap.get().startServerSpan("mcp", "query-database",
+                null, null, null);
         try (var scope = serverSpan.makeCurrent()) {
-            Span stepSpan = TelemetryBootstrap.get().startStepCallSpan(0, "db-api.query");
+            Span stepSpan = TelemetryBootstrap.get().startStepCallSpan(0, "db-api.query", null);
             try (var stepScope = stepSpan.makeCurrent()) {
                 Span clientSpan = TelemetryBootstrap.get()
-                        .startClientSpan("POST", "http://localhost:8080/query");
+                        .startClientSpan("POST", "http://localhost:8080/query", null);
                 clientSpan.end();
             }
             stepSpan.end();
