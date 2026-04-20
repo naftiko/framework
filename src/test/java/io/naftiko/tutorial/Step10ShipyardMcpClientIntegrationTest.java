@@ -217,6 +217,66 @@ public class Step10ShipyardMcpClientIntegrationTest
         }
     }
 
+    /**
+     * Regression test for #329 — get-voyage-manifest must return the correct shape:
+     * - ship: { name, type, flag } — not absent
+     * - route: { from, to } — not flat departurePort/arrivalPort
+     * - cargo: array with all items referenced by the voyage's cargoIds
+     * - crew: array with all crew members referenced by the voyage's crewIds
+     */
+    @Test
+    public void getVoyageManifestShouldReturnShipRouteCrewAndCargo() throws Exception {
+        HttpClient http = HttpClient.newHttpClient();
+        String sessionId = initialize(http);
+
+        JsonNode result = callTool(http, sessionId, """
+                {"jsonrpc":"2.0","id":10,"method":"tools/call",
+                 "params":{"name":"get-voyage-manifest",
+                           "arguments":{"voyageId":"VOY-2026-042"}}}
+                """);
+
+        assertTrue(result.isObject(),
+                "get-voyage-manifest must return a mapped object");
+
+        // Scalar fields
+        assertEquals("VOY-2026-042", result.path("voyageId").asText(),
+                "voyageId must match the input");
+        assertEquals("planned", result.path("status").asText(),
+                "status must be present");
+
+        // Bug 2: route must be nested object { from, to }, not flat departurePort/arrivalPort
+        assertTrue(result.has("route"), "result must have a 'route' object");
+        JsonNode route = result.get("route");
+        assertTrue(route.isObject(), "route must be an object");
+        assertEquals("Oslo", route.path("from").asText(), "route.from must be Oslo");
+        assertEquals("Singapore", route.path("to").asText(), "route.to must be Singapore");
+
+        // Bug 1: ship must be present
+        assertTrue(result.has("ship"), "result must have a 'ship' object");
+        JsonNode ship = result.get("ship");
+        assertTrue(ship.isObject(), "ship must be an object");
+        assertEquals("Northern Star", ship.path("name").asText());
+        assertEquals("cargo", ship.path("type").asText());
+        assertEquals("NO", ship.path("flag").asText());
+
+        // Crew
+        assertTrue(result.has("crew"), "result must have a 'crew' array");
+        JsonNode crew = result.get("crew");
+        assertTrue(crew.isArray(), "crew must be an array");
+        assertTrue(crew.size() >= 2, "crew must have at least 2 members");
+        assertTrue(crew.get(0).has("fullName"), "crew entries must have fullName");
+        assertTrue(crew.get(0).has("role"), "crew entries must have role");
+
+        // Bug 3: cargo must have at least the items referenced by get-voyage.cargoIds
+        assertTrue(result.has("cargo"), "result must have a 'cargo' array");
+        JsonNode cargo = result.get("cargo");
+        assertTrue(cargo.isArray(), "cargo must be an array");
+        assertTrue(cargo.size() >= 1, "cargo must have at least 1 item");
+        assertTrue(cargo.get(0).has("type"), "cargo entries must have type");
+        assertTrue(cargo.get(0).has("description"), "cargo entries must have description");
+        assertTrue(cargo.get(0).has("weight"), "cargo entries must have weight");
+    }
+
     private NaftikoSpec loadPatchedStep10Spec() throws Exception {
         NaftikoSpec spec = loadSpec(CAPABILITY_FILE);
 
