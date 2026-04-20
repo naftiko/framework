@@ -26,6 +26,7 @@ import org.restlet.resource.Post;
 import org.restlet.resource.ServerResource;
 import io.naftiko.engine.telemetry.RestletHeaderGetter;
 import io.naftiko.engine.telemetry.TelemetryBootstrap;
+import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.context.Scope;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -64,12 +65,13 @@ public class McpServerResource extends ServerResource {
                         RestletHeaderGetter.INSTANCE);
 
         try (Scope ignored = extractedContext.makeCurrent()) {
-            return dispatchWithTraceContext(dispatcher, mapper, entity);
+            return dispatchWithTraceContext(dispatcher, mapper, entity, extractedContext);
         }
     }
 
     private Representation dispatchWithTraceContext(ProtocolDispatcher dispatcher,
-            ObjectMapper mapper, Representation entity) {
+            ObjectMapper mapper, Representation entity,
+            io.opentelemetry.context.Context extractedContext) {
         try {
             String body = (entity != null) ? entity.getText() : null;
 
@@ -97,15 +99,26 @@ public class McpServerResource extends ServerResource {
                 return new StringRepresentation("");
             }
 
-            // Delegate to the shared protocol dispatcher
-            ObjectNode result = dispatcher.dispatch(root);
+            // Create a SERVER span for the inbound MCP request
+            String capabilityName = (String) getContext().getAttributes().get("capabilityName");
+            Span span = TelemetryBootstrap.get().startServerSpan("mcp", rpcMethod,
+                    extractedContext, null, capabilityName);
+            try (Scope scope = span.makeCurrent()) {
+                // Delegate to the shared protocol dispatcher
+                ObjectNode result = dispatcher.dispatch(root);
 
-            if (result != null) {
-                return toJsonRepresentation(mapper, result);
-            } else {
-                // Notification — no response body
-                setStatus(Status.SUCCESS_ACCEPTED);
-                return new StringRepresentation("");
+                if (result != null) {
+                    return toJsonRepresentation(mapper, result);
+                } else {
+                    // Notification — no response body
+                    setStatus(Status.SUCCESS_ACCEPTED);
+                    return new StringRepresentation("");
+                }
+            } catch (Exception e) {
+                TelemetryBootstrap.recordError(span, e);
+                throw e;
+            } finally {
+                TelemetryBootstrap.endSpan(span);
             }
 
         } catch (JsonProcessingException e) {

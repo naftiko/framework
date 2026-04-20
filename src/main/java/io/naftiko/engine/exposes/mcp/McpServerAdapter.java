@@ -100,6 +100,11 @@ public class McpServerAdapter extends ServerAdapter {
         Context context = new Context();
         context.getAttributes().put("dispatcher", dispatcher);
         context.getAttributes().put("activeSessions", activeSessions);
+        if (getCapability().getSpec().getInfo() != null
+                && getCapability().getSpec().getInfo().getLabel() != null) {
+            context.getAttributes().put("capabilityName",
+                    getCapability().getSpec().getInfo().getLabel());
+        }
 
         Router router = new Router(context);
         router.attachDefault(McpServerResource.class);

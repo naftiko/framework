@@ -60,6 +60,11 @@ public class SkillServerAdapter extends ServerAdapter {
         Context context = new Context();
         context.getAttributes().put("skillServerSpec", serverSpec);
         context.getAttributes().put("namespaceMode", namespaceMode);
+        if (getCapability().getSpec().getInfo() != null
+                && getCapability().getSpec().getInfo().getLabel() != null) {
+            context.getAttributes().put("capabilityName",
+                    getCapability().getSpec().getInfo().getLabel());
+        }
 
         Router router = new Router(context);
         router.attach("/skills", CatalogResource.class);

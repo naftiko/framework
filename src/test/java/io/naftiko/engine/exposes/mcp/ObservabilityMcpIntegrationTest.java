@@ -71,7 +71,7 @@ public class ObservabilityMcpIntegrationTest {
     }
 
     @Test
-    void mcpToolCallShouldProduceServerSpan() throws Exception {
+    void mcpToolCallShouldProduceToolHandlerSpan() throws Exception {
         McpServerAdapter adapter = (McpServerAdapter) capability.getServerAdapters().get(0);
         ToolHandler handler = adapter.getToolHandler();
 
@@ -83,19 +83,19 @@ public class ObservabilityMcpIntegrationTest {
         assertNotNull(result);
 
         List<SpanData> spans = exporter.getFinishedSpanItems();
-        assertTrue(spans.size() >= 2, "Should produce at least 2 spans (server + aggregate)");
+        assertTrue(spans.size() >= 2, "Should produce at least 2 spans (tool handler + aggregate)");
 
-        // Find the server span
-        SpanData serverSpan = spans.stream()
-                .filter(s -> s.getName().equals("mcp.request"))
+        // Find the tool handler span (INTERNAL — the SERVER span lives in McpServerResource)
+        SpanData toolSpan = spans.stream()
+                .filter(s -> s.getName().equals("mcp.tool"))
                 .findFirst()
-                .orElseThrow(() -> new AssertionError("Missing mcp.request span"));
+                .orElseThrow(() -> new AssertionError("Missing mcp.tool span"));
 
-        assertEquals(SpanKind.SERVER, serverSpan.getKind());
+        assertEquals(SpanKind.INTERNAL, toolSpan.getKind());
         assertEquals("mcp",
-                serverSpan.getAttributes().get(TelemetryBootstrap.ATTR_ADAPTER_TYPE));
+                toolSpan.getAttributes().get(TelemetryBootstrap.ATTR_ADAPTER_TYPE));
         assertEquals("get-forecast",
-                serverSpan.getAttributes().get(TelemetryBootstrap.ATTR_OPERATION_ID));
+                toolSpan.getAttributes().get(TelemetryBootstrap.ATTR_OPERATION_ID));
     }
 
     @Test
@@ -120,14 +120,14 @@ public class ObservabilityMcpIntegrationTest {
         assertEquals("forecast.get-forecast",
                 aggregateSpan.getAttributes().get(TelemetryBootstrap.ATTR_AGGREGATE_REF));
 
-        // Aggregate span should be a child of the server span
-        SpanData serverSpan = spans.stream()
-                .filter(s -> s.getName().equals("mcp.request"))
+        // Aggregate span should be a child of the tool handler span
+        SpanData toolSpan = spans.stream()
+                .filter(s -> s.getName().equals("mcp.tool"))
                 .findFirst().orElseThrow();
 
-        assertEquals(serverSpan.getSpanId(), aggregateSpan.getParentSpanId(),
-                "aggregate.function should be a child of mcp.request");
-        assertEquals(serverSpan.getTraceId(), aggregateSpan.getTraceId(),
+        assertEquals(toolSpan.getSpanId(), aggregateSpan.getParentSpanId(),
+                "aggregate.function should be a child of mcp.tool");
+        assertEquals(toolSpan.getTraceId(), aggregateSpan.getTraceId(),
                 "Both spans should share the same trace");
     }
 
@@ -142,11 +142,11 @@ public class ObservabilityMcpIntegrationTest {
         List<SpanData> spans = exporter.getFinishedSpanItems();
         assertFalse(spans.isEmpty(), "Should produce a span even on error");
 
-        SpanData serverSpan = spans.stream()
-                .filter(s -> s.getName().equals("mcp.request"))
+        SpanData toolSpan = spans.stream()
+                .filter(s -> s.getName().equals("mcp.tool"))
                 .findFirst().orElseThrow();
 
         assertEquals(io.opentelemetry.api.trace.StatusCode.ERROR,
-                serverSpan.getStatus().getStatusCode());
+                toolSpan.getStatus().getStatusCode());
     }
 }

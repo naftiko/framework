@@ -172,7 +172,7 @@ public class OperationStepExecutor {
             switch (step) {
                 case OperationStepCallSpec callStep -> {
                     Span stepSpan = TelemetryBootstrap.get()
-                            .startStepCallSpan(stepIndex, callStep.getCall());
+                            .startStepCallSpan(stepIndex, callStep.getCall(), exposeNamespace);
                     try (Scope stepScope = stepSpan.makeCurrent()) {
                         lastContext = executeCallStep(callStep, runtimeParameters);
 
@@ -747,8 +747,9 @@ public class OperationStepExecutor {
                     ? clientRequest.getMethod().getName() : "UNKNOWN";
             String url = clientRequest.getResourceRef() != null
                     ? clientRequest.getResourceRef().toString() : "unknown";
+            String namespace = clientAdapter.getHttpClientSpec().getNamespace();
 
-            Span span = telemetry.startClientSpan(method, url);
+            Span span = telemetry.startClientSpan(method, url, namespace);
             try (Scope scope = span.makeCurrent()) {
                 // Inject W3C trace context after the client span is current
                 // so downstream services see this span as the parent
