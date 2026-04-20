@@ -56,6 +56,7 @@ Wrap a current API as a capability to make it easier to discover, reuse, and con
 How Naftiko achieves this technically:
 - Model the legacy/existing API once in `consumes.resources.operations` with explicit methods, paths, parameters, and body formats.
 - Add a stable capability namespace and expose curated resource paths/tools that are easier to consume than vendor-native endpoints.
+- Reshape not just data but also operation semantics: declare `semantics` (safe, idempotent, cacheable) on aggregate functions so the engine derives correct HTTP methods for REST adapters and `hints` for MCP tools automatically.
 - Enforce schema-based validation (`capability-schema.json`) so the elevated contract remains consistent and machine-checkable.
 
 ![Elevate existing APIs](https://naftiko.github.io/docs/images/technology/use_case_api_reusability_elevate_existing_apis.png)
@@ -68,6 +69,9 @@ How Naftiko achieves this technically:
   - [x] Focus on source APIs with JSON payloads
   - [x] Change HTTP methods to expose proper semantics
     - E.g. Adapt read-only POST queries into cacheable GET queries
+  - [x] Reshape operation semantics via `aggregates`
+    - Declare safe, idempotent, cacheable on domain functions
+    - Engine derives REST methods and MCP tool `hints` automatically
   - [x] Convert XML, Avro, CSV, TSV, PSV, HTML, Markdown payloads to JSON
 - [x] Schema-based validation with Spectral rules
   - [x] Namespace uniqueness, path conventions, and security checks

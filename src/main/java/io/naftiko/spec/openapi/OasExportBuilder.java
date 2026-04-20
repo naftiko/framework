@@ -33,6 +33,9 @@ import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.security.OAuthFlow;
+import io.swagger.v3.oas.models.security.OAuthFlows;
+import io.swagger.v3.oas.models.security.Scopes;
 import io.swagger.v3.oas.models.servers.Server;
 import io.naftiko.spec.CapabilitySpec;
 import io.naftiko.spec.InputParameterSpec;
@@ -43,6 +46,7 @@ import io.naftiko.spec.consumes.AuthenticationSpec;
 import io.naftiko.spec.consumes.BasicAuthenticationSpec;
 import io.naftiko.spec.consumes.BearerAuthenticationSpec;
 import io.naftiko.spec.consumes.DigestAuthenticationSpec;
+import io.naftiko.spec.consumes.OAuth2AuthenticationSpec;
 import io.naftiko.spec.exposes.RestServerOperationSpec;
 import io.naftiko.spec.exposes.RestServerResourceSpec;
 import io.naftiko.spec.exposes.RestServerSpec;
@@ -355,6 +359,19 @@ public class OasExportBuilder {
             if (apiKey.getPlacement() != null) {
                 securityScheme.setIn(SecurityScheme.In.valueOf(apiKey.getPlacement().toUpperCase()));
             }
+        } else if (auth instanceof OAuth2AuthenticationSpec oauth2) {
+            schemeName = "oauth2Auth";
+            securityScheme.setType(SecurityScheme.Type.OAUTH2);
+            OAuthFlows flows = new OAuthFlows();
+            OAuthFlow clientCredentials = new OAuthFlow();
+            clientCredentials.setTokenUrl(oauth2.getAuthorizationServerUri());
+            Scopes oasScopes = new Scopes();
+            if (oauth2.getScopes() != null) {
+                oauth2.getScopes().forEach(scope -> oasScopes.addString(scope, ""));
+            }
+            clientCredentials.setScopes(oasScopes);
+            flows.setClientCredentials(clientCredentials);
+            securityScheme.setFlows(flows);
         } else {
             warnings.add("Unsupported authentication type for export: " + auth.getClass().getSimpleName());
             return;
