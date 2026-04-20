@@ -57,8 +57,10 @@ public class ToolHandler {
         this.stepExecutor = new OperationStepExecutor(capability, exposeNamespace);
         this.exposeNamespace = exposeNamespace;
 
-        for (McpServerToolSpec tool : tools) {
-            toolSpecs.put(tool.getName(), tool);
+        if (tools != null) {
+            for (McpServerToolSpec tool : tools) {
+                toolSpecs.put(tool.getName(), tool);
+            }
         }
     }
 

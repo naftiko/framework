@@ -56,7 +56,7 @@ public class AggregateRefResolver {
      */
     public void resolve(NaftikoSpec spec) {
         CapabilitySpec capability = spec.getCapability();
-        if (capability == null || capability.getAggregates().isEmpty()) {
+        if (capability == null || capability.getAggregates() == null || capability.getAggregates().isEmpty()) {
             return;
         }
 

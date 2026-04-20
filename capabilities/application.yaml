@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: naftiko-capabilities
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"   # après l'operator et les classes
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/naftiko/framework
+    targetRevision: feat/idp-first-iteration
+    path: capabilities/manifests
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true

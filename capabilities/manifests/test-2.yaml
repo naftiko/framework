@@ -1,0 +1,32 @@
+apiVersion: naftiko.io/v1alpha1
+kind: Capability
+metadata:
+  name: test-capability-hello-world
+  namespace: default
+spec:
+  naftiko: "1.0.0-alpha2"
+  info:
+    label: Test Capability hello-world
+    description: "Simple hello world REST capability"
+    tags:
+      - test
+    labels:
+      naftiko.io/domain: platform
+      naftiko.io/cost-center: platform-team
+      naftiko.io/tier: standard
+  capability:
+    exposes:
+      - type: rest
+        port: 3001
+        namespace: tutorial
+        resources:
+          - path: /hello
+            name: hello
+            label: My first resource
+            description: This is a resource to demonstrate a simple Hello, World! API endpoint
+            operations:
+              - method: GET
+                outputParameters:
+                  - name: message
+                    type: string
+                    value: "Hello, World!"

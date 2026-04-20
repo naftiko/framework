@@ -84,7 +84,7 @@ public class Capability {
 
         // Build runtime aggregates (must happen after imports are resolved)
         this.aggregates = new CopyOnWriteArrayList<>();
-        if (spec.getCapability() != null && !spec.getCapability().getAggregates().isEmpty()) {
+        if (spec.getCapability() != null && spec.getCapability().getAggregates() != null && !spec.getCapability().getAggregates().isEmpty()) {
             OperationStepExecutor sharedExecutor = new OperationStepExecutor(this);
             for (AggregateSpec aggSpec : spec.getCapability().getAggregates()) {
                 this.aggregates.add(new Aggregate(aggSpec, sharedExecutor));
@@ -125,9 +125,11 @@ public class Capability {
             }
         }
 
-        for (ClientSpec clientSpec : spec.getCapability().getConsumes()) {
-            if ("http".equals(clientSpec.getType())) {
-                this.clientAdapters.add(new HttpClientAdapter(this, (HttpClientSpec) clientSpec));
+        if (spec.getCapability().getConsumes() != null) {
+            for (ClientSpec clientSpec : spec.getCapability().getConsumes()) {
+                if ("http".equals(clientSpec.getType())) {
+                    this.clientAdapters.add(new HttpClientAdapter(this, (HttpClientSpec) clientSpec));
+                }
             }
         }
     }

@@ -65,10 +65,12 @@ public class McpServerAdapter extends ServerAdapter {
         this.toolLabels = new HashMap<>();
         Context.getCurrentLogger().log(Level.INFO, "Building MCP Tool definitions from the spec");
 
-        for (McpServerToolSpec toolSpec : serverSpec.getTools()) {
-            this.tools.add(buildMcpTool(toolSpec));
-            if (toolSpec.getLabel() != null) {
-                this.toolLabels.put(toolSpec.getName(), toolSpec.getLabel());
+        if (serverSpec.getTools() != null) {
+            for (McpServerToolSpec toolSpec : serverSpec.getTools()) {
+                this.tools.add(buildMcpTool(toolSpec));
+                if (toolSpec.getLabel() != null) {
+                    this.toolLabels.put(toolSpec.getName(), toolSpec.getLabel());
+                }
             }
         }
 
@@ -111,7 +113,7 @@ public class McpServerAdapter extends ServerAdapter {
 
         Restlet chain = buildServerChain(router);
 
-        String address = serverSpec.getAddress() != null ? serverSpec.getAddress() : "localhost";
+        String address = serverSpec.getAddress() != null ? serverSpec.getAddress() : "0.0.0.0";
         initServer(address, serverSpec.getPort(), chain);
     }
 

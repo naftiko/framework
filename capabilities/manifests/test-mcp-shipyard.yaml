@@ -1,0 +1,59 @@
+apiVersion: naftiko.io/v1alpha1
+kind: Capability
+metadata:
+  name: test-capability-mcp-shipyard
+  namespace: default
+spec:
+  naftiko: "1.0.0-alpha2"
+  info:
+    label: Test Capability MCP Shipyard
+    description: "MCP capability exposing shipyard tools backed by the mock maritime registry API"
+    tags:
+    - test
+    - mcp
+    labels:
+      naftiko.io/domain: platform
+      naftiko.io/cost-center: platform-team
+      naftiko.io/tier: standard
+  capability:
+    consumes:
+    - namespace: registry
+      type: http
+      baseUri: "https://mocks.naftiko.net/rest/naftiko-shipyard-maritime-registry-api/1.0.0-alpha1"
+      resources:
+      - name: ships
+        path: "/ships"
+        operations:
+        - name: list-ships
+          method: GET
+    exposes:
+    - type: mcp
+      address: "0.0.0.0"
+      port: 3003
+      namespace: shipyard-tools
+      description: "Shipyard MCP tools for fleet management"
+      tools:
+      - name: list-ships
+        description: "List ships in the shipyard"
+        call: registry.list-ships
+        outputParameters:
+        - type: array
+          mapping: "$."
+          items:
+            type: object
+            properties:
+              imo:
+                type: string
+                mapping: "$.imo_number"
+              name:
+                type: string
+                mapping: "$.vessel_name"
+              type:
+                type: string
+                mapping: "$.vessel_type"
+              flag:
+                type: string
+                mapping: "$.flag_code"
+              status:
+                type: string
+                mapping: "$.operational_status"

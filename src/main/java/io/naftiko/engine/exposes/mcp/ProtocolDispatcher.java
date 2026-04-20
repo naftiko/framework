@@ -118,10 +118,12 @@ public class ProtocolDispatcher {
         // Conditionally advertise capabilities based on what is declared in the spec
         ObjectNode capabilities = mapper.createObjectNode();
         capabilities.putObject("tools");
-        if (!adapter.getMcpServerSpec().getResources().isEmpty()) {
+        if (adapter.getMcpServerSpec().getResources() != null
+            && !adapter.getMcpServerSpec().getResources().isEmpty()) {
             capabilities.putObject("resources");
         }
-        if (!adapter.getMcpServerSpec().getPrompts().isEmpty()) {
+        if (adapter.getMcpServerSpec().getPrompts() != null
+            && !adapter.getMcpServerSpec().getPrompts().isEmpty()) {
             capabilities.putObject("prompts");
         }
         result.set("capabilities", capabilities);
