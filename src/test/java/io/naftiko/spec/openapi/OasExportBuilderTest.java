@@ -29,6 +29,7 @@ import io.naftiko.spec.OutputParameterSpec;
 import io.naftiko.spec.consumes.ApiKeyAuthenticationSpec;
 import io.naftiko.spec.consumes.BasicAuthenticationSpec;
 import io.naftiko.spec.consumes.BearerAuthenticationSpec;
+import io.naftiko.spec.consumes.OAuth2AuthenticationSpec;
 import io.naftiko.spec.exposes.RestServerOperationSpec;
 import io.naftiko.spec.exposes.RestServerResourceSpec;
 import io.naftiko.spec.exposes.RestServerSpec;
@@ -285,6 +286,66 @@ public class OasExportBuilderTest {
                 .getSecuritySchemes().get("apiKeyAuth");
         assertEquals(SecurityScheme.Type.APIKEY, scheme.getType());
         assertEquals("X-API-Key", scheme.getName());
+    }
+
+    @Test
+    void buildShouldMapOauth2AuthenticationWithClientCredentialsFlow() {
+        NaftikoSpec spec = minimalSpec("Test", null);
+        RestServerSpec rest = getRestServer(spec);
+        rest.getResources().add(resourceWithOperation("/pets", "pets",
+                "GET", "list-pets", null));
+        OAuth2AuthenticationSpec oauth2 = new OAuth2AuthenticationSpec();
+        oauth2.setAuthorizationServerUri("https://auth.example.com/token");
+        oauth2.setScopes(List.of("read:pets", "write:pets"));
+        rest.setAuthentication(oauth2);
+
+        OasExportResult result = builder.build(spec, null);
+
+        SecurityScheme scheme = result.getOpenApi().getComponents()
+                .getSecuritySchemes().get("oauth2Auth");
+        assertEquals(SecurityScheme.Type.OAUTH2, scheme.getType());
+        assertNotNull(scheme.getFlows());
+        assertNotNull(scheme.getFlows().getClientCredentials());
+        assertEquals("https://auth.example.com/token",
+                scheme.getFlows().getClientCredentials().getTokenUrl());
+        assertTrue(scheme.getFlows().getClientCredentials().getScopes().containsKey("read:pets"));
+        assertTrue(scheme.getFlows().getClientCredentials().getScopes().containsKey("write:pets"));
+    }
+
+    @Test
+    void buildShouldMapOauth2AuthenticationWithEmptyScopesWhenNull() {
+        NaftikoSpec spec = minimalSpec("Test", null);
+        RestServerSpec rest = getRestServer(spec);
+        rest.getResources().add(resourceWithOperation("/pets", "pets",
+                "GET", "list-pets", null));
+        OAuth2AuthenticationSpec oauth2 = new OAuth2AuthenticationSpec();
+        oauth2.setAuthorizationServerUri("https://auth.example.com/token");
+        rest.setAuthentication(oauth2);
+
+        OasExportResult result = builder.build(spec, null);
+
+        SecurityScheme scheme = result.getOpenApi().getComponents()
+                .getSecuritySchemes().get("oauth2Auth");
+        assertEquals(SecurityScheme.Type.OAUTH2, scheme.getType());
+        assertNotNull(scheme.getFlows().getClientCredentials().getScopes());
+        assertTrue(scheme.getFlows().getClientCredentials().getScopes().isEmpty());
+    }
+
+    @Test
+    void buildShouldSetDocumentLevelSecurityForOauth2() {
+        NaftikoSpec spec = minimalSpec("Test", null);
+        RestServerSpec rest = getRestServer(spec);
+        rest.getResources().add(resourceWithOperation("/pets", "pets",
+                "GET", "list-pets", null));
+        OAuth2AuthenticationSpec oauth2 = new OAuth2AuthenticationSpec();
+        oauth2.setAuthorizationServerUri("https://auth.example.com/token");
+        rest.setAuthentication(oauth2);
+
+        OasExportResult result = builder.build(spec, null);
+
+        assertNotNull(result.getOpenApi().getSecurity());
+        assertFalse(result.getOpenApi().getSecurity().isEmpty());
+        assertTrue(result.getOpenApi().getSecurity().get(0).containsKey("oauth2Auth"));
     }
 
     // ── Edge cases ──
