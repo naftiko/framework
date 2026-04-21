@@ -361,10 +361,19 @@ public class OasExportBuilder {
                 securityScheme.setIn(SecurityScheme.In.valueOf(apiKey.getPlacement().toUpperCase()));
             }
         } else if (auth instanceof OAuth2AuthenticationSpec oauth2) {
-            String tokenUrl = oauth2.getAuthorizationServerUri();
+            String tokenUrl = oauth2.getTokenEndpoint();
             if (tokenUrl == null || tokenUrl.isBlank()) {
-                warnings.add("OAuth2 authentication requires authorizationServerUri (tokenUrl) "
-                        + "but it is missing or blank — skipping security scheme export");
+                tokenUrl = oauth2.getAuthorizationServerUri();
+                if (tokenUrl != null && !tokenUrl.isBlank()) {
+                    warnings.add("No tokenEndpoint set — falling back to authorizationServerUri "
+                            + "as tokenUrl. This may be semantically incorrect; "
+                            + "authorizationServerUri is the issuer URI, not the token endpoint.");
+                }
+            }
+            if (tokenUrl == null || tokenUrl.isBlank()) {
+                warnings.add("OAuth2 authentication requires tokenEndpoint or "
+                        + "authorizationServerUri but both are missing or blank "
+                        + "— skipping security scheme export");
                 return;
             }
             schemeName = "oauth2Auth";
@@ -372,16 +381,14 @@ public class OasExportBuilder {
             OAuthFlows flows = new OAuthFlows();
             OAuthFlow clientCredentials = new OAuthFlow();
             clientCredentials.setTokenUrl(tokenUrl);
-            Scopes oasScopes = new Scopes();
             if (oauth2.getScopes() != null) {
+                Scopes oasScopes = new Scopes();
                 oauth2.getScopes().forEach(scope -> oasScopes.addString(scope, ""));
-            }
-            clientCredentials.setScopes(oasScopes);
-            flows.setClientCredentials(clientCredentials);
-            securityScheme.setFlows(flows);
-            if (oauth2.getScopes() != null) {
+                clientCredentials.setScopes(oasScopes);
                 requiredScopes = oauth2.getScopes();
             }
+            flows.setClientCredentials(clientCredentials);
+            securityScheme.setFlows(flows);
         } else {
             warnings.add("Unsupported authentication type for export: " + auth.getClass().getSimpleName());
             return;

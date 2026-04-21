@@ -295,7 +295,8 @@ public class OasExportBuilderTest {
         rest.getResources().add(resourceWithOperation("/pets", "pets",
                 "GET", "list-pets", null));
         OAuth2AuthenticationSpec oauth2 = new OAuth2AuthenticationSpec();
-        oauth2.setAuthorizationServerUri("https://auth.example.com/token");
+        oauth2.setAuthorizationServerUri("https://auth.example.com");
+        oauth2.setTokenEndpoint("https://auth.example.com/oauth/token");
         oauth2.setScopes(List.of("read:pets", "write:pets"));
         rest.setAuthentication(oauth2);
 
@@ -306,20 +307,43 @@ public class OasExportBuilderTest {
         assertEquals(SecurityScheme.Type.OAUTH2, scheme.getType());
         assertNotNull(scheme.getFlows());
         assertNotNull(scheme.getFlows().getClientCredentials());
-        assertEquals("https://auth.example.com/token",
+        assertEquals("https://auth.example.com/oauth/token",
                 scheme.getFlows().getClientCredentials().getTokenUrl());
         assertTrue(scheme.getFlows().getClientCredentials().getScopes().containsKey("read:pets"));
         assertTrue(scheme.getFlows().getClientCredentials().getScopes().containsKey("write:pets"));
+        assertTrue(result.getWarnings().stream()
+                .noneMatch(w -> w.contains("tokenEndpoint")));
     }
 
     @Test
-    void buildShouldMapOauth2AuthenticationWithEmptyScopesWhenNull() {
+    void buildShouldFallbackToAuthorizationServerUriWhenTokenEndpointMissing() {
         NaftikoSpec spec = minimalSpec("Test", null);
         RestServerSpec rest = getRestServer(spec);
         rest.getResources().add(resourceWithOperation("/pets", "pets",
                 "GET", "list-pets", null));
         OAuth2AuthenticationSpec oauth2 = new OAuth2AuthenticationSpec();
-        oauth2.setAuthorizationServerUri("https://auth.example.com/token");
+        oauth2.setAuthorizationServerUri("https://auth.example.com");
+        oauth2.setScopes(List.of("read:pets"));
+        rest.setAuthentication(oauth2);
+
+        OasExportResult result = builder.build(spec, null);
+
+        SecurityScheme scheme = result.getOpenApi().getComponents()
+                .getSecuritySchemes().get("oauth2Auth");
+        assertEquals("https://auth.example.com",
+                scheme.getFlows().getClientCredentials().getTokenUrl());
+        assertTrue(result.getWarnings().stream()
+                .anyMatch(w -> w.contains("No tokenEndpoint set")));
+    }
+
+    @Test
+    void buildShouldNotSetScopesOnFlowWhenNull() {
+        NaftikoSpec spec = minimalSpec("Test", null);
+        RestServerSpec rest = getRestServer(spec);
+        rest.getResources().add(resourceWithOperation("/pets", "pets",
+                "GET", "list-pets", null));
+        OAuth2AuthenticationSpec oauth2 = new OAuth2AuthenticationSpec();
+        oauth2.setTokenEndpoint("https://auth.example.com/oauth/token");
         rest.setAuthentication(oauth2);
 
         OasExportResult result = builder.build(spec, null);
@@ -327,8 +351,8 @@ public class OasExportBuilderTest {
         SecurityScheme scheme = result.getOpenApi().getComponents()
                 .getSecuritySchemes().get("oauth2Auth");
         assertEquals(SecurityScheme.Type.OAUTH2, scheme.getType());
-        assertNotNull(scheme.getFlows().getClientCredentials().getScopes());
-        assertTrue(scheme.getFlows().getClientCredentials().getScopes().isEmpty());
+        assertNull(scheme.getFlows().getClientCredentials().getScopes(),
+                "Scopes should not be set when source scopes are null");
     }
 
     @Test
@@ -338,7 +362,7 @@ public class OasExportBuilderTest {
         rest.getResources().add(resourceWithOperation("/pets", "pets",
                 "GET", "list-pets", null));
         OAuth2AuthenticationSpec oauth2 = new OAuth2AuthenticationSpec();
-        oauth2.setAuthorizationServerUri("https://auth.example.com/token");
+        oauth2.setTokenEndpoint("https://auth.example.com/oauth/token");
         rest.setAuthentication(oauth2);
 
         OasExportResult result = builder.build(spec, null);
@@ -355,7 +379,7 @@ public class OasExportBuilderTest {
         rest.getResources().add(resourceWithOperation("/pets", "pets",
                 "GET", "list-pets", null));
         OAuth2AuthenticationSpec oauth2 = new OAuth2AuthenticationSpec();
-        oauth2.setAuthorizationServerUri("https://auth.example.com/token");
+        oauth2.setTokenEndpoint("https://auth.example.com/oauth/token");
         oauth2.setScopes(List.of("read:pets", "write:pets"));
         rest.setAuthentication(oauth2);
 
@@ -372,7 +396,7 @@ public class OasExportBuilderTest {
     // ── Edge cases ──
 
     @Test
-    void buildShouldWarnAndSkipOauth2WhenTokenUrlIsNull() {
+    void buildShouldWarnAndSkipOauth2WhenBothTokenUrlAndIssuerAreNull() {
         NaftikoSpec spec = minimalSpec("Test", null);
         RestServerSpec rest = getRestServer(spec);
         rest.getResources().add(resourceWithOperation("/pets", "pets",
@@ -383,29 +407,30 @@ public class OasExportBuilderTest {
         OasExportResult result = builder.build(spec, null);
 
         assertNull(result.getOpenApi().getComponents().getSecuritySchemes(),
-                "No security scheme should be added when tokenUrl is missing");
+                "No security scheme should be added when both are missing");
         assertNull(result.getOpenApi().getSecurity(),
-                "No document-level security should be added when tokenUrl is missing");
+                "No document-level security should be added when both are missing");
         assertTrue(result.getWarnings().stream()
-                .anyMatch(w -> w.contains("authorizationServerUri")));
+                .anyMatch(w -> w.contains("both are missing")));
     }
 
     @Test
-    void buildShouldWarnAndSkipOauth2WhenTokenUrlIsBlank() {
+    void buildShouldWarnAndSkipOauth2WhenBothTokenUrlAndIssuerAreBlank() {
         NaftikoSpec spec = minimalSpec("Test", null);
         RestServerSpec rest = getRestServer(spec);
         rest.getResources().add(resourceWithOperation("/pets", "pets",
                 "GET", "list-pets", null));
         OAuth2AuthenticationSpec oauth2 = new OAuth2AuthenticationSpec();
+        oauth2.setTokenEndpoint("   ");
         oauth2.setAuthorizationServerUri("   ");
         rest.setAuthentication(oauth2);
 
         OasExportResult result = builder.build(spec, null);
 
         assertNull(result.getOpenApi().getComponents().getSecuritySchemes(),
-                "No security scheme should be added when tokenUrl is blank");
+                "No security scheme should be added when both are blank");
         assertTrue(result.getWarnings().stream()
-                .anyMatch(w -> w.contains("authorizationServerUri")));
+                .anyMatch(w -> w.contains("both are missing")));
     }
 
     @Test
