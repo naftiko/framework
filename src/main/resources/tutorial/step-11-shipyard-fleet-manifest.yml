@@ -621,7 +621,7 @@ capability:
                 status: shipyard-api.status
               outputParameters:
                 - type: array
-                  mapping: "$."
+                  mapping: "$.vessel"
                   items:
                     type: object
                     properties:
