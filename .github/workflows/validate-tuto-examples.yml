@@ -1,0 +1,287 @@
+name: Validate Shipyard tutorial examples
+
+on:
+  push:
+    paths:
+      - 'src/main/**'
+      - 'pom.xml'
+  workflow_dispatch:
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install jq & yq
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y jq
+        sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
+        sudo chmod +x /usr/bin/yq
+
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: 21
+
+    - name: Build project
+      run: mvn package -DskipTests -q
+
+    - name: Create secrets file
+      run: |
+        mkdir -p shared
+        cat > shared/secrets.yaml << EOF
+        registry-bearer-token: ${{ secrets.REGISTRY_TOKEN }}
+        registry-api-version: ${{ secrets.REGISTRY_VERSION }}
+        dockyard-api-key: ${{ secrets.DOCKYARD_API_KEY }}
+        mcp-server-token: ${{ secrets.MCP_SERVER_TOKEN }}
+        EOF
+
+    - name: Start Microcks
+      run: |
+        docker run -d \
+          -p 8080:8080 \
+          quay.io/microcks/microcks-uber:latest  
+
+    - name: Wait for Microcks
+      run: |
+        sleep 15
+        curl -sf http://localhost:8080/api/health || (echo "Microcks failed to start" && exit 1)
+
+
+    - name: Import OpenAPI specs into Microcks
+      run: |
+        for file in .github/microcks/*.yaml; do
+          echo "Importing $file"
+          curl -s -X POST "http://localhost:8080/api/artifact/upload" \
+            -F "file=@$file"
+        done
+
+    - name: Patch baseUri in capability files
+      run: |
+        TUTORIAL_DIR="src/main/resources/tutorial"
+
+        get_base_uri() {
+          case "$1" in
+            registry) echo "http://localhost:8080/rest/naftiko-shipyard-maritime-registry-api/1.0.0-alpha2" ;;
+            legacy)   echo "http://localhost:8080/rest/naftiko-shipyard-legacy-dockyard-api/1.0.0-alpha2" ;;
+            *)        echo "" ;;
+          esac
+        }
+
+        find "$TUTORIAL_DIR" -name "*.yaml" -o -name "*.yml" | while read file; do
+          COUNT=$(yq '.capability.consumes | length' "$file" 2>/dev/null)
+          [ -z "$COUNT" ] || [ "$COUNT" = "0" ] || [ "$COUNT" = "null" ] && continue
+
+          for i in $(seq 0 $(($COUNT - 1))); do
+            IMPORT=$(yq -r ".capability.consumes[$i].import // \"\"" "$file")
+
+            if [ -n "$IMPORT" ]; then
+              # Import-style: patch the referenced shared file
+              LOCATION=$(yq -r ".capability.consumes[$i].location" "$file")
+              SHARED_FILE="$(dirname "$file")/$LOCATION"
+
+              [ ! -f "$SHARED_FILE" ] && echo "Warning: $SHARED_FILE not found, skipping" && continue
+
+              NAMESPACE=$(yq -r ".consumes[0].namespace" "$SHARED_FILE")
+              BASE_URI=$(get_base_uri "$NAMESPACE")
+              [ -z "$BASE_URI" ] && continue
+
+              echo "Patching shared file $SHARED_FILE: '$NAMESPACE' → $BASE_URI"
+              yq -i ".consumes[0].baseUri = \"$BASE_URI\"" "$SHARED_FILE"
+            else
+              # Inline-style: patch baseUri directly in the tutorial file
+              NAMESPACE=$(yq -r ".capability.consumes[$i].namespace // \"\"" "$file")
+              [ -z "$NAMESPACE" ] && continue
+
+              BASE_URI=$(get_base_uri "$NAMESPACE")
+              [ -z "$BASE_URI" ] && continue
+
+              echo "Patching $file inline: '$NAMESPACE' → $BASE_URI"
+              yq -i ".capability.consumes[$i].baseUri = \"$BASE_URI\"" "$file"
+            fi
+          done
+        done
+        
+    - name: Run tests
+      env:
+        MCP_SERVER_TOKEN: ${{ secrets.MCP_SERVER_TOKEN }}
+      run: |
+        set -e
+
+        PID=""
+
+        cleanup() {
+          if [ ! -z "$PID" ]; then
+            kill $PID 2>/dev/null || true
+            wait $PID 2>/dev/null || true
+            PID=""
+          fi
+        }
+
+        # Cleanup on any exit (crash, signal, success)
+        trap cleanup EXIT
+
+        TEST_FILE=".github/tests/tests.yml"
+        TEST_COUNT=$(yq '.tests | length' $TEST_FILE)
+
+        echo "Running $TEST_COUNT tests..."
+
+        for i in $(seq 0 $(($TEST_COUNT - 1))); do
+          NAME=$(yq -r ".tests[$i].name" $TEST_FILE)
+          FILE=$(yq -r ".tests[$i].file" $TEST_FILE)
+          PORT=$(yq -r ".tests[$i].port" $TEST_FILE)
+          TOOL=$(yq -r ".tests[$i].tool // \"\"" $TEST_FILE)
+          SKIP=$(yq -r ".tests[$i].skip // false" $TEST_FILE)
+
+          if [ "$SKIP" = "true" ]; then
+            echo "Skipping test: $NAME"
+            continue
+          fi
+
+          echo "-----------------------------------"
+          echo "Running test: $NAME"
+          echo "File: $FILE | Port: $PORT | Tool: $TOOL"
+          echo "-----------------------------------"
+
+          ARGS=$(yq -o=json ".tests[$i].args // {}" $TEST_FILE)
+          
+          # Determine test type FIRST (before health check)
+          TYPE=$(yq -r ".tests[$i].type // \"mcp\"" $TEST_FILE)
+
+          # Start server with a timeout guard
+          timeout 120 java -jar target/capability.jar src/main/resources/tutorial/$FILE &
+          PID=$!
+
+          echo "Waiting for server on port $PORT (type: $TYPE)..."
+
+          READY=false
+
+          if [ "$TYPE" = "rest" ]; then
+            # REST health check
+            for j in {1..30}; do
+              if curl -s http://localhost:$PORT > /dev/null 2>&1; then
+                echo "REST server is ready"
+                READY=true
+                break
+              fi
+              sleep 1
+            done
+          else
+            # MCP check (tools/list)
+            for j in {1..30}; do
+              RESPONSE=$(curl -s http://localhost:$PORT \
+                -H "Content-Type: application/json" \
+                -H "Authorization: Bearer $MCP_SERVER_TOKEN" \
+                -d '{
+                  "jsonrpc":"2.0",
+                  "id":1,
+                  "method":"tools/list",
+                  "params":{}
+                }' || true)
+
+              if echo "$RESPONSE" | jq -e '.result.tools' > /dev/null 2>&1; then
+                echo "MCP server is ready"
+                READY=true
+                break
+              fi
+
+              sleep 1
+            done
+          fi
+
+          # Fail if server never started
+          if [ "$READY" != "true" ]; then
+            echo "Server failed to start on port $PORT"
+            cleanup
+            exit 1
+          fi
+
+          # Execute test based on type
+          if [ "$TYPE" = "rest" ]; then
+            METHOD=$(yq -r ".tests[$i].method" $TEST_FILE)
+            ENDPOINT_PATH=$(yq -r ".tests[$i].path" $TEST_FILE)
+            BODY=$(yq -o=json ".tests[$i].body // {}" $TEST_FILE)
+
+            echo "Calling REST endpoint: $METHOD $ENDPOINT_PATH"
+
+            if [ "$METHOD" = "GET" ]; then
+              RESPONSE=$(curl -s http://localhost:$PORT$ENDPOINT_PATH)
+            else
+              RESPONSE=$(curl -s -X $METHOD http://localhost:$PORT$ENDPOINT_PATH \
+                -H "Content-Type: application/json" \
+                -d "$BODY")
+            fi
+
+            DATA="$RESPONSE"
+
+          else
+            RESPONSE=$(curl -s http://localhost:$PORT \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer $MCP_SERVER_TOKEN" \
+              -d "{
+                \"jsonrpc\": \"2.0\",
+                \"id\": 1,
+                \"method\": \"tools/call\",
+                \"params\": {
+                  \"name\": \"$TOOL\",
+                  \"arguments\": $ARGS
+                }
+              }")
+
+            IS_ERROR=$(echo "$RESPONSE" | jq -r '.result.isError // false')
+            DATA=$(echo "$RESPONSE" | jq -r '.result.content[0].text')
+
+            if [ "$IS_ERROR" = "true" ]; then
+              echo "Tool returned an error:"
+              echo "$DATA"
+              cleanup
+              exit 1
+            fi
+          fi
+          if echo "$DATA" | head -c 1 | grep -q "<"; then
+            echo "XML detected → wrapping as string for safe jq parsing"
+            DATA=$(echo "$DATA" | jq -R .)
+          fi
+          echo "Parsed data:"
+          if ! echo "$DATA" | jq . ; then
+            echo "Invalid JSON returned"
+            echo "Raw response was: $RESPONSE"
+            cleanup
+            exit 1
+          fi
+
+          VALIDATION_COUNT=$(yq ".tests[$i].validations | length" $TEST_FILE)
+
+          for k in $(seq 0 $(($VALIDATION_COUNT - 1))); do
+            RULE=$(yq -r ".tests[$i].validations[$k].jq" $TEST_FILE)
+
+            echo "Running validation: $RULE"
+
+            if ! echo "$DATA" | jq -e "$RULE" > /dev/null; then
+              echo "Validation failed: $RULE"
+              echo "Data was: $DATA"
+              cleanup
+              exit 1
+            fi
+          done
+
+          echo "Test $NAME passed :)"
+
+          cleanup
+
+          # Wait for port to be released before next test
+          for j in {1..10}; do
+            if ! curl -s http://localhost:$PORT > /dev/null 2>&1; then
+              break
+            fi
+            sleep 1
+          done
+
+        done
+
+        echo "All tests passed !"

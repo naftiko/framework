@@ -1,0 +1,342 @@
+openapi: 3.1.0
+info:
+  title: naftiko-shipyard-legacy-dockyard-api
+  description: >-
+    Legacy dockyard system that holds records for older vessels that were never
+    migrated to the modern Maritime Registry. Authenticated via API key
+    passed in the X-Dock-Key header. All responses are served as XML
+    (application/xml).
+  version: 1.0.0-alpha2
+  contact:
+    name: Shipyard API Team
+
+servers:
+  - url: https://mocks.naftiko.net/rest/naftiko-shipyard-legacy-dockyard-api/1.0.0-alpha2
+    description: Legacy Dockyard API
+
+tags:
+  - name: Vessels
+    description: Legacy vessel registry operations
+  - name: Personnel
+    description: Legacy crew/personnel registry operations
+
+security:
+  - apiKeyAuth: []
+
+paths:
+  /vessels:
+    get:
+      tags:
+        - Vessels
+      operationId: list-vessels
+      summary: List vessels from the legacy dockyard
+      description: >-
+        Returns a list of vessels from the legacy dockyard system as XML.
+        These are older vessel records that were never migrated to the
+        modern Maritime Registry. Can be filtered by operational status.
+      x-microcks-operation:
+        dispatcher: FALLBACK
+        dispatcherRules: |-
+          {
+            "dispatcher": "URI_PARAMS",
+            "dispatcherRules": "status",
+            "fallback": "allVessels"
+          }
+      parameters:
+        - name: status
+          in: query
+          required: false
+          description: Filter by operational status
+          schema:
+            type: string
+            enum:
+              - active
+              - laid_up
+              - scrapped
+          examples:
+            "?status=active":
+              value: "active"
+            "?status=laid_up":
+              value: "laid_up"
+      responses:
+        '200':
+          description: A list of legacy vessels (XML)
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/LegacyVesselList'
+              examples:
+                allVessels:
+                  summary: All legacy vessels
+                  value: |-
+                    <vessels>
+                      <vessel>
+                        <vesselCode>LEGACY-4012</vesselCode>
+                        <vesselName>Old Faithful</vesselName>
+                        <category>cargo</category>
+                        <flagState>GB</flagState>
+                        <operationalStatus>active</operationalStatus>
+                      </vessel>
+                      <vessel>
+                        <vesselCode>LEGACY-2087</vesselCode>
+                        <vesselName>Iron Maiden</vesselName>
+                        <category>bulk_carrier</category>
+                        <flagState>PA</flagState>
+                        <operationalStatus>laid_up</operationalStatus>
+                      </vessel>
+                    </vessels>
+                "?status=active":
+                  summary: Active legacy vessels only
+                  value: |-
+                    <vessels>
+                      <vessel>
+                        <vesselCode>LEGACY-4012</vesselCode>
+                        <vesselName>Old Faithful</vesselName>
+                        <category>cargo</category>
+                        <flagState>GB</flagState>
+                        <operationalStatus>active</operationalStatus>
+                      </vessel>
+                    </vessels>
+                "?status=laid_up":
+                  summary: Laid up legacy vessels
+                  value: |-
+                    <vessels>
+                      <vessel>
+                        <vesselCode>LEGACY-2087</vesselCode>
+                        <vesselName>Iron Maiden</vesselName>
+                        <category>bulk_carrier</category>
+                        <flagState>PA</flagState>
+                        <operationalStatus>laid_up</operationalStatus>
+                      </vessel>
+                    </vessels>
+
+  /vessels/{vesselCode}:
+    get:
+      tags:
+        - Vessels
+      operationId: get-vessel
+      summary: Retrieve a vessel by its legacy code
+      description: >-
+        Returns a single legacy vessel record as XML, including extra
+        fields such as build year, deadweight and home port.
+      x-microcks-operation:
+        dispatcher: URI_PARTS
+        dispatcherRules: vesselCode
+      parameters:
+        - name: vesselCode
+          in: path
+          required: true
+          description: Legacy vessel identifier code
+          schema:
+            type: string
+          examples:
+            "/vesselCode=LEGACY-4012":
+              value: "LEGACY-4012"
+      responses:
+        '200':
+          description: Full legacy vessel details (XML)
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/LegacyVesselDetail'
+              examples:
+                "/vesselCode=LEGACY-4012":
+                  summary: Old Faithful - cargo legacy vessel
+                  value: |-
+                    <vessel>
+                      <vesselCode>LEGACY-4012</vesselCode>
+                      <vesselName>Old Faithful</vesselName>
+                      <category>cargo</category>
+                      <flagState>GB</flagState>
+                      <operationalStatus>active</operationalStatus>
+                      <buildYear>1998</buildYear>
+                      <deadweight>28000</deadweight>
+                      <homePort>Liverpool</homePort>
+                    </vessel>
+        '404':
+          description: Vessel not found
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                notFound:
+                  value: |-
+                    <error>
+                      <code>not_found</code>
+                      <message>Vessel LEGACY-0000 not found</message>
+                    </error>
+
+  /personnel:
+    get:
+      tags:
+        - Personnel
+      operationId: list-personnel
+      summary: List all personnel
+      description: >-
+        Returns all personnel records from the legacy dockyard as XML.
+        Uses snake_case field names (emp_id, vessel_id) that differ from
+        the modern Maritime Registry /crew endpoint.
+      responses:
+        '200':
+          description: A list of legacy personnel (XML)
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/PersonnelList'
+              examples:
+                allPersonnel:
+                  summary: All legacy personnel
+                  value: |-
+                    <personnel>
+                      <employee>
+                        <emp_id>EMP-301</emp_id>
+                        <name>James Harlow</name>
+                        <position>captain</position>
+                        <vessel_id>LEGACY-4012</vessel_id>
+                      </employee>
+                      <employee>
+                        <emp_id>EMP-302</emp_id>
+                        <name>Mei-Lin Chow</name>
+                        <position>engineer</position>
+                        <vessel_id>LEGACY-4012</vessel_id>
+                      </employee>
+                    </personnel>
+
+components:
+  securitySchemes:
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Dock-Key
+      description: API key for legacy dockyard access
+
+  schemas:
+    LegacyVessel:
+      type: object
+      xml:
+        name: vessel
+      description: >-
+        Legacy vessel summary record. Uses camelCase field names that
+        differ from the modern Maritime Registry (snake_case).
+      required:
+        - vesselCode
+        - vesselName
+        - category
+        - flagState
+        - operationalStatus
+      properties:
+        vesselCode:
+          type: string
+          description: Legacy vessel identifier code
+          example: "LEGACY-4012"
+        vesselName:
+          type: string
+          description: Name of the vessel
+          example: "Old Faithful"
+        category:
+          type: string
+          description: Vessel category (equivalent to vessel_type in the modern registry)
+          enum:
+            - cargo
+            - tanker
+            - bulk_carrier
+            - container
+            - passenger
+          example: "cargo"
+        flagState:
+          type: string
+          description: ISO country code of the flag state (equivalent to flag_code)
+          example: "GB"
+        operationalStatus:
+          type: string
+          description: >-
+            Current operational status. Uses legacy values (laid_up, scrapped)
+            instead of the modern registry's maintenance/decommissioned.
+          enum:
+            - active
+            - laid_up
+            - scrapped
+          example: "active"
+
+    LegacyVesselList:
+      type: array
+      xml:
+        name: vessels
+        wrapped: true
+      items:
+        $ref: '#/components/schemas/LegacyVessel'
+
+    LegacyVesselDetail:
+      allOf:
+        - $ref: '#/components/schemas/LegacyVessel'
+        - type: object
+          properties:
+            buildYear:
+              type: integer
+              description: Year the vessel was built
+              example: 1998
+            deadweight:
+              type: integer
+              description: Deadweight tonnage
+              example: 28000
+            homePort:
+              type: string
+              description: Home port of the vessel
+              example: "Liverpool"
+
+    Employee:
+      type: object
+      xml:
+        name: employee
+      description: >-
+        Legacy personnel record. Uses snake_case fields (emp_id, vessel_id)
+        that map to crewId and shipImo in the modern Maritime Registry.
+      required:
+        - emp_id
+        - name
+        - position
+        - vessel_id
+      properties:
+        emp_id:
+          type: string
+          description: Legacy employee identifier (maps to crewId)
+          example: "EMP-301"
+        name:
+          type: string
+          description: Full name (maps to fullName)
+          example: "James Harlow"
+        position:
+          type: string
+          description: Role on the vessel (maps to role)
+          example: "captain"
+        vessel_id:
+          type: string
+          description: Legacy vessel code the employee is assigned to (maps to shipImo)
+          example: "LEGACY-4012"
+
+    PersonnelList:
+      type: array
+      xml:
+        name: personnel
+        wrapped: true
+      items:
+        $ref: '#/components/schemas/Employee'
+
+    Error:
+      type: object
+      xml:
+        name: error
+      description: XML error response
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Error code
+          example: "not_found"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Resource not found"
