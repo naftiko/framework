@@ -278,7 +278,12 @@ public class ResourceHandler {
             return "";
         }
 
-        String mapped = stepExecutor.applyOutputMappings(responseText, spec.getOutputParameters());
+        String outputRawFormat = found.clientOperation != null
+                ? found.clientOperation.getOutputRawFormat() : null;
+        String outputSchema = found.clientOperation != null
+                ? found.clientOperation.getOutputSchema() : null;
+        String mapped = stepExecutor.applyOutputMappings(responseText,
+                spec.getOutputParameters(), outputRawFormat, outputSchema);
         return mapped != null ? mapped : responseText;
     }
 

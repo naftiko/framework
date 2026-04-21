@@ -263,8 +263,13 @@ public class ToolHandler {
         // Buffer entity text before any mapping to avoid double-read issues
         String responseText = found.clientResponse.getEntity().getText();
 
-        // Apply output parameter mappings if defined
-        String mapped = stepExecutor.applyOutputMappings(responseText, toolSpec.getOutputParameters());
+        // Apply output parameter mappings if defined, converting from the declared format
+        String outputRawFormat = found.clientOperation != null
+                ? found.clientOperation.getOutputRawFormat() : null;
+        String outputSchema = found.clientOperation != null
+                ? found.clientOperation.getOutputSchema() : null;
+        String mapped = stepExecutor.applyOutputMappings(responseText,
+                toolSpec.getOutputParameters(), outputRawFormat, outputSchema);
         if (mapped != null) {
             return new McpSchema.CallToolResult(List.of(new McpSchema.TextContent(mapped)),
                     isError, null, null);
