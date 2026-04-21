@@ -43,6 +43,7 @@ import io.naftiko.spec.OutputParameterSpec;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
@@ -113,6 +114,46 @@ public class Converter {
         }
 
         return root;
+    }
+
+    /**
+     * Convert a text-based response to a JSON tree, given the declared output format.
+     *
+     * <p>Handles every text-representable format (XML, YAML, CSV, TSV, PSV, HTML, Markdown,
+     * JSON). Binary formats (Protobuf, Avro) cannot be round-tripped through a
+     * {@link String} and will throw.</p>
+     *
+     * @param format the declared {@code outputRawFormat} (may be {@code null} for JSON)
+     * @param schema the declared {@code outputSchema} (used by HTML/Markdown selectors)
+     * @param text   the raw response body as a string
+     * @return the parsed JSON tree
+     * @throws IOException if parsing or conversion fails
+     */
+    public static JsonNode convertToJson(String format, String schema, String text)
+            throws IOException {
+        if ("XML".equalsIgnoreCase(format)) {
+            return Converter.convertXmlToJson(new StringReader(text));
+        } else if ("YAML".equalsIgnoreCase(format)) {
+            return Converter.convertYamlToJson(new StringReader(text));
+        } else if ("CSV".equalsIgnoreCase(format)) {
+            return Converter.convertDelimitedToJson(new StringReader(text), ',');
+        } else if ("TSV".equalsIgnoreCase(format)) {
+            return Converter.convertDelimitedToJson(new StringReader(text), '\t');
+        } else if ("PSV".equalsIgnoreCase(format)) {
+            return Converter.convertDelimitedToJson(new StringReader(text), '|');
+        } else if ("HTML".equalsIgnoreCase(format)) {
+            return Converter.convertHtmlToJson(new StringReader(text), schema);
+        } else if ("MARKDOWN".equalsIgnoreCase(format)) {
+            return Converter.convertMarkdownToJson(new StringReader(text), schema);
+        } else if ("Protobuf".equalsIgnoreCase(format) || "Avro".equalsIgnoreCase(format)) {
+            throw new IOException(format
+                    + " format cannot be converted from a text string; "
+                    + "use the Representation-based overload instead");
+        } else if ("JSON".equalsIgnoreCase(format) || format == null) {
+            return new ObjectMapper().readTree(text);
+        } else {
+            throw new IOException("Unsupported \"" + format + "\" format specified");
+        }
     }
 
     /**

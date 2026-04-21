@@ -35,6 +35,7 @@ import io.naftiko.engine.consumes.http.HttpClientAdapter;
 import io.naftiko.engine.telemetry.RestletHeaderSetter;
 import io.naftiko.engine.telemetry.TelemetryBootstrap;
 import io.naftiko.engine.util.LookupExecutor;
+import io.naftiko.engine.util.Converter;
 import io.naftiko.engine.util.Resolver;
 import io.naftiko.engine.util.StepExecutionContext;
 import io.naftiko.spec.InputParameterSpec;
@@ -726,13 +727,32 @@ public class OperationStepExecutor {
      */
     public String applyOutputMappings(String responseText,
             List<OutputParameterSpec> outputParameters) throws IOException {
+        return applyOutputMappings(responseText, outputParameters, null, null);
+    }
+
+    /**
+     * Apply output parameter mappings, converting the response from the declared format first.
+     *
+     * <p>When {@code outputRawFormat} is non-null (e.g. {@code "xml"}), the response text
+     * is converted to a JSON tree via {@link Converter#convertToJson(String, String, String)}
+     * before mappings are applied. When {@code null}, the text is parsed as JSON directly.</p>
+     *
+     * @param responseText     the raw HTTP response body
+     * @param outputParameters the list of output parameter specs to try
+     * @param outputRawFormat  the declared format (may be {@code null} for JSON)
+     * @param outputSchema     the declared schema (used by HTML/Markdown selectors)
+     * @return the first mapped JSON string, or {@code null} if none matched
+     */
+    public String applyOutputMappings(String responseText,
+            List<OutputParameterSpec> outputParameters,
+            String outputRawFormat, String outputSchema) throws IOException {
         if (responseText == null || responseText.isEmpty()) {
             return null;
         }
         if (outputParameters == null || outputParameters.isEmpty()) {
             return null;
         }
-        JsonNode root = mapper.readTree(responseText);
+        JsonNode root = Converter.convertToJson(outputRawFormat, outputSchema, responseText);
         for (OutputParameterSpec outputParam : outputParameters) {
             JsonNode mapped = Resolver.resolveOutputMappings(outputParam, root, mapper);
             if (mapped != null && !(mapped instanceof NullNode)) {

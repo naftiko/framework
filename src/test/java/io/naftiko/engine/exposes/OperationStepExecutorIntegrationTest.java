@@ -240,6 +240,78 @@ public class OperationStepExecutorIntegrationTest {
                 missingMode.getMessage());
     }
 
+    /**
+     * Regression test for #339: applyOutputMappings assumes JSON and throws
+     * JsonParseException when the response is XML. After the fix, the overloaded
+     * method accepting outputRawFormat should convert XML to JSON first.
+     */
+    @Test
+    public void applyOutputMappingsShouldThrowJsonParseExceptionForXmlInput() throws Exception {
+        OperationStepExecutor executor = new OperationStepExecutor(capabilityFromYaml("""
+                naftiko: "%s"
+                capability:
+                  exposes:
+                    - type: "rest"
+                      address: "localhost"
+                      port: 0
+                      namespace: "dummy"
+                      resources:
+                        - path: "/dummy"
+                          operations:
+                            - method: "GET"
+                              name: "dummy"
+                  consumes: []
+                """.formatted(schemaVersion)));
+
+        String xmlResponse = "<vessels><vessel>"
+                + "<vesselCode>V001</vesselCode>"
+                + "<vesselName>Sea Eagle</vesselName>"
+                + "</vessel></vessels>";
+
+        OutputParameterSpec spec = new OutputParameterSpec();
+        spec.setType("string");
+        spec.setMapping("$.vessel.vesselCode");
+
+        // Bug #339: this throws JsonParseException instead of converting XML first
+        assertThrows(com.fasterxml.jackson.core.JsonParseException.class,
+                () -> executor.applyOutputMappings(xmlResponse, List.of(spec)));
+    }
+
+    /**
+     * Regression test for #339: the 4-arg overload accepting outputRawFormat should
+     * convert the XML response to a JSON tree before applying output mappings.
+     */
+    @Test
+    public void applyOutputMappingsShouldMapXmlWhenOutputRawFormatIsXml() throws Exception {
+        OperationStepExecutor executor = new OperationStepExecutor(capabilityFromYaml("""
+                naftiko: "%s"
+                capability:
+                  exposes:
+                    - type: "rest"
+                      address: "localhost"
+                      port: 0
+                      namespace: "dummy"
+                      resources:
+                        - path: "/dummy"
+                          operations:
+                            - method: "GET"
+                              name: "dummy"
+                  consumes: []
+                """.formatted(schemaVersion)));
+
+        String xmlResponse = "<vessels><vessel>"
+                + "<vesselCode>V001</vesselCode>"
+                + "<vesselName>Sea Eagle</vesselName>"
+                + "</vessel></vessels>";
+
+        OutputParameterSpec spec = new OutputParameterSpec();
+        spec.setType("string");
+        spec.setMapping("$.vessel.vesselCode");
+
+        String mapped = executor.applyOutputMappings(xmlResponse, List.of(spec), "xml", null);
+        assertEquals("\"V001\"", mapped);
+    }
+
     @Test
     public void executeStepsShouldThrowWhenLookupReferencesMissingIndex() throws Exception {
         OperationStepExecutor executor = new OperationStepExecutor(capabilityFromYaml("""

@@ -103,6 +103,12 @@ public class Step5ShipyardMcpClientIntegrationTest
                     ((HttpClientSpec) cs).setBaseUri(REGISTRY_MOCK_URI);
                 } else if ("legacy".equals(cs.getNamespace())) {
                     ((HttpClientSpec) cs).setBaseUri(LEGACY_MOCK_URI);
+                    // The alpha1 mock returns JSON, not XML. Clear outputRawFormat so
+                    // the engine parses the response as JSON. The XML conversion path
+                    // is covered by McpXmlOutputIntegrationTest with a local XML mock.
+                    ((HttpClientSpec) cs).getResources()
+                            .forEach(r -> r.getOperations()
+                                    .forEach(op -> op.setOutputRawFormat(null)));
                 }
             }
         }

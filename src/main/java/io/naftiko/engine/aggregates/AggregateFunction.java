@@ -161,8 +161,12 @@ public class AggregateFunction {
                 && found != null && found.clientResponse != null
                 && found.clientResponse.getEntity() != null) {
             String responseText = found.clientResponse.getEntity().getText();
+            String outputRawFormat = found.clientOperation != null
+                    ? found.clientOperation.getOutputRawFormat() : null;
+            String outputSchema = found.clientOperation != null
+                    ? found.clientOperation.getOutputSchema() : null;
             String mapped = stepExecutor.applyOutputMappings(responseText,
-                    spec.getOutputParameters());
+                    spec.getOutputParameters(), outputRawFormat, outputSchema);
             if (mapped != null) {
                 return new FunctionResult(found, mapped, null);
             }
