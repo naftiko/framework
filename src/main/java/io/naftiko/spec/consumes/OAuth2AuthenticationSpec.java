@@ -27,6 +27,7 @@ public class OAuth2AuthenticationSpec extends AuthenticationSpec {
     private volatile String resource;
     private volatile List<String> scopes;
     private volatile String audience;
+    private volatile String tokenEndpoint;
     private volatile String tokenValidation;
 
     public OAuth2AuthenticationSpec() {
@@ -71,6 +72,14 @@ public class OAuth2AuthenticationSpec extends AuthenticationSpec {
 
     public void setTokenValidation(String tokenValidation) {
         this.tokenValidation = tokenValidation;
+    }
+
+    public String getTokenEndpoint() {
+        return tokenEndpoint;
+    }
+
+    public void setTokenEndpoint(String tokenEndpoint) {
+        this.tokenEndpoint = tokenEndpoint;
     }
 
 }

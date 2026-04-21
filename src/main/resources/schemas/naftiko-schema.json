@@ -2212,6 +2212,11 @@
           "type": "string",
           "description": "Expected 'aud' claim in the JWT. Defaults to the 'resource' URI if not set."
         },
+        "tokenEndpoint": {
+          "type": "string",
+          "format": "uri",
+          "description": "Token endpoint URI of the authorization server. Used by the OpenAPI exporter as the clientCredentials tokenUrl. When omitted, the exporter falls back to authorizationServerUri (with a warning)."
+        },
         "tokenValidation": {
           "type": "string",
           "enum": [
