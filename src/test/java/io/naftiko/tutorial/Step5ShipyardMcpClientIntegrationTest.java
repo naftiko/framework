@@ -20,8 +20,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.net.http.HttpClient;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.restlet.Application;
+import org.restlet.Component;
+import org.restlet.Restlet;
+import org.restlet.data.MediaType;
+import org.restlet.data.Protocol;
+import org.restlet.data.Status;
+import org.restlet.routing.Router;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.naftiko.engine.consumes.ConsumesImportResolver;
@@ -60,8 +68,8 @@ import io.naftiko.spec.consumes.HttpClientSpec;
  *   <li>Manually resolve imported consumes via {@link ConsumesImportResolver} using the
  *       tutorial directory as {@code capabilityDir}. This populates the consumes list with
  *       real {@link HttpClientSpec} objects before {@link io.naftiko.Capability} is constructed.</li>
- *   <li>Patch the resolved {@code legacy} {@link HttpClientSpec#setBaseUri(String)} to the
- *       real mock URL (the shared file contains a placeholder URI).</li>
+ *   <li>Patch the resolved {@code legacy} {@link HttpClientSpec#setBaseUri(String)} to a
+ *       local XML mock server that returns the expected vessel XML.</li>
  * </ol>
  */
 public class Step5ShipyardMcpClientIntegrationTest
@@ -75,8 +83,27 @@ public class Step5ShipyardMcpClientIntegrationTest
             "src/main/resources/tutorial";
         private static final String REGISTRY_MOCK_URI =
             "https://mocks.naftiko.net/rest/naftiko-shipyard-maritime-registry-api/1.0.0-alpha1";
-    private static final String LEGACY_MOCK_URI =
-            "https://mocks.naftiko.net/rest/naftiko-shipyard-legacy-dockyard-api/1.0.0-alpha1";
+
+    private static final String LEGACY_XML_RESPONSE = """
+            <vessels>
+              <vessel>
+                <vesselCode>LEGACY-4012</vesselCode>
+                <vesselName>Old Faithful</vesselName>
+                <category>cargo</category>
+                <flagState>GB</flagState>
+                <operationalStatus>active</operationalStatus>
+              </vessel>
+              <vessel>
+                <vesselCode>LEGACY-2087</vesselCode>
+                <vesselName>Iron Maiden</vesselName>
+                <category>bulk_carrier</category>
+                <flagState>PA</flagState>
+                <operationalStatus>laid_up</operationalStatus>
+              </vessel>
+            </vessels>
+            """;
+
+    private Component legacyMockServer;
 
     @BeforeEach
     public void startServer() throws Exception {
@@ -95,25 +122,51 @@ public class Step5ShipyardMcpClientIntegrationTest
         new ConsumesImportResolver().resolveImports(
                 spec.getCapability().getConsumes(), tutorialAbsoluteDir);
 
-        // Patch the legacy baseUri: the shared file targets a placeholder host;
-        // tests must hit the real mock server at mocks.naftiko.net
+        // Start a local XML mock for the legacy dockyard API
+        int legacyPort = findFreePort();
+        legacyMockServer = createLegacyXmlMock(legacyPort);
+        legacyMockServer.start();
+
+        // Patch baseUris: registry → remote mock, legacy → local XML mock
         for (ClientSpec cs : spec.getCapability().getConsumes()) {
             if (cs instanceof HttpClientSpec) {
                 if ("registry".equals(cs.getNamespace())) {
                     ((HttpClientSpec) cs).setBaseUri(REGISTRY_MOCK_URI);
                 } else if ("legacy".equals(cs.getNamespace())) {
-                    ((HttpClientSpec) cs).setBaseUri(LEGACY_MOCK_URI);
-                    // The alpha1 mock returns JSON, not XML. Clear outputRawFormat so
-                    // the engine parses the response as JSON. The XML conversion path
-                    // is covered by McpXmlOutputIntegrationTest with a local XML mock.
-                    ((HttpClientSpec) cs).getResources()
-                            .forEach(r -> r.getOperations()
-                                    .forEach(op -> op.setOutputRawFormat(null)));
+                    ((HttpClientSpec) cs).setBaseUri("http://localhost:" + legacyPort);
                 }
             }
         }
 
         startServerFromSpec(spec);
+    }
+
+    @AfterEach
+    public void stopLegacyMock() throws Exception {
+        if (legacyMockServer != null) {
+            legacyMockServer.stop();
+        }
+    }
+
+    private Component createLegacyXmlMock(int port) throws Exception {
+        Component component = new Component();
+        component.getServers().add(Protocol.HTTP, port);
+        component.getDefaultHost().attach(new Application() {
+            @Override
+            public Restlet createInboundRoot() {
+                Router router = new Router(getContext());
+                router.attach("/vessels", new Restlet() {
+                    @Override
+                    public void handle(org.restlet.Request request,
+                            org.restlet.Response response) {
+                        response.setStatus(Status.SUCCESS_OK);
+                        response.setEntity(LEGACY_XML_RESPONSE, MediaType.APPLICATION_XML);
+                    }
+                });
+                return router;
+            }
+        });
+        return component;
     }
 
     // ── tools/list ────────────────────────────────────────────────────────────
