@@ -76,44 +76,41 @@ public class Converter {
     /** Convert various formats to JSON */
     public static JsonNode convertToJson(String format, String schema, Representation entity)
             throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode root = null;
+        ConversionFormat fmt = ConversionFormat.fromLabel(format);
 
-        // Convert based on outputRawFormat
-        if ("XML".equalsIgnoreCase(format)) {
-            root = Converter.convertXmlToJson(entity.getReader());
-        } else if ("Protobuf".equalsIgnoreCase(format)) {
-            if (schema == null || schema.isEmpty()) {
-                throw new IOException(
-                        "Protobuf format requires outputSchema to be specified in operation specification");
-            }
-            root = Converter.convertProtobufToJson(entity.getStream(), schema);
-        } else if ("Avro".equalsIgnoreCase(format)) {
-            if (schema == null || schema.isEmpty()) {
-                throw new IOException(
-                        "Avro format requires outputSchema to be specified in operation specification");
-            }
-            root = Converter.convertAvroToJson(entity.getStream(), schema);
-        } else if ("YAML".equalsIgnoreCase(format)) {
-            // YAML is text-based; use the reader to parse to JsonNode
-            root = Converter.convertYamlToJson(entity.getReader());
-        } else if ("CSV".equalsIgnoreCase(format)) {
-            root = Converter.convertDelimitedToJson(entity.getReader(), ',');
-        } else if ("TSV".equalsIgnoreCase(format)) {
-            root = Converter.convertDelimitedToJson(entity.getReader(), '\t');
-        } else if ("PSV".equalsIgnoreCase(format)) {
-            root = Converter.convertDelimitedToJson(entity.getReader(), '|');
-        } else if ("HTML".equalsIgnoreCase(format)) {
-            root = Converter.convertHtmlToJson(entity.getReader(), schema);
-        } else if ("MARKDOWN".equalsIgnoreCase(format)) {
-            root = Converter.convertMarkdownToJson(entity.getReader(), schema);
-        } else if ("JSON".equalsIgnoreCase(format) || format == null) {
-            root = mapper.readTree(entity.getReader());
-        } else {
+        if (fmt == null && format != null) {
             throw new IOException("Unsupported \"" + format + "\" format specified");
         }
 
-        return root;
+        // null format defaults to JSON
+        if (fmt == null) {
+            fmt = ConversionFormat.JSON;
+        }
+
+        return switch (fmt) {
+            case XML -> Converter.convertXmlToJson(entity.getReader());
+            case PROTOBUF -> {
+                if (schema == null || schema.isEmpty()) {
+                    throw new IOException(
+                            "Protobuf format requires outputSchema to be specified in operation specification");
+                }
+                yield Converter.convertProtobufToJson(entity.getStream(), schema);
+            }
+            case AVRO -> {
+                if (schema == null || schema.isEmpty()) {
+                    throw new IOException(
+                            "Avro format requires outputSchema to be specified in operation specification");
+                }
+                yield Converter.convertAvroToJson(entity.getStream(), schema);
+            }
+            case YAML -> Converter.convertYamlToJson(entity.getReader());
+            case CSV -> Converter.convertDelimitedToJson(entity.getReader(), ',');
+            case TSV -> Converter.convertDelimitedToJson(entity.getReader(), '\t');
+            case PSV -> Converter.convertDelimitedToJson(entity.getReader(), '|');
+            case HTML -> Converter.convertHtmlToJson(entity.getReader(), schema);
+            case MARKDOWN -> Converter.convertMarkdownToJson(entity.getReader(), schema);
+            case JSON -> new ObjectMapper().readTree(entity.getReader());
+        };
     }
 
     /**
@@ -131,29 +128,30 @@ public class Converter {
      */
     public static JsonNode convertToJson(String format, String schema, String text)
             throws IOException {
-        if ("XML".equalsIgnoreCase(format)) {
-            return Converter.convertXmlToJson(new StringReader(text));
-        } else if ("YAML".equalsIgnoreCase(format)) {
-            return Converter.convertYamlToJson(new StringReader(text));
-        } else if ("CSV".equalsIgnoreCase(format)) {
-            return Converter.convertDelimitedToJson(new StringReader(text), ',');
-        } else if ("TSV".equalsIgnoreCase(format)) {
-            return Converter.convertDelimitedToJson(new StringReader(text), '\t');
-        } else if ("PSV".equalsIgnoreCase(format)) {
-            return Converter.convertDelimitedToJson(new StringReader(text), '|');
-        } else if ("HTML".equalsIgnoreCase(format)) {
-            return Converter.convertHtmlToJson(new StringReader(text), schema);
-        } else if ("MARKDOWN".equalsIgnoreCase(format)) {
-            return Converter.convertMarkdownToJson(new StringReader(text), schema);
-        } else if ("Protobuf".equalsIgnoreCase(format) || "Avro".equalsIgnoreCase(format)) {
-            throw new IOException(format
-                    + " format cannot be converted from a text string; "
-                    + "use the Representation-based overload instead");
-        } else if ("JSON".equalsIgnoreCase(format) || format == null) {
-            return new ObjectMapper().readTree(text);
-        } else {
+        ConversionFormat fmt = ConversionFormat.fromLabel(format);
+
+        if (fmt == null && format != null) {
             throw new IOException("Unsupported \"" + format + "\" format specified");
         }
+
+        // null format defaults to JSON
+        if (fmt == null) {
+            fmt = ConversionFormat.JSON;
+        }
+
+        return switch (fmt) {
+            case XML -> Converter.convertXmlToJson(new StringReader(text));
+            case YAML -> Converter.convertYamlToJson(new StringReader(text));
+            case CSV -> Converter.convertDelimitedToJson(new StringReader(text), ',');
+            case TSV -> Converter.convertDelimitedToJson(new StringReader(text), '\t');
+            case PSV -> Converter.convertDelimitedToJson(new StringReader(text), '|');
+            case HTML -> Converter.convertHtmlToJson(new StringReader(text), schema);
+            case MARKDOWN -> Converter.convertMarkdownToJson(new StringReader(text), schema);
+            case PROTOBUF, AVRO -> throw new IOException(fmt.label
+                    + " format cannot be converted from a text string; "
+                    + "use the Representation-based overload instead");
+            case JSON -> new ObjectMapper().readTree(text);
+        };
     }
 
     /**
