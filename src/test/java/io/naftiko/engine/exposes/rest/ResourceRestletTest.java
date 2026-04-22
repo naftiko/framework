@@ -300,15 +300,26 @@ public class ResourceRestletTest {
 
     // Unsupported output format triggers mapping exception path.
     RestServerOperationSpec failingOperation = new RestServerOperationSpec();
-    failingOperation.setOutputRawFormat("INI");
     OutputParameterSpec output = new OutputParameterSpec();
     output.setType("string");
     output.setIn("body");
     output.setMapping("$.id");
     failingOperation.getOutputParameters().add(output);
 
+    // Set unsupported format on the client operation (where the fix now reads it from)
+    io.naftiko.spec.consumes.HttpClientOperationSpec failingClientOp =
+        new io.naftiko.spec.consumes.HttpClientOperationSpec();
+    failingClientOp.setOutputRawFormat("INI");
+
+    OperationStepExecutor.HandlingContext failingContext =
+        new OperationStepExecutor.HandlingContext();
+    failingContext.clientOperation = failingClientOp;
+    Request failingClientRequest = new Request(Method.GET, "http://localhost/internal");
+    failingContext.clientResponse = new Response(failingClientRequest);
+    failingContext.clientResponse.setEntity("{\"id\":\"u-1\"}", MediaType.APPLICATION_JSON);
+
     Response errorResponse = new Response(new Request(Method.GET, "http://localhost/test"));
-    restlet.sendResponse(failingOperation, errorResponse, handlingContext);
+    restlet.sendResponse(failingOperation, errorResponse, failingContext);
     assertEquals(Status.SERVER_ERROR_INTERNAL, errorResponse.getStatus());
     assertTrue(errorResponse.getEntity().getText().contains("Failed to map output parameters"));
   }
@@ -449,6 +460,64 @@ public class ResourceRestletTest {
                               name: "test"
                   consumes: []
                 """.formatted(schemaVersion);
+  }
+
+  @Test
+  public void mapOutputParametersShouldHonorClientOperationOutputRawFormat() throws Exception {
+    Capability capability = capabilityFromYaml(minimalCapabilityYaml());
+    RestServerSpec serverSpec = (RestServerSpec) capability.getServerAdapters().get(0)
+        .getSpec();
+    ResourceRestlet restlet = new ResourceRestlet(capability, serverSpec,
+        serverSpec.getResources().get(0));
+
+    // Server operation does NOT declare outputRawFormat (it lives on the consumed side)
+    RestServerOperationSpec operation = new RestServerOperationSpec();
+    OutputParameterSpec mappedBody = new OutputParameterSpec();
+    mappedBody.setType("array");
+    mappedBody.setIn("body");
+    mappedBody.setMapping("$.user");
+
+    OutputParameterSpec itemSpec = new OutputParameterSpec();
+    itemSpec.setType("object");
+    OutputParameterSpec idProp = new OutputParameterSpec();
+    idProp.setName("id");
+    idProp.setType("string");
+    idProp.setMapping("$.id");
+    itemSpec.getProperties().add(idProp);
+    OutputParameterSpec nameProp = new OutputParameterSpec();
+    nameProp.setName("name");
+    nameProp.setType("string");
+    nameProp.setMapping("$.name");
+    itemSpec.getProperties().add(nameProp);
+    mappedBody.setItems(itemSpec);
+    operation.getOutputParameters().add(mappedBody);
+
+    // Client operation declares outputRawFormat: xml
+    io.naftiko.spec.consumes.HttpClientOperationSpec clientOp =
+        new io.naftiko.spec.consumes.HttpClientOperationSpec();
+    clientOp.setOutputRawFormat("xml");
+
+    String xml = "<root><user><id>1</id><name>Alice</name></user>"
+        + "<user><id>2</id><name>Bob</name></user></root>";
+
+    OperationStepExecutor.HandlingContext handlingContext =
+        new OperationStepExecutor.HandlingContext();
+    handlingContext.clientOperation = clientOp;
+    Request clientRequest = new Request(Method.GET, "http://localhost/internal");
+    handlingContext.clientResponse = new Response(clientRequest);
+    handlingContext.clientResponse.setEntity(xml, MediaType.APPLICATION_XML);
+
+    String mapped = restlet.mapOutputParameters(operation, handlingContext);
+
+    // Without the fix, this throws JsonParseException because the XML is parsed as JSON
+    assertNotNull(mapped, "XML response should be mapped successfully");
+    JsonNode payload = JSON.readTree(mapped);
+    assertTrue(payload.isArray(), "Result should be an array");
+    assertEquals(2, payload.size());
+    assertEquals("1", payload.get(0).path("id").asText());
+    assertEquals("Alice", payload.get(0).path("name").asText());
+    assertEquals("2", payload.get(1).path("id").asText());
+    assertEquals("Bob", payload.get(1).path("name").asText());
   }
 
   private static OutputParameterSpec stringOutput(String name, String value) {
