@@ -22,6 +22,7 @@ import org.restlet.data.Preference;
 import org.restlet.data.Protocol;
 import org.restlet.data.Reference;
 import org.restlet.data.Status;
+import org.restlet.representation.StringRepresentation;
 
 /**
  * Lightweight HTTP client for connecting to a running Naftiko control port. Uses Restlet's
@@ -56,6 +57,19 @@ class ControlPortClient {
      */
     ControlPortResponse getPlain(String path) throws ControlPortUnreachableException {
         Request request = new Request(Method.GET, new Reference(baseUrl + path));
+        return execute(request);
+    }
+
+    /**
+     * Sends a PUT request with a JSON body to the given path.
+     *
+     * @throws ControlPortUnreachableException if the control port cannot be reached
+     */
+    ControlPortResponse put(String path, String jsonBody) throws ControlPortUnreachableException {
+        Request request = new Request(Method.PUT, new Reference(baseUrl + path));
+        request.setEntity(new StringRepresentation(jsonBody, MediaType.APPLICATION_JSON));
+        request.getClientInfo().getAcceptedMediaTypes()
+                .add(new Preference<>(MediaType.APPLICATION_JSON));
         return execute(request);
     }
 
