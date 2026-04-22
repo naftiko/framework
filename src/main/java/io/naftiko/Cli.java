@@ -18,6 +18,7 @@ import io.naftiko.cli.ExportCommand;
 import io.naftiko.cli.HealthCommand;
 import io.naftiko.cli.ImportCommand;
 import io.naftiko.cli.MetricsCommand;
+import io.naftiko.cli.ScriptingCommand;
 import io.naftiko.cli.StatusCommand;
 import io.naftiko.cli.TracesCommand;
 import io.naftiko.cli.ValidateCommand;
@@ -33,7 +34,7 @@ import picocli.CommandLine.IVersionProvider;
     description = "Naftiko CLI",
     subcommands = {CreateCommand.class, ValidateCommand.class, ImportCommand.class,
             ExportCommand.class, HealthCommand.class, StatusCommand.class,
-            TracesCommand.class, MetricsCommand.class}
+            TracesCommand.class, MetricsCommand.class, ScriptingCommand.class}
 )
 public class Cli implements Runnable {
 
