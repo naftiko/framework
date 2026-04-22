@@ -493,8 +493,12 @@ public class ResourceRestlet extends Restlet {
             return null;
         }
 
-        JsonNode root = Converter.convertToJson(serverOp.getOutputRawFormat(),
-                serverOp.getOutputSchema(), found.clientResponse.getEntity());
+        String outputRawFormat = found.clientOperation != null
+                ? found.clientOperation.getOutputRawFormat() : null;
+        String outputSchema = found.clientOperation != null
+                ? found.clientOperation.getOutputSchema() : null;
+        JsonNode root = Converter.convertToJson(outputRawFormat, outputSchema,
+                found.clientResponse.getEntity());
 
         for (OutputParameterSpec outputParameter : serverOp.getOutputParameters()) {
             if ("body".equalsIgnoreCase(inOrDefault(outputParameter))) {
