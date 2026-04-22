@@ -461,6 +461,7 @@
                                     <imageName>naftiko-cli</imageName>
                                     <buildArgs>
                                         <buildArg>-H:+ReportExceptionStackTraces</buildArg>
+                                        <buildArg>--enable-url-protocols=https</buildArg>
                                     </buildArgs>
                                 </configuration>
                             </execution>
