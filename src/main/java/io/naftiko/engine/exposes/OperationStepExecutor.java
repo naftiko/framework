@@ -300,8 +300,9 @@ public class OperationStepExecutor {
                             scriptStep.getName(), scriptExecutor.getScriptingSpec());
                     TelemetryBootstrap scriptTelemetry = TelemetryBootstrap.get();
                     String effectiveScriptLanguage = scriptStep.getLanguage();
-                    if (effectiveScriptLanguage == null
-                            || effectiveScriptLanguage.isBlank()) {
+                    if ((effectiveScriptLanguage == null
+                            || effectiveScriptLanguage.isBlank())
+                            && scriptExecutor.getScriptingSpec() != null) {
                         effectiveScriptLanguage =
                                 scriptExecutor.getScriptingSpec().getDefaultLanguage();
                     }
