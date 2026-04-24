@@ -14,6 +14,8 @@
 package io.naftiko.engine.exposes;
 
 import java.util.Set;
+import org.codehaus.groovy.ast.expr.ClassExpression;
+import org.codehaus.groovy.ast.expr.ConstructorCallExpression;
 import org.codehaus.groovy.ast.expr.Expression;
 import org.codehaus.groovy.ast.expr.MethodCallExpression;
 import org.codehaus.groovy.ast.expr.PropertyExpression;
@@ -60,6 +62,17 @@ class GroovySandboxExpressionChecker implements SecureASTCustomizer.ExpressionCh
             "class"
     );
 
+    /** Class names blocked in constructor calls and class expressions. */
+    private static final Set<String> BLOCKED_CLASSES = Set.of(
+            "ProcessBuilder", "java.lang.ProcessBuilder",
+            "Thread", "java.lang.Thread",
+            "ThreadGroup", "java.lang.ThreadGroup",
+            "Runtime", "java.lang.Runtime",
+            "ClassLoader", "java.lang.ClassLoader",
+            "GroovyShell", "groovy.lang.GroovyShell",
+            "GroovyClassLoader", "groovy.lang.GroovyClassLoader"
+    );
+
     @Override
     public boolean isAuthorized(Expression expression) {
         if (expression instanceof MethodCallExpression methodCall) {
@@ -71,6 +84,26 @@ class GroovySandboxExpressionChecker implements SecureASTCustomizer.ExpressionCh
         if (expression instanceof PropertyExpression propertyExpr) {
             String property = propertyExpr.getPropertyAsString();
             if (property != null && BLOCKED_PROPERTIES.contains(property)) {
+                return false;
+            }
+            // Block property access on blocked class receivers (e.g. Runtime.class)
+            Expression objectExpr = propertyExpr.getObjectExpression();
+            if (objectExpr instanceof ClassExpression classExpr) {
+                String className = classExpr.getType().getName();
+                if (BLOCKED_CLASSES.contains(className)) {
+                    return false;
+                }
+            }
+        }
+        if (expression instanceof ConstructorCallExpression ctorCall) {
+            String typeName = ctorCall.getType().getName();
+            if (BLOCKED_CLASSES.contains(typeName)) {
+                return false;
+            }
+        }
+        if (expression instanceof ClassExpression classExpr) {
+            String className = classExpr.getType().getName();
+            if (BLOCKED_CLASSES.contains(className)) {
                 return false;
             }
         }
