@@ -52,9 +52,9 @@ public class NativeImageReflectConfigTest {
         List<String> requiredClasses = List.of(
                 "io.naftiko.spec.NaftikoSpec",
                 "io.naftiko.spec.consumes.ClientSpec",
-                "io.naftiko.spec.consumes.HttpClientSpec",
-                "io.naftiko.spec.consumes.HttpClientResourceSpec",
-                "io.naftiko.spec.consumes.HttpClientOperationSpec",
+                "io.naftiko.spec.consumes.http.HttpClientSpec",
+                "io.naftiko.spec.consumes.http.HttpClientResourceSpec",
+                "io.naftiko.spec.consumes.http.HttpClientOperationSpec",
                 "io.naftiko.spec.OperationSpec",
                 "io.naftiko.spec.ResourceSpec",
                 "io.naftiko.spec.InputParameterSpec",
@@ -73,12 +73,12 @@ public class NativeImageReflectConfigTest {
     @Test
     void reflectConfigShouldContainAuthenticationSpecClasses() {
         List<String> requiredClasses = List.of(
-                "io.naftiko.spec.consumes.AuthenticationSpec",
-                "io.naftiko.spec.consumes.ApiKeyAuthenticationSpec",
-                "io.naftiko.spec.consumes.BearerAuthenticationSpec",
-                "io.naftiko.spec.consumes.BasicAuthenticationSpec",
-                "io.naftiko.spec.consumes.DigestAuthenticationSpec",
-                "io.naftiko.spec.consumes.OAuth2AuthenticationSpec");
+                "io.naftiko.spec.consumes.http.AuthenticationSpec",
+                "io.naftiko.spec.consumes.http.ApiKeyAuthenticationSpec",
+                "io.naftiko.spec.consumes.http.BearerAuthenticationSpec",
+                "io.naftiko.spec.consumes.http.BasicAuthenticationSpec",
+                "io.naftiko.spec.consumes.http.DigestAuthenticationSpec",
+                "io.naftiko.spec.consumes.http.OAuth2AuthenticationSpec");
 
         List<String> missing = requiredClasses.stream()
                 .filter(c -> !registeredClasses.contains(c))

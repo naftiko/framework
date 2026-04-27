@@ -37,9 +37,9 @@ import io.naftiko.engine.exposes.ServerAdapter;
 import io.naftiko.engine.exposes.skill.SkillServerAdapter;
 import io.naftiko.spec.NaftikoSpec;
 import io.naftiko.spec.consumes.ClientSpec;
-import io.naftiko.spec.consumes.HttpClientSpec;
-import io.naftiko.spec.exposes.RestServerSpec;
-import io.naftiko.spec.exposes.SkillServerSpec;
+import io.naftiko.spec.consumes.http.HttpClientSpec;
+import io.naftiko.spec.exposes.rest.RestServerSpec;
+import io.naftiko.spec.exposes.skill.SkillServerSpec;
 
 /**
  * End-to-end integration test for {@code step-10-shipyard-rest-adapter.yml}

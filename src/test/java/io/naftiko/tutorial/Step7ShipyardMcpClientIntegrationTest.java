@@ -27,7 +27,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.naftiko.engine.consumes.ConsumesImportResolver;
 import io.naftiko.spec.NaftikoSpec;
 import io.naftiko.spec.consumes.ClientSpec;
-import io.naftiko.spec.consumes.HttpClientSpec;
+import io.naftiko.spec.consumes.http.HttpClientSpec;
 
 /**
  * End-to-end integration test for {@code step-7-shipyard-orchestrated-lookup.yml}

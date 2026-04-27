@@ -21,7 +21,7 @@ import org.restlet.representation.FileRepresentation;
 import org.restlet.representation.Representation;
 import org.restlet.resource.Get;
 import org.restlet.resource.ResourceException;
-import io.naftiko.spec.exposes.ExposedSkillSpec;
+import io.naftiko.spec.exposes.skill.ExposedSkillSpec;
 
 /**
  * Handles {@code GET /skills/{name}/contents/{file}} — serves an individual file from the skill's

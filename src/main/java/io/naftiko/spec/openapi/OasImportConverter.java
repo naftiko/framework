@@ -29,14 +29,14 @@ import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.naftiko.spec.InputParameterSpec;
 import io.naftiko.spec.OutputParameterSpec;
-import io.naftiko.spec.consumes.ApiKeyAuthenticationSpec;
-import io.naftiko.spec.consumes.AuthenticationSpec;
-import io.naftiko.spec.consumes.BasicAuthenticationSpec;
-import io.naftiko.spec.consumes.BearerAuthenticationSpec;
-import io.naftiko.spec.consumes.DigestAuthenticationSpec;
-import io.naftiko.spec.consumes.HttpClientOperationSpec;
-import io.naftiko.spec.consumes.HttpClientResourceSpec;
-import io.naftiko.spec.consumes.HttpClientSpec;
+import io.naftiko.spec.consumes.http.ApiKeyAuthenticationSpec;
+import io.naftiko.spec.consumes.http.AuthenticationSpec;
+import io.naftiko.spec.consumes.http.BasicAuthenticationSpec;
+import io.naftiko.spec.consumes.http.BearerAuthenticationSpec;
+import io.naftiko.spec.consumes.http.DigestAuthenticationSpec;
+import io.naftiko.spec.consumes.http.HttpClientOperationSpec;
+import io.naftiko.spec.consumes.http.HttpClientResourceSpec;
+import io.naftiko.spec.consumes.http.HttpClientSpec;
 
 /**
  * Stateless converter: OpenAPI {@link OpenAPI} POJO → Naftiko {@link HttpClientSpec} object tree.

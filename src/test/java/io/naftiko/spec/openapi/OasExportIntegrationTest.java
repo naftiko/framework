@@ -25,7 +25,7 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.naftiko.spec.CapabilitySpec;
 import io.naftiko.spec.InfoSpec;
 import io.naftiko.spec.NaftikoSpec;
-import io.naftiko.spec.exposes.RestServerSpec;
+import io.naftiko.spec.exposes.rest.RestServerSpec;
 
 /**
  * Integration tests: load Naftiko capability YAMLs, export to OAS, and validate.

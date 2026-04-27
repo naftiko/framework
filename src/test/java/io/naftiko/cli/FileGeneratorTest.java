@@ -23,7 +23,6 @@ import java.nio.file.Paths;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import io.naftiko.cli.enums.FileFormat;
 
 public class FileGeneratorTest {
 

@@ -18,6 +18,9 @@ import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import io.naftiko.spec.observability.ObservabilityExportersSpec;
+import io.naftiko.spec.observability.ObservabilitySpec;
+import io.naftiko.spec.observability.ObservabilityTracesSpec;
 
 /**
  * Unit tests for ObservabilitySpec deserialization.

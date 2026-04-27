@@ -27,7 +27,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.naftiko.Capability;
 import io.naftiko.engine.exposes.ServerAdapter;
 import io.naftiko.spec.NaftikoSpec;
-import io.naftiko.spec.exposes.McpServerSpec;
+import io.naftiko.spec.exposes.mcp.McpServerSpec;
 
 /**
  * Integration tests for MCP Server Adapter with stdio transport.

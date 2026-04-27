@@ -15,12 +15,12 @@ package io.naftiko.engine.exposes.control;
 
 import io.naftiko.Capability;
 import io.naftiko.engine.exposes.ServerAdapter;
-import io.naftiko.engine.telemetry.TelemetryBootstrap;
-import io.naftiko.spec.ObservabilitySpec;
-import io.naftiko.spec.ObservabilityTracesLocalSpec;
-import io.naftiko.spec.exposes.ControlManagementSpec;
-import io.naftiko.spec.exposes.ControlServerSpec;
-import io.naftiko.spec.exposes.ScriptingManagementSpec;
+import io.naftiko.engine.observability.TelemetryBootstrap;
+import io.naftiko.spec.observability.ObservabilitySpec;
+import io.naftiko.spec.observability.ObservabilityTracesLocalSpec;
+import io.naftiko.spec.exposes.control.ControlManagementSpec;
+import io.naftiko.spec.exposes.control.ControlServerSpec;
+import io.naftiko.spec.exposes.control.ScriptingManagementSpec;
 import org.restlet.Context;
 import org.restlet.Restlet;
 import org.restlet.routing.Router;

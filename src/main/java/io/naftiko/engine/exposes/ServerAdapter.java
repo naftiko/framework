@@ -29,15 +29,14 @@ import org.restlet.security.SecretVerifier;
 import org.restlet.security.Verifier;
 import io.naftiko.Capability;
 import io.naftiko.engine.Adapter;
-import io.naftiko.engine.exposes.rest.ServerAuthenticationRestlet;
 import io.naftiko.engine.util.Resolver;
 import io.naftiko.spec.util.BindingKeysSpec;
 import io.naftiko.spec.util.BindingSpec;
 import io.naftiko.spec.NaftikoSpec;
-import io.naftiko.spec.consumes.AuthenticationSpec;
-import io.naftiko.spec.consumes.BasicAuthenticationSpec;
-import io.naftiko.spec.consumes.DigestAuthenticationSpec;
-import io.naftiko.spec.consumes.OAuth2AuthenticationSpec;
+import io.naftiko.spec.consumes.http.AuthenticationSpec;
+import io.naftiko.spec.consumes.http.BasicAuthenticationSpec;
+import io.naftiko.spec.consumes.http.DigestAuthenticationSpec;
+import io.naftiko.spec.consumes.http.OAuth2AuthenticationSpec;
 import io.naftiko.spec.exposes.ServerSpec;
 
 /**
