@@ -123,6 +123,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow. Key rules:
 - Always read the repository templates before creating issues or PRs:
   - Issues: `.github/ISSUE_TEMPLATE/` — use the matching template and fill in all required fields
   - PRs: `.github/PULL_REQUEST_TEMPLATE.md` — follow the structure exactly, do not improvise
+- When asked to review a PR, load and follow the `pr-review` skill in `.agents/skills/pr-review/` before doing anything else
 - Do **not** use `git push --force` — use `--force-with-lease`
 - When the user corrects a mistake, note it immediately so the insight is not lost — see [Self-Improvement](#self-improvement)
 - When the workflow is complete, review any noted corrections and propose rule updates if warranted
