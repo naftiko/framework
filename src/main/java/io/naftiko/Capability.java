@@ -24,8 +24,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.naftiko.engine.aggregates.Aggregate;
 import io.naftiko.engine.aggregates.AggregateFunction;
 import io.naftiko.engine.aggregates.AggregateRefResolver;
-import io.naftiko.engine.exposes.OperationStepExecutor;
-import io.naftiko.engine.telemetry.TelemetryBootstrap;
+import io.naftiko.engine.util.OperationStepExecutor;
 import io.naftiko.spec.aggregates.AggregateSpec;
 import io.naftiko.spec.util.ExecutionContext;
 import io.naftiko.engine.consumes.ClientAdapter;
@@ -36,16 +35,17 @@ import io.naftiko.engine.exposes.control.ControlServerAdapter;
 import io.naftiko.engine.exposes.mcp.McpServerAdapter;
 import io.naftiko.engine.exposes.rest.RestServerAdapter;
 import io.naftiko.engine.exposes.skill.SkillServerAdapter;
+import io.naftiko.engine.observability.TelemetryBootstrap;
 import io.naftiko.engine.util.BindingResolver;
 import io.naftiko.spec.NaftikoSpec;
 import io.naftiko.spec.consumes.ClientSpec;
-import io.naftiko.spec.consumes.HttpClientSpec;
-import io.naftiko.spec.exposes.ControlServerSpec;
-import io.naftiko.spec.exposes.ScriptingManagementSpec;
-import io.naftiko.spec.exposes.RestServerSpec;
-import io.naftiko.spec.exposes.McpServerSpec;
+import io.naftiko.spec.consumes.http.HttpClientSpec;
+import io.naftiko.spec.exposes.control.ControlServerSpec;
+import io.naftiko.spec.exposes.control.ScriptingManagementSpec;
+import io.naftiko.spec.exposes.rest.RestServerSpec;
+import io.naftiko.spec.exposes.mcp.McpServerSpec;
 import io.naftiko.spec.exposes.ServerSpec;
-import io.naftiko.spec.exposes.SkillServerSpec;
+import io.naftiko.spec.exposes.skill.SkillServerSpec;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
 /**
@@ -267,10 +267,10 @@ public class Capability {
                 if (spec.getInfo() != null && spec.getInfo().getLabel() != null) {
                     serviceName = "naftiko-" + spec.getInfo().getLabel();
                 }
-                io.naftiko.spec.ObservabilitySpec observabilitySpec = null;
+                io.naftiko.spec.observability.ObservabilitySpec observabilitySpec = null;
                 if (spec.getCapability() != null) {
                     for (io.naftiko.spec.exposes.ServerSpec server : spec.getCapability().getExposes()) {
-                        if (server instanceof io.naftiko.spec.exposes.ControlServerSpec controlSpec) {
+                        if (server instanceof io.naftiko.spec.exposes.control.ControlServerSpec controlSpec) {
                             observabilitySpec = controlSpec.getObservability();
                             break;
                         }

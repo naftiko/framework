@@ -36,7 +36,7 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
-import io.naftiko.spec.consumes.OAuth2AuthenticationSpec;
+import io.naftiko.spec.consumes.http.OAuth2AuthenticationSpec;
 
 /**
  * Unit tests for the shared {@link OAuth2AuthenticationRestlet}. Validates JWT signature

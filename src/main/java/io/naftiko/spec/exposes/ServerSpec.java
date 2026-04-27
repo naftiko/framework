@@ -19,7 +19,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.naftiko.spec.InputParameterSpec;
-import io.naftiko.spec.consumes.AuthenticationSpec;
+import io.naftiko.spec.consumes.http.AuthenticationSpec;
+import io.naftiko.spec.exposes.control.ControlServerSpec;
+import io.naftiko.spec.exposes.mcp.McpServerSpec;
+import io.naftiko.spec.exposes.rest.RestServerSpec;
+import io.naftiko.spec.exposes.skill.SkillServerSpec;
 
 /**
  * Base Exposed Adapter Specification Element

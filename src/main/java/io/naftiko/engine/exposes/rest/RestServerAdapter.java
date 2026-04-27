@@ -19,8 +19,8 @@ import org.restlet.routing.TemplateRoute;
 import org.restlet.routing.Variable;
 import io.naftiko.Capability;
 import io.naftiko.engine.exposes.ServerAdapter;
-import io.naftiko.spec.exposes.RestServerResourceSpec;
-import io.naftiko.spec.exposes.RestServerSpec;
+import io.naftiko.spec.exposes.rest.RestServerResourceSpec;
+import io.naftiko.spec.exposes.rest.RestServerSpec;
 
 /**
  * Implementation of the ServerAdapter abstract class that sets up an HTTP server using the Restlet

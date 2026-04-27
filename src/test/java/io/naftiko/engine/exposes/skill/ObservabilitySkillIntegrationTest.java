@@ -16,7 +16,7 @@ package io.naftiko.engine.exposes.skill;
 import static org.junit.jupiter.api.Assertions.*;
 
 import io.naftiko.Capability;
-import io.naftiko.engine.telemetry.TelemetryBootstrap;
+import io.naftiko.engine.observability.TelemetryBootstrap;
 import io.opentelemetry.api.trace.SpanKind;
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
 import io.opentelemetry.context.propagation.ContextPropagators;

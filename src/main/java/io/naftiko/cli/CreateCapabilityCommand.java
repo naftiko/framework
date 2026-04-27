@@ -19,8 +19,6 @@ import java.io.IOException;
 import java.util.Scanner;
 import java.util.concurrent.Callable;
 
-import io.naftiko.cli.enums.FileFormat;
-
 @Command(
     name = "capability",
     mixinStandardHelpOptions = true,

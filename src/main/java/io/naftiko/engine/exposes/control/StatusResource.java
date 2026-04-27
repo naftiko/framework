@@ -18,7 +18,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.naftiko.Capability;
 import io.naftiko.engine.exposes.ServerAdapter;
-import io.naftiko.engine.telemetry.TelemetryBootstrap;
+import io.naftiko.engine.observability.TelemetryBootstrap;
 import io.naftiko.spec.exposes.ServerSpec;
 import io.naftiko.util.VersionHelper;
 import io.opentelemetry.api.OpenTelemetry;

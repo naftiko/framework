@@ -23,12 +23,12 @@ import org.restlet.routing.TemplateRoute;
 import org.restlet.routing.Variable;
 import io.naftiko.Capability;
 import io.naftiko.engine.exposes.ServerAdapter;
-import io.naftiko.spec.exposes.RestServerSpec;
-import io.naftiko.spec.exposes.ExposedSkillSpec;
-import io.naftiko.spec.exposes.McpServerSpec;
+import io.naftiko.spec.exposes.rest.RestServerSpec;
+import io.naftiko.spec.exposes.skill.ExposedSkillSpec;
+import io.naftiko.spec.exposes.mcp.McpServerSpec;
 import io.naftiko.spec.exposes.ServerSpec;
-import io.naftiko.spec.exposes.SkillServerSpec;
-import io.naftiko.spec.exposes.SkillToolSpec;
+import io.naftiko.spec.exposes.skill.SkillServerSpec;
+import io.naftiko.spec.exposes.skill.SkillToolSpec;
 
 /**
  * Skill Server Adapter — exposes a read-only catalog of agent skills over predefined HTTP

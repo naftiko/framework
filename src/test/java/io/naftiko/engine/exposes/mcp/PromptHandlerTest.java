@@ -21,8 +21,8 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import io.naftiko.spec.exposes.McpServerPromptSpec;
-import io.naftiko.spec.exposes.McpPromptMessageSpec;
+import io.naftiko.spec.exposes.mcp.McpServerPromptSpec;
+import io.naftiko.spec.exposes.mcp.McpPromptMessageSpec;
 
 public class PromptHandlerTest {
 

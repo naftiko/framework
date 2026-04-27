@@ -15,10 +15,10 @@ package io.naftiko.engine.exposes.skill;
 
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
-import io.naftiko.spec.exposes.SkillServerSpec;
-import io.naftiko.spec.exposes.ExposedSkillSpec;
-import io.naftiko.spec.exposes.SkillToolSpec;
-import io.naftiko.spec.exposes.SkillToolFromSpec;
+import io.naftiko.spec.exposes.skill.SkillServerSpec;
+import io.naftiko.spec.exposes.skill.ExposedSkillSpec;
+import io.naftiko.spec.exposes.skill.SkillToolSpec;
+import io.naftiko.spec.exposes.skill.SkillToolFromSpec;
 
 public class SkillValidationTest {
 

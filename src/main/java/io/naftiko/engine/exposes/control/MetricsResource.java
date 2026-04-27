@@ -13,13 +13,13 @@
  */
 package io.naftiko.engine.exposes.control;
 
-import io.naftiko.engine.telemetry.TelemetryBootstrap;
 import org.restlet.data.MediaType;
 import org.restlet.data.Status;
 import org.restlet.representation.Representation;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Get;
 import org.restlet.resource.ServerResource;
+import io.naftiko.engine.observability.TelemetryBootstrap;
 
 /**
  * Prometheus metrics scrape endpoint. Bridges OTel-recorded metrics to Prometheus exposition

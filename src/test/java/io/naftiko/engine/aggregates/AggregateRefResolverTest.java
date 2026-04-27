@@ -23,10 +23,10 @@ import io.naftiko.spec.aggregates.AggregateSpec;
 import io.naftiko.spec.CapabilitySpec;
 import io.naftiko.spec.NaftikoSpec;
 import io.naftiko.spec.aggregates.SemanticsSpec;
-import io.naftiko.spec.exposes.McpServerSpec;
-import io.naftiko.spec.exposes.McpServerToolSpec;
-import io.naftiko.spec.exposes.McpToolHintsSpec;
-import io.naftiko.spec.exposes.RestServerOperationSpec;
+import io.naftiko.spec.exposes.mcp.McpServerSpec;
+import io.naftiko.spec.exposes.mcp.McpServerToolSpec;
+import io.naftiko.spec.exposes.mcp.McpToolHintsSpec;
+import io.naftiko.spec.exposes.rest.RestServerOperationSpec;
 import io.naftiko.spec.exposes.ServerCallSpec;
 
 /**
