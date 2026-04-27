@@ -1,6 +1,6 @@
 ---
 name: pr-review
-version: "1.0.0"
+version: "1.1.0"
 description: >
   On-demand skill for reviewing GitHub Pull Requests and posting inline
   comments via the GitHub API. Activate when the user asks to: review a PR,
@@ -14,12 +14,86 @@ allowed-tools:
 ## Overview
 
 This skill guides the agent through a structured PR review workflow:
-fetch the diff → compute line numbers accurately → verify each line →
+check for existing reviews → offer Continue/Fresh start choice → fetch the diff →
+compute line numbers accurately → verify each line number →
 present findings → post only after explicit user confirmation.
 
 ---
 
-## Step 1 — Fetch and save the diff
+## Step 1 — Check for existing review activity
+
+Before fetching the diff, check whether the PR already has reviews or inline comments.
+
+Retrieve `{owner}/{repo}` from the local git remote if not known:
+
+```bash
+gh repo view --json nameWithOwner -q .nameWithOwner
+```
+
+```powershell
+# Windows (PowerShell)
+gh api repos/{owner}/{repo}/pulls/<number>/reviews --paginate `
+  --jq '[.[] | {id, state, submitted_at, user: .user.login, body: (.body // "" | .[:80])}]'
+gh api repos/{owner}/{repo}/pulls/<number>/comments --paginate `
+  --jq '[.[] | {id, path, line, user: .user.login, outdated}]'
+```
+
+```bash
+# Linux / macOS
+gh api repos/{owner}/{repo}/pulls/<number>/reviews --paginate \
+  --jq '[.[] | {id, state, submitted_at, user: .user.login, body: (.body // "" | .[:80])}]'
+gh api repos/{owner}/{repo}/pulls/<number>/comments --paginate \
+  --jq '[.[] | {id, path, line, user: .user.login, outdated}]'
+```
+
+**If no reviews and no inline comments exist** → proceed directly to Step 2.
+
+**If reviews or comments already exist**, summarize what was found and ask the user:
+
+> «This PR already has N review(s) and M inline comment(s) (latest state: X, by [reviewers]).
+> How do you want to proceed?
+> - **Continue** — check `CHANGES_REQUESTED` review bodies and their linked inline comments first, skip `outdated` inline comments, then add net-new findings only.
+> - **Fresh start** — ignore prior review activity and review the full diff from scratch.»
+
+Wait for the user's answer before proceeding.
+
+### If the user chooses **Continue**
+
+Join reviews and inline comments to identify which comments belong to a `CHANGES_REQUESTED` review:
+
+```powershell
+# Step A — get CHANGES_REQUESTED reviews including their body feedback
+gh api repos/{owner}/{repo}/pulls/<number>/reviews --paginate `
+  --jq '[.[] | select(.state == "CHANGES_REQUESTED") | {id, user: .user.login, body}]'
+
+# Step B — get inline comments including their review linkage
+gh api repos/{owner}/{repo}/pulls/<number>/comments --paginate `
+  --jq '[.[] | {id, pull_request_review_id, path, line, user: .user.login, body, outdated}]'
+```
+
+```bash
+# Step A
+gh api repos/{owner}/{repo}/pulls/<number>/reviews --paginate \
+  --jq '[.[] | select(.state == "CHANGES_REQUESTED") | {id, user: .user.login, body}]'
+
+# Step B
+gh api repos/{owner}/{repo}/pulls/<number>/comments --paginate \
+  --jq '[.[] | {id, pull_request_review_id, path, line, user: .user.login, body, outdated}]'
+```
+
+Fetch the diff in **Step 2**, then use it to verify both sources:
+- **Review bodies** (Step A) — each `CHANGES_REQUESTED` review may contain blocking feedback in its top-level body; verify whether the issue it describes is fixed in the current diff
+- **Inline comments** (Step B) — a comment belongs to a `CHANGES_REQUESTED` review when its `pull_request_review_id` matches an ID from Step A; verify each non-`outdated` one against the current diff
+- Skip inline comments with `outdated: true` — they target stale code; do not re-raise unless the same defect reappears in current hunks
+- After checking those items, scan the diff for net-new findings only
+
+### If the user chooses **Fresh start**
+
+Ignore all prior review data. Proceed to Step 2 as if the PR had no prior activity.
+
+---
+
+## Step 2 — Fetch and save the diff
 
 Save the diff to a temp file to enable repeated querying without extra API calls.
 
@@ -50,7 +124,7 @@ gh pr view <number> --json files | python3 -c \
 
 ---
 
-## Step 2 — Compute line numbers for inline comments
+## Step 3 — Compute line numbers for inline comments
 
 GitHub inline comments require the **line number in the resulting file** (after the
 diff is applied). The algorithm:
@@ -66,7 +140,7 @@ diff is applied). The algorithm:
 
 ---
 
-## Step 3 — Verify each line number before reporting
+## Step 4 — Verify each line number before reporting
 
 **Always run the algorithm in a terminal** for each finding. Do not estimate or compute mentally.
 
@@ -115,7 +189,7 @@ reject the comment silently.
 
 ---
 
-## Step 4 — Present findings, then branch on user response
+## Step 5 — Present findings, then branch on user response
 
 Present all findings to the user in a table:
 
@@ -124,6 +198,8 @@ Present all findings to the user in a table:
 | 1 | `path/to/File.java` | L42 | 🔴 HIGH | Comment text ready to paste |
 
 Severity scale: 🔴 HIGH (blocking) · 🟡 MEDIUM · 🔵 LOW (nit).
+
+**All comments must be written in English**, regardless of the language used in the conversation with the user — see AGENTS.md.
 
 **Then wait for the user's response and branch:**
 
@@ -152,12 +228,6 @@ gh api repos/{owner}/{repo}/pulls/<number>/reviews \
 Use `event=COMMENT` for a non-approving review.
 Use `event=REQUEST_CHANGES` when at least one finding is blocking (🔴 HIGH).
 Use `event=APPROVE` only when explicitly asked to approve the PR.
-
-Retrieve owner/repo from the local git remote if not known:
-
-```bash
-gh repo view --json nameWithOwner -q .nameWithOwner
-```
 
 After posting, verify the review was accepted:
 

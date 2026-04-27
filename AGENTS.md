@@ -114,6 +114,7 @@ When designing or modifying a Capability:
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow. Key rules:
 
 - Open an Issue before starting work
+- **All GitHub interactions must be in English** — issues, PR titles/bodies, inline review comments, and commit messages. The codebase and its community are English-first.
 - Branch from `main`: `feat/`, `fix/`, or `chore/` prefix
 - Use [Conventional Commits](https://www.conventionalcommits.org/): `feat:`, `fix:`, `chore:` — no scopes for now
 - AGENTS.md improvements are `feat:`, not `chore:` — they add value to the agent workflow
@@ -123,7 +124,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow. Key rules:
 - Always read the repository templates before creating issues or PRs:
   - Issues: `.github/ISSUE_TEMPLATE/` — use the matching template and fill in all required fields
   - PRs: `.github/PULL_REQUEST_TEMPLATE.md` — follow the structure exactly, do not improvise
+- When creating issues or PRs with multiline bodies via `gh`, **never use PowerShell here-strings** (`@"..."@`) — they hang waiting for the closing delimiter in the VS Code terminal. Always write the body to a temp `.md` file (e.g. `Set-Content -Path "$env:TEMP\gh-body.md" -Encoding utf8 -Value $body`) and pass it via `--body-file "$env:TEMP\gh-body.md"`
 - When asked to review a PR, load and follow the `pr-review` skill in `.agents/skills/pr-review/` before doing anything else
+- When editing documentation, skill, or instruction files (`.md`, `SKILL.md`, `AGENTS.md`), re-read the **entire file** after applying edits and before committing — to catch terminology drift, broken cross-references, and inconsistencies between sections that targeted edits cannot detect
 - Do **not** use `git push --force` — use `--force-with-lease`
 - When the user corrects a mistake, note it immediately so the insight is not lost — see [Self-Improvement](#self-improvement)
 - When the workflow is complete, review any noted corrections and propose rule updates if warranted
