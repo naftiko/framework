@@ -1,6 +1,6 @@
 ---
 name: pr-review
-version: "1.0.0"
+version: "1.1.0"
 description: >
   On-demand skill for reviewing GitHub Pull Requests and posting inline
   comments via the GitHub API. Activate when the user asks to: review a PR,
@@ -14,14 +14,66 @@ allowed-tools:
 ## Overview
 
 This skill guides the agent through a structured PR review workflow:
-fetch the diff → compute line numbers accurately → verify each line →
+check for existing reviews → offer Continue/Fresh-start choice → fetch the diff →
+compute line numbers accurately → verify each line →
 present findings → post only after explicit user confirmation.
 
 ---
 
-## Step 1 — Fetch and save the diff
+## Step 1 — Check for existing review activity
+
+Before fetching the diff, check whether the PR already has reviews or inline comments.
+
+```powershell
+# Windows (PowerShell)
+gh api repos/{owner}/{repo}/pulls/<number>/reviews `
+  --jq '[.[] | {id, state, submitted_at, user: .user.login, body: .body[:80]}]'
+gh api repos/{owner}/{repo}/pulls/<number>/comments `
+  --jq '[.[] | {id, path, line, user: .user.login, outdated}]'
+```
+
+```bash
+# Linux / macOS
+gh api repos/{owner}/{repo}/pulls/<number>/reviews \
+  --jq '[.[] | {id, state, submitted_at, user: .user.login, body: .body[:80]}]'
+gh api repos/{owner}/{repo}/pulls/<number>/comments \
+  --jq '[.[] | {id, path, line, user: .user.login, outdated}]'
+```
+
+**If no reviews and no inline comments exist** → proceed directly to Step 2.
+
+**If reviews or comments already exist**, summarize what was found and ask the user:
+
+> «This PR already has N review(s) and M inline comment(s) (latest state: X, by [reviewers]).
+> How do you want to proceed?
+> - **Continue** — focus on open CHANGES_REQUESTED items, skip already-resolved or outdated comments, then add net-new findings only.
+> - **Fresh start** — ignore prior review activity and review the full diff from scratch.»
+
+Wait for the user's answer before proceeding.
+
+### If the user chooses **Continue**
+
+Fetch the full inline comment list and build a filter:
+
+```powershell
+gh api repos/{owner}/{repo}/pulls/<number>/comments `
+  --jq '[.[] | {id, path, line, user: .user.login, body, outdated}]'
+```
+
+- Extract open CHANGES_REQUESTED comment bodies → verify each one against the current diff first (is it fixed or still present?)
+- Mark `outdated: true` comments as resolved — do not re-raise unless the same defect reappears in current hunks
+- After checking open items, scan the diff for net-new findings only
+
+### If the user chooses **Fresh start**
+
+Ignore all prior review data. Proceed to Step 2 as if the PR had no prior activity.
+
+---
+
+## Step 2 — Fetch and save the diff
 
 Save the diff to a temp file to enable repeated querying without extra API calls.
+
 
 ```powershell
 # Windows (PowerShell)
