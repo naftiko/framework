@@ -52,6 +52,9 @@ spec:
           local:
             enabled: true
           bufferSize: 100
+        exporters:
+          otlp:
+            endpoint: "http://localhost:4317"
 
     - type: mcp
       address: "0.0.0.0" # Needed in Docker context. Permits to access the MCP with localhost from outside the container.
