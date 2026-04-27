@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import io.modelcontextprotocol.spec.McpSchema;
 import io.naftiko.Capability;
-import io.naftiko.engine.telemetry.TelemetryBootstrap;
+import io.naftiko.engine.observability.TelemetryBootstrap;
 import io.opentelemetry.api.trace.SpanKind;
 import io.opentelemetry.sdk.OpenTelemetrySdk;
 import io.opentelemetry.sdk.testing.exporter.InMemorySpanExporter;

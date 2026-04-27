@@ -30,7 +30,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.naftiko.Capability;
 import io.naftiko.engine.exposes.ServerAdapter;
 import io.naftiko.spec.NaftikoSpec;
-import io.naftiko.spec.exposes.SkillServerSpec;
+import io.naftiko.spec.exposes.skill.SkillServerSpec;
 import io.naftiko.util.VersionHelper;
 
 /**

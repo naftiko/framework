@@ -30,7 +30,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.naftiko.Capability;
 import io.naftiko.spec.NaftikoSpec;
-import io.naftiko.spec.exposes.McpServerSpec;
+import io.naftiko.spec.exposes.mcp.McpServerSpec;
 
 /**
  * Unit tests for the Restlet-based MCP Streamable HTTP transport.

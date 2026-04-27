@@ -22,7 +22,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.naftiko.Capability;
 import io.naftiko.engine.exposes.ServerAdapter;
 import io.naftiko.spec.NaftikoSpec;
-import io.naftiko.spec.exposes.ControlServerSpec;
+import io.naftiko.spec.exposes.control.ControlServerSpec;
 import io.naftiko.util.VersionHelper;
 import org.restlet.routing.TemplateRoute;
 

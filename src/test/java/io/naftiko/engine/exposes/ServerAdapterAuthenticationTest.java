@@ -27,7 +27,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.naftiko.Capability;
 import io.naftiko.engine.exposes.mcp.McpOAuth2Restlet;
-import io.naftiko.engine.exposes.rest.ServerAuthenticationRestlet;
 import io.naftiko.spec.NaftikoSpec;
 import io.naftiko.util.VersionHelper;
 

@@ -14,7 +14,7 @@
 package io.naftiko.spec.openapi;
 
 import java.util.List;
-import io.naftiko.spec.consumes.HttpClientSpec;
+import io.naftiko.spec.consumes.http.HttpClientSpec;
 
 /**
  * Result of an OpenAPI import conversion. Contains the converted HttpClientSpec

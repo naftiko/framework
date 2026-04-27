@@ -34,7 +34,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.naftiko.Capability;
 import io.naftiko.spec.NaftikoSpec;
 import io.naftiko.spec.OutputParameterSpec;
-import io.naftiko.spec.exposes.McpServerResourceSpec;
+import io.naftiko.spec.exposes.mcp.McpServerResourceSpec;
 import io.naftiko.spec.exposes.ServerCallSpec;
 import io.naftiko.util.VersionHelper;
 

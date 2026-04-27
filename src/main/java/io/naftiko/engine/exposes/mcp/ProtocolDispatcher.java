@@ -23,9 +23,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.modelcontextprotocol.spec.McpSchema;
-import io.naftiko.spec.exposes.McpPromptArgumentSpec;
-import io.naftiko.spec.exposes.McpServerPromptSpec;
-import io.naftiko.spec.exposes.McpServerResourceSpec;
+import io.naftiko.spec.exposes.mcp.McpPromptArgumentSpec;
+import io.naftiko.spec.exposes.mcp.McpServerPromptSpec;
+import io.naftiko.spec.exposes.mcp.McpServerResourceSpec;
 
 /**
  * Transport-agnostic MCP JSON-RPC protocol dispatcher.

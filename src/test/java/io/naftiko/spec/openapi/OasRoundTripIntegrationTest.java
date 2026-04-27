@@ -23,12 +23,12 @@ import io.naftiko.spec.InfoSpec;
 import io.naftiko.spec.InputParameterSpec;
 import io.naftiko.spec.NaftikoSpec;
 import io.naftiko.spec.OutputParameterSpec;
-import io.naftiko.spec.consumes.BearerAuthenticationSpec;
-import io.naftiko.spec.consumes.HttpClientOperationSpec;
-import io.naftiko.spec.consumes.HttpClientSpec;
-import io.naftiko.spec.exposes.RestServerOperationSpec;
-import io.naftiko.spec.exposes.RestServerResourceSpec;
-import io.naftiko.spec.exposes.RestServerSpec;
+import io.naftiko.spec.consumes.http.BearerAuthenticationSpec;
+import io.naftiko.spec.consumes.http.HttpClientOperationSpec;
+import io.naftiko.spec.consumes.http.HttpClientSpec;
+import io.naftiko.spec.exposes.rest.RestServerOperationSpec;
+import io.naftiko.spec.exposes.rest.RestServerResourceSpec;
+import io.naftiko.spec.exposes.rest.RestServerSpec;
 
 /**
  * Round-trip integration test: Export → Import → compare operations, parameters, auth.
