@@ -17,7 +17,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.naftiko.spec.NaftikoSpec;
-import io.naftiko.spec.exposes.ControlServerSpec;
+import io.naftiko.spec.exposes.control.ControlServerSpec;
 import io.naftiko.spec.exposes.ServerSpec;
 import picocli.CommandLine.Option;
 import java.nio.file.DirectoryStream;

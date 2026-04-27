@@ -555,19 +555,19 @@
     "allDeclaredFields": true
   },
   {
-    "name": "io.naftiko.spec.consumes.HttpClientSpec",
+    "name": "io.naftiko.spec.consumes.http.HttpClientSpec",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
   },
   {
-    "name": "io.naftiko.spec.consumes.HttpClientResourceSpec",
+    "name": "io.naftiko.spec.consumes.http.HttpClientResourceSpec",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
   },
   {
-    "name": "io.naftiko.spec.consumes.HttpClientOperationSpec",
+    "name": "io.naftiko.spec.consumes.http.HttpClientOperationSpec",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
@@ -603,37 +603,37 @@
     "allDeclaredFields": true
   },
   {
-    "name": "io.naftiko.spec.consumes.AuthenticationSpec",
+    "name": "io.naftiko.spec.consumes.http.AuthenticationSpec",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
   },
   {
-    "name": "io.naftiko.spec.consumes.ApiKeyAuthenticationSpec",
+    "name": "io.naftiko.spec.consumes.http.ApiKeyAuthenticationSpec",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
   },
   {
-    "name": "io.naftiko.spec.consumes.BearerAuthenticationSpec",
+    "name": "io.naftiko.spec.consumes.http.BearerAuthenticationSpec",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
   },
   {
-    "name": "io.naftiko.spec.consumes.BasicAuthenticationSpec",
+    "name": "io.naftiko.spec.consumes.http.BasicAuthenticationSpec",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
   },
   {
-    "name": "io.naftiko.spec.consumes.DigestAuthenticationSpec",
+    "name": "io.naftiko.spec.consumes.http.DigestAuthenticationSpec",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
   },
   {
-    "name": "io.naftiko.spec.consumes.OAuth2AuthenticationSpec",
+    "name": "io.naftiko.spec.consumes.http.OAuth2AuthenticationSpec",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true

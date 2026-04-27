@@ -27,8 +27,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import io.naftiko.engine.consumes.ConsumesImportResolver;
 import io.naftiko.spec.consumes.ClientSpec;
-import io.naftiko.spec.consumes.HttpClientSpec;
-import io.naftiko.spec.consumes.ImportedConsumesHttpSpec;
+import io.naftiko.spec.consumes.http.HttpClientSpec;
+import io.naftiko.spec.consumes.http.ImportedConsumesHttpSpec;
 import io.naftiko.util.VersionHelper;
 
 /**

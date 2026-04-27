@@ -18,6 +18,8 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
+import io.naftiko.spec.consumes.http.HttpClientSpec;
+import io.naftiko.spec.consumes.http.ImportedConsumesHttpSpec;
 
 /**
  * Custom deserializer that discriminates between Import and regular HttpClientSpec

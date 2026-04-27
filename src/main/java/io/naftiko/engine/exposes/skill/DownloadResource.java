@@ -30,7 +30,7 @@ import org.restlet.representation.OutputRepresentation;
 import org.restlet.representation.Representation;
 import org.restlet.resource.Get;
 import org.restlet.resource.ResourceException;
-import io.naftiko.spec.exposes.ExposedSkillSpec;
+import io.naftiko.spec.exposes.skill.ExposedSkillSpec;
 
 /**
  * Handles {@code GET /skills/{name}/download} — streams a ZIP archive of the skill's

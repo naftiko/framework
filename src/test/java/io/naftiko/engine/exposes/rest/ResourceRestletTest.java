@@ -38,13 +38,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.naftiko.Capability;
-import io.naftiko.engine.exposes.OperationStepExecutor;
+import io.naftiko.engine.util.OperationStepExecutor;
 import io.naftiko.engine.util.Resolver;
 import io.naftiko.spec.NaftikoSpec;
 import io.naftiko.spec.OutputParameterSpec;
-import io.naftiko.spec.exposes.RestServerOperationSpec;
-import io.naftiko.spec.exposes.RestServerForwardSpec;
-import io.naftiko.spec.exposes.RestServerSpec;
+import io.naftiko.spec.exposes.rest.RestServerOperationSpec;
+import io.naftiko.spec.exposes.rest.RestServerForwardSpec;
+import io.naftiko.spec.exposes.rest.RestServerSpec;
 import io.naftiko.spec.exposes.ServerCallSpec;
 import io.naftiko.util.VersionHelper;
 
@@ -307,8 +307,8 @@ public class ResourceRestletTest {
     failingOperation.getOutputParameters().add(output);
 
     // Set unsupported format on the client operation (where the fix now reads it from)
-    io.naftiko.spec.consumes.HttpClientOperationSpec failingClientOp =
-        new io.naftiko.spec.consumes.HttpClientOperationSpec();
+    io.naftiko.spec.consumes.http.HttpClientOperationSpec failingClientOp =
+        new io.naftiko.spec.consumes.http.HttpClientOperationSpec();
     failingClientOp.setOutputRawFormat("INI");
 
     OperationStepExecutor.HandlingContext failingContext =
@@ -493,8 +493,8 @@ public class ResourceRestletTest {
     operation.getOutputParameters().add(mappedBody);
 
     // Client operation declares outputRawFormat: xml
-    io.naftiko.spec.consumes.HttpClientOperationSpec clientOp =
-        new io.naftiko.spec.consumes.HttpClientOperationSpec();
+    io.naftiko.spec.consumes.http.HttpClientOperationSpec clientOp =
+        new io.naftiko.spec.consumes.http.HttpClientOperationSpec();
     clientOp.setOutputRawFormat("xml");
 
     String xml = "<root><user><id>1</id><name>Alice</name></user>"

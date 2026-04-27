@@ -25,8 +25,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import io.naftiko.spec.exposes.McpPromptMessageSpec;
-import io.naftiko.spec.exposes.McpServerPromptSpec;
+import io.naftiko.spec.exposes.mcp.McpPromptMessageSpec;
+import io.naftiko.spec.exposes.mcp.McpServerPromptSpec;
 
 /**
  * Handles MCP {@code prompts/get} requests by rendering prompt templates.

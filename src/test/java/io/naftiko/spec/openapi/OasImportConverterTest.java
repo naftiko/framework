@@ -42,11 +42,11 @@ import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import io.naftiko.spec.InputParameterSpec;
 import io.naftiko.spec.OutputParameterSpec;
-import io.naftiko.spec.consumes.ApiKeyAuthenticationSpec;
-import io.naftiko.spec.consumes.BasicAuthenticationSpec;
-import io.naftiko.spec.consumes.BearerAuthenticationSpec;
-import io.naftiko.spec.consumes.DigestAuthenticationSpec;
-import io.naftiko.spec.consumes.HttpClientOperationSpec;
+import io.naftiko.spec.consumes.http.ApiKeyAuthenticationSpec;
+import io.naftiko.spec.consumes.http.BasicAuthenticationSpec;
+import io.naftiko.spec.consumes.http.BearerAuthenticationSpec;
+import io.naftiko.spec.consumes.http.DigestAuthenticationSpec;
+import io.naftiko.spec.consumes.http.HttpClientOperationSpec;
 
 
 public class OasImportConverterTest {

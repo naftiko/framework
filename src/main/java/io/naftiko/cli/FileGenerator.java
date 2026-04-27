@@ -15,8 +15,6 @@ package io.naftiko.cli;
 
 import com.samskivert.mustache.Mustache;
 import com.samskivert.mustache.Template;
-
-import io.naftiko.cli.enums.FileFormat;
 import io.naftiko.util.VersionHelper;
 
 import java.io.*;

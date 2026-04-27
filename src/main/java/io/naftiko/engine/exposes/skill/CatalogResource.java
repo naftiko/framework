@@ -18,8 +18,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.restlet.ext.jackson.JacksonRepresentation;
 import org.restlet.representation.Representation;
 import org.restlet.resource.Get;
-import io.naftiko.spec.exposes.ExposedSkillSpec;
-import io.naftiko.spec.exposes.SkillToolSpec;
+import io.naftiko.spec.exposes.skill.ExposedSkillSpec;
+import io.naftiko.spec.exposes.skill.SkillToolSpec;
 
 /**
  * Handles {@code GET /skills} — lists all skills with their tool name summaries.

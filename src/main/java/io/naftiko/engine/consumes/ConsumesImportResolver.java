@@ -25,8 +25,8 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import io.naftiko.spec.NaftikoSpec;
 import io.naftiko.spec.consumes.ClientSpec;
-import io.naftiko.spec.consumes.HttpClientSpec;
-import io.naftiko.spec.consumes.ImportedConsumesHttpSpec;
+import io.naftiko.spec.consumes.http.HttpClientSpec;
+import io.naftiko.spec.consumes.http.ImportedConsumesHttpSpec;
 
 /**
  * Resolver for global consumes imports.

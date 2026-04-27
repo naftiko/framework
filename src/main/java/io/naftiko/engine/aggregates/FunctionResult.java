@@ -14,7 +14,7 @@
 package io.naftiko.engine.aggregates;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import io.naftiko.engine.exposes.OperationStepExecutor;
+import io.naftiko.engine.util.OperationStepExecutor;
 
 /**
  * Transport-neutral result of executing an aggregate function.

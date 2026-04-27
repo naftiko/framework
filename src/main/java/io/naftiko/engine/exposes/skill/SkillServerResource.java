@@ -20,11 +20,11 @@ import org.restlet.data.MediaType;
 import org.restlet.representation.Representation;
 import org.restlet.resource.ServerResource;
 import org.restlet.service.MetadataService;
-import io.naftiko.engine.telemetry.RestletHeaderGetter;
-import io.naftiko.engine.telemetry.TelemetryBootstrap;
+import io.naftiko.engine.observability.RestletHeaderGetter;
+import io.naftiko.engine.observability.TelemetryBootstrap;
 import io.naftiko.engine.util.SafePathResolver;
-import io.naftiko.spec.exposes.ExposedSkillSpec;
-import io.naftiko.spec.exposes.SkillServerSpec;
+import io.naftiko.spec.exposes.skill.ExposedSkillSpec;
+import io.naftiko.spec.exposes.skill.SkillServerSpec;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.context.Scope;
 

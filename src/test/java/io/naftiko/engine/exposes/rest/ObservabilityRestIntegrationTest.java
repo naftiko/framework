@@ -16,7 +16,7 @@ package io.naftiko.engine.exposes.rest;
 import static org.junit.jupiter.api.Assertions.*;
 
 import io.naftiko.Capability;
-import io.naftiko.engine.telemetry.TelemetryBootstrap;
+import io.naftiko.engine.observability.TelemetryBootstrap;
 import io.opentelemetry.api.trace.SpanKind;
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
 import io.opentelemetry.context.propagation.ContextPropagators;
@@ -26,7 +26,7 @@ import io.opentelemetry.sdk.trace.SdkTracerProvider;
 import io.opentelemetry.sdk.trace.data.SpanData;
 import io.opentelemetry.sdk.trace.export.SimpleSpanProcessor;
 import io.naftiko.spec.NaftikoSpec;
-import io.naftiko.spec.exposes.RestServerSpec;
+import io.naftiko.spec.exposes.rest.RestServerSpec;
 import io.naftiko.util.VersionHelper;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
