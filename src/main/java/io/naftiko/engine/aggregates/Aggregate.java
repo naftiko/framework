@@ -15,7 +15,7 @@ package io.naftiko.engine.aggregates;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import io.naftiko.engine.exposes.OperationStepExecutor;
+import io.naftiko.engine.util.OperationStepExecutor;
 import io.naftiko.spec.aggregates.AggregateFunctionSpec;
 import io.naftiko.spec.aggregates.AggregateSpec;
 

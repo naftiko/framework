@@ -21,8 +21,8 @@ import org.restlet.data.Status;
 import org.restlet.representation.Representation;
 import org.restlet.resource.Get;
 import org.restlet.resource.ResourceException;
-import io.naftiko.spec.exposes.ExposedSkillSpec;
-import io.naftiko.spec.exposes.SkillToolSpec;
+import io.naftiko.spec.exposes.skill.ExposedSkillSpec;
+import io.naftiko.spec.exposes.skill.SkillToolSpec;
 
 /**
  * Handles {@code GET /skills/{name}} — returns full skill metadata and tool catalog.

@@ -36,8 +36,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.naftiko.Capability;
 import io.naftiko.spec.NaftikoSpec;
-import io.naftiko.spec.exposes.RestServerResourceSpec;
-import io.naftiko.spec.exposes.RestServerSpec;
+import io.naftiko.spec.exposes.rest.RestServerResourceSpec;
+import io.naftiko.spec.exposes.rest.RestServerSpec;
 import io.naftiko.util.VersionHelper;
 
 /**

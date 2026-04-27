@@ -22,10 +22,10 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.parser.OpenAPIV3Parser;
 import io.swagger.parser.OpenAPIParser;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
-import io.naftiko.spec.consumes.BearerAuthenticationSpec;
-import io.naftiko.spec.consumes.HttpClientOperationSpec;
-import io.naftiko.spec.consumes.HttpClientResourceSpec;
-import io.naftiko.spec.consumes.HttpClientSpec;
+import io.naftiko.spec.consumes.http.BearerAuthenticationSpec;
+import io.naftiko.spec.consumes.http.HttpClientOperationSpec;
+import io.naftiko.spec.consumes.http.HttpClientResourceSpec;
+import io.naftiko.spec.consumes.http.HttpClientSpec;
 import io.naftiko.spec.InputParameterSpec;
 import io.naftiko.spec.OutputParameterSpec;
 

@@ -16,8 +16,8 @@ package io.naftiko.spec;
 import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import io.naftiko.spec.consumes.HttpClientResourceSpec;
-import io.naftiko.spec.consumes.HttpClientSpec;
+import io.naftiko.spec.consumes.http.HttpClientResourceSpec;
+import io.naftiko.spec.consumes.http.HttpClientSpec;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**

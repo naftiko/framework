@@ -24,8 +24,8 @@ import io.naftiko.Capability;
 import io.naftiko.engine.consumes.http.HttpClientAdapter;
 import io.naftiko.engine.exposes.ServerAdapter;
 import io.naftiko.spec.NaftikoSpec;
-import io.naftiko.spec.exposes.McpServerSpec;
-import io.naftiko.spec.exposes.McpServerToolSpec;
+import io.naftiko.spec.exposes.mcp.McpServerSpec;
+import io.naftiko.spec.exposes.mcp.McpServerToolSpec;
 import io.naftiko.util.VersionHelper;
 
 import java.io.File;

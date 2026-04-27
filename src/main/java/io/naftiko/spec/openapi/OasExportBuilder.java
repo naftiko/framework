@@ -41,15 +41,15 @@ import io.naftiko.spec.CapabilitySpec;
 import io.naftiko.spec.InputParameterSpec;
 import io.naftiko.spec.NaftikoSpec;
 import io.naftiko.spec.OutputParameterSpec;
-import io.naftiko.spec.consumes.ApiKeyAuthenticationSpec;
-import io.naftiko.spec.consumes.AuthenticationSpec;
-import io.naftiko.spec.consumes.BasicAuthenticationSpec;
-import io.naftiko.spec.consumes.BearerAuthenticationSpec;
-import io.naftiko.spec.consumes.DigestAuthenticationSpec;
-import io.naftiko.spec.consumes.OAuth2AuthenticationSpec;
-import io.naftiko.spec.exposes.RestServerOperationSpec;
-import io.naftiko.spec.exposes.RestServerResourceSpec;
-import io.naftiko.spec.exposes.RestServerSpec;
+import io.naftiko.spec.consumes.http.ApiKeyAuthenticationSpec;
+import io.naftiko.spec.consumes.http.AuthenticationSpec;
+import io.naftiko.spec.consumes.http.BasicAuthenticationSpec;
+import io.naftiko.spec.consumes.http.BearerAuthenticationSpec;
+import io.naftiko.spec.consumes.http.DigestAuthenticationSpec;
+import io.naftiko.spec.consumes.http.OAuth2AuthenticationSpec;
+import io.naftiko.spec.exposes.rest.RestServerOperationSpec;
+import io.naftiko.spec.exposes.rest.RestServerResourceSpec;
+import io.naftiko.spec.exposes.rest.RestServerSpec;
 import io.naftiko.spec.exposes.ServerSpec;
 
 /**

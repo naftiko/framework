@@ -15,7 +15,6 @@ package io.naftiko.cli;
 
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
-import io.naftiko.cli.enums.FileFormat;
 
 public class FileFormatEnumTest {
 

@@ -32,8 +32,8 @@ import io.naftiko.engine.aggregates.AggregateFunction;
 import io.naftiko.engine.exposes.mcp.McpServerAdapter;
 import io.naftiko.engine.exposes.mcp.ProtocolDispatcher;
 import io.naftiko.spec.NaftikoSpec;
-import io.naftiko.spec.exposes.RestServerOperationSpec;
-import io.naftiko.spec.exposes.RestServerSpec;
+import io.naftiko.spec.exposes.rest.RestServerOperationSpec;
+import io.naftiko.spec.exposes.rest.RestServerSpec;
 
 /**
  * Integration test proving that a single aggregate function mock can be reused unchanged by

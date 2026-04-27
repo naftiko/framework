@@ -25,7 +25,7 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.parser.OpenAPIParser;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
 import io.naftiko.spec.NaftikoSpec;
-import io.naftiko.spec.consumes.HttpClientSpec;
+import io.naftiko.spec.consumes.http.HttpClientSpec;
 import io.naftiko.spec.openapi.OasImportConverter;
 import io.naftiko.spec.openapi.OasImportResult;
 import io.naftiko.util.VersionHelper;

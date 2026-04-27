@@ -16,7 +16,7 @@ package io.naftiko.engine.exposes.control;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.naftiko.spec.exposes.ScriptingManagementSpec;
+import io.naftiko.spec.exposes.control.ScriptingManagementSpec;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;

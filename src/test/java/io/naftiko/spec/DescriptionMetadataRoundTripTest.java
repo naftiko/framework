@@ -19,7 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
-import io.naftiko.spec.exposes.RestServerStepSpec;
+import io.naftiko.spec.exposes.rest.RestServerStepSpec;
 import io.naftiko.spec.exposes.ServerCallSpec;
 
 import static org.junit.jupiter.api.Assertions.*;

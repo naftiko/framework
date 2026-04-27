@@ -45,7 +45,7 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
-import io.naftiko.spec.consumes.OAuth2AuthenticationSpec;
+import io.naftiko.spec.consumes.http.OAuth2AuthenticationSpec;
 
 /**
  * Shared Restlet that implements OAuth 2.1 resource server authentication. Validates bearer tokens

@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import io.naftiko.spec.NaftikoSpec;
-import io.naftiko.spec.consumes.HttpClientSpec;
+import io.naftiko.spec.consumes.http.HttpClientSpec;
 
 /**
  * End-to-end integration test for {@code step-2-shipyard-wiring.yml} exercised

@@ -25,10 +25,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.naftiko.Capability;
-import io.naftiko.engine.exposes.OperationStepExecutor;
+import io.naftiko.engine.util.OperationStepExecutor;
 import io.naftiko.spec.NaftikoSpec;
-import io.naftiko.spec.exposes.McpServerSpec;
-import io.naftiko.spec.exposes.McpServerToolSpec;
+import io.naftiko.spec.exposes.mcp.McpServerSpec;
+import io.naftiko.spec.exposes.mcp.McpServerToolSpec;
 
 /**
  * Non-regression test for nested object output mapping.
