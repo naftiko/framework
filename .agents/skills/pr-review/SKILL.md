@@ -213,7 +213,28 @@ Return to this step when the user is ready.
 Submit all inline comments in a **single** API call. Do not post without explicit
 user confirmation — this is an irreversible action on a shared system.
 
+> **PowerShell — backtick hazard in `--field` strings**
+> In PowerShell double-quoted strings (`"..."`), the backtick `` ` `` is an escape
+> character: `` `e `` → ESC, `` `n `` → newline, `` `t `` → tab, etc. Comment bodies
+> that contain Markdown inline code (e.g. `` `engine.exposes` ``) will be silently
+> corrupted before reaching the API (`` `e `` becomes ESC, rendering as `→ngine.exposes`
+> on GitHub). Always use **single-quoted strings** for `--field` body values on Windows.
+
+```powershell
+# Windows (PowerShell) — use single quotes for body values to avoid backtick expansion
+gh api repos/{owner}/{repo}/pulls/<number>/reviews `
+  --method POST `
+  --field event=COMMENT `
+  --field 'comments[][path]=src/main/java/io/naftiko/Foo.java' `
+  --field 'comments[][line]=42' `
+  --field 'comments[][body]=Your comment here, safe to use `backticks` in single quotes.' `
+  --field 'comments[][path]=src/main/resources/schemas/naftiko-schema.json' `
+  --field 'comments[][line]=2586' `
+  --field 'comments[][body]=Another comment.'
+```
+
 ```bash
+# Linux / macOS
 gh api repos/{owner}/{repo}/pulls/<number>/reviews \
   --method POST \
   --field event=COMMENT \
