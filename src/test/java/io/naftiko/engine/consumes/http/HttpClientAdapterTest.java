@@ -23,10 +23,10 @@ import org.restlet.Request;
 import org.restlet.data.ChallengeResponse;
 import org.restlet.data.ChallengeScheme;
 import org.restlet.data.Method;
-import io.naftiko.spec.consumes.ApiKeyAuthenticationSpec;
-import io.naftiko.spec.consumes.BasicAuthenticationSpec;
-import io.naftiko.spec.consumes.DigestAuthenticationSpec;
-import io.naftiko.spec.consumes.HttpClientSpec;
+import io.naftiko.spec.consumes.http.ApiKeyAuthenticationSpec;
+import io.naftiko.spec.consumes.http.BasicAuthenticationSpec;
+import io.naftiko.spec.consumes.http.DigestAuthenticationSpec;
+import io.naftiko.spec.consumes.http.HttpClientSpec;
 
 public class HttpClientAdapterTest {
 

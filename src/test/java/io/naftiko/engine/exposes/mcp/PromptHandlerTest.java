@@ -21,10 +21,28 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import io.naftiko.spec.exposes.McpServerPromptSpec;
-import io.naftiko.spec.exposes.McpPromptMessageSpec;
+import io.naftiko.spec.exposes.mcp.McpServerPromptSpec;
+import io.naftiko.spec.exposes.mcp.McpPromptMessageSpec;
 
 public class PromptHandlerTest {
+
+    @Test
+    public void constructorShouldTreatNullPromptListAsEmpty() {
+        PromptHandler handler = new PromptHandler(null);
+
+        assertTrue(handler.listAll().isEmpty(), "Null prompt list should behave like no prompts");
+    }
+
+    @Test
+    public void constructorShouldSkipPromptEntriesWithNullName() {
+        McpServerPromptSpec malformed = new McpServerPromptSpec();
+        malformed.setName(null);
+
+        PromptHandler handler = new PromptHandler(List.of(malformed));
+
+        assertTrue(handler.listAll().isEmpty(),
+                "Prompt entries with null name should be ignored");
+    }
 
     @Test
     public void renderShouldThrowWhenPromptUnknown() {

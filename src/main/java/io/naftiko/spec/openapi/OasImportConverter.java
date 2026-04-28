@@ -29,14 +29,14 @@ import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.naftiko.spec.InputParameterSpec;
 import io.naftiko.spec.OutputParameterSpec;
-import io.naftiko.spec.consumes.ApiKeyAuthenticationSpec;
-import io.naftiko.spec.consumes.AuthenticationSpec;
-import io.naftiko.spec.consumes.BasicAuthenticationSpec;
-import io.naftiko.spec.consumes.BearerAuthenticationSpec;
-import io.naftiko.spec.consumes.DigestAuthenticationSpec;
-import io.naftiko.spec.consumes.HttpClientOperationSpec;
-import io.naftiko.spec.consumes.HttpClientResourceSpec;
-import io.naftiko.spec.consumes.HttpClientSpec;
+import io.naftiko.spec.consumes.http.ApiKeyAuthenticationSpec;
+import io.naftiko.spec.consumes.http.AuthenticationSpec;
+import io.naftiko.spec.consumes.http.BasicAuthenticationSpec;
+import io.naftiko.spec.consumes.http.BearerAuthenticationSpec;
+import io.naftiko.spec.consumes.http.DigestAuthenticationSpec;
+import io.naftiko.spec.consumes.http.HttpClientOperationSpec;
+import io.naftiko.spec.consumes.http.HttpClientResourceSpec;
+import io.naftiko.spec.consumes.http.HttpClientSpec;
 
 /**
  * Stateless converter: OpenAPI {@link OpenAPI} POJO → Naftiko {@link HttpClientSpec} object tree.
@@ -52,6 +52,10 @@ public class OasImportConverter {
      * @return conversion result containing the HttpClientSpec and any warnings
      */
     public OasImportResult convert(OpenAPI openApi) {
+        if (openApi == null) {
+            throw new IllegalArgumentException("OpenAPI document must not be null");
+        }
+
         List<String> warnings = new ArrayList<>();
 
         String namespace = deriveNamespace(openApi, warnings);
@@ -94,7 +98,8 @@ public class OasImportConverter {
 
     String deriveBaseUri(OpenAPI openApi, List<String> warnings) {
         if (openApi.getServers() != null && !openApi.getServers().isEmpty()) {
-            String url = openApi.getServers().get(0).getUrl();
+            io.swagger.v3.oas.models.servers.Server firstServer = openApi.getServers().get(0);
+            String url = firstServer != null ? firstServer.getUrl() : null;
             if (url != null && !url.isEmpty() && !"/".equals(url)) {
                 // Strip trailing slash
                 if (url.endsWith("/")) {
@@ -119,6 +124,12 @@ public class OasImportConverter {
         Map.Entry<String, SecurityScheme> first =
                 schemes.entrySet().iterator().next();
         SecurityScheme scheme = first.getValue();
+
+        if (scheme == null || scheme.getType() == null) {
+            warnings.add("Security scheme '" + first.getKey()
+                + "' is missing type information and was ignored");
+            return null;
+        }
 
         switch (scheme.getType()) {
             case APIKEY:

@@ -28,10 +28,10 @@ import io.naftiko.Capability;
 import io.naftiko.engine.aggregates.AggregateFunction;
 import io.naftiko.engine.exposes.ServerAdapter;
 import io.naftiko.spec.InputParameterSpec;
-import io.naftiko.spec.consumes.OAuth2AuthenticationSpec;
-import io.naftiko.spec.exposes.McpServerSpec;
-import io.naftiko.spec.exposes.McpServerToolSpec;
-import io.naftiko.spec.exposes.McpToolHintsSpec;
+import io.naftiko.spec.consumes.http.OAuth2AuthenticationSpec;
+import io.naftiko.spec.exposes.mcp.McpServerSpec;
+import io.naftiko.spec.exposes.mcp.McpServerToolSpec;
+import io.naftiko.spec.exposes.mcp.McpToolHintsSpec;
 
 /**
  * MCP Server Adapter implementation.
@@ -66,6 +66,13 @@ public class McpServerAdapter extends ServerAdapter {
         Context.getCurrentLogger().log(Level.INFO, "Building MCP Tool definitions from the spec");
 
         for (McpServerToolSpec toolSpec : serverSpec.getTools()) {
+            if (toolSpec == null || toolSpec.getName() == null
+                    || toolSpec.getName().isBlank()) {
+                Context.getCurrentLogger().warning(
+                        "Skipping malformed MCP tool declaration: tool or name is missing");
+                continue;
+            }
+
             this.tools.add(buildMcpTool(toolSpec));
             if (toolSpec.getLabel() != null) {
                 this.toolLabels.put(toolSpec.getName(), toolSpec.getLabel());

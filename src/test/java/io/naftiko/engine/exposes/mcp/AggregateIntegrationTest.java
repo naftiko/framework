@@ -22,8 +22,8 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.naftiko.Capability;
 import io.naftiko.engine.aggregates.AggregateFunction;
 import io.naftiko.spec.NaftikoSpec;
-import io.naftiko.spec.exposes.McpServerSpec;
-import io.naftiko.spec.exposes.McpServerToolSpec;
+import io.naftiko.spec.exposes.mcp.McpServerSpec;
+import io.naftiko.spec.exposes.mcp.McpServerToolSpec;
 import java.io.File;
 
 /**
@@ -98,11 +98,11 @@ public class AggregateIntegrationTest {
         io.naftiko.engine.exposes.rest.RestServerAdapter restAdapter =
                 (io.naftiko.engine.exposes.rest.RestServerAdapter) capability.getServerAdapters()
                         .get(1);
-        io.naftiko.spec.exposes.RestServerSpec restSpec =
-                (io.naftiko.spec.exposes.RestServerSpec) restAdapter.getSpec();
+        io.naftiko.spec.exposes.rest.RestServerSpec restSpec =
+                (io.naftiko.spec.exposes.rest.RestServerSpec) restAdapter.getSpec();
 
         // Second operation (POST) omits name/description — inherited from function
-        io.naftiko.spec.exposes.RestServerOperationSpec op =
+        io.naftiko.spec.exposes.rest.RestServerOperationSpec op =
                 restSpec.getResources().get(0).getOperations().get(1);
         assertEquals("POST", op.getMethod());
         assertEquals("get-forecast", op.getName());

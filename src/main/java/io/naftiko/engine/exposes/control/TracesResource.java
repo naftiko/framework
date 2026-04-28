@@ -16,7 +16,7 @@ package io.naftiko.engine.exposes.control;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.naftiko.engine.telemetry.TelemetryBootstrap;
+import io.naftiko.engine.observability.TelemetryBootstrap;
 import org.restlet.data.MediaType;
 import org.restlet.data.Status;
 import org.restlet.representation.Representation;

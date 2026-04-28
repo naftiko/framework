@@ -25,13 +25,15 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.parser.OpenAPIParser;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
 import io.naftiko.spec.NaftikoSpec;
-import io.naftiko.spec.consumes.HttpClientSpec;
+import io.naftiko.spec.consumes.http.HttpClientSpec;
 import io.naftiko.spec.openapi.OasImportConverter;
 import io.naftiko.spec.openapi.OasImportResult;
 import io.naftiko.util.VersionHelper;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Command(
     name = "openapi",
@@ -39,6 +41,8 @@ import picocli.CommandLine.Parameters;
     description = "Import an OpenAPI specification into a Naftiko consumes YAML file."
 )
 public class ImportOpenApiCommand implements Callable<Integer> {
+
+    private static final Logger logger = LoggerFactory.getLogger(ImportOpenApiCommand.class);
 
     @Parameters(index = "0", description = "Path or URL to the OpenAPI specification file")
     private String source;
@@ -130,6 +134,7 @@ public class ImportOpenApiCommand implements Callable<Integer> {
 
         } catch (Exception e) {
             System.err.println("Error: " + e.getMessage());
+            logger.debug("Import command failed", e);
             return 1;
         }
     }

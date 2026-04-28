@@ -22,11 +22,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.naftiko.Capability;
+import io.naftiko.spec.CapabilitySpec;
 import io.naftiko.spec.NaftikoSpec;
-import io.naftiko.spec.exposes.McpServerPromptSpec;
-import io.naftiko.spec.exposes.McpServerResourceSpec;
-import io.naftiko.spec.exposes.McpServerSpec;
-import io.naftiko.spec.exposes.McpServerToolSpec;
+import io.naftiko.spec.exposes.mcp.McpServerPromptSpec;
+import io.naftiko.spec.exposes.mcp.McpServerResourceSpec;
+import io.naftiko.spec.exposes.mcp.McpServerSpec;
+import io.naftiko.spec.exposes.mcp.McpServerToolSpec;
 import io.naftiko.util.VersionHelper;
 
 import java.io.File;
@@ -190,12 +191,73 @@ public class ResourcesPromptsIntegrationTest {
         assertNotNull(adapter.getPromptHandler(), "McpPromptHandler should be created");
     }
 
+        @Test
+        public void testPromptHandlerCreatedWhenPromptsAreOmitted() throws Exception {
+                McpServerToolSpec tool = new McpServerToolSpec();
+                tool.setName("ping");
+                tool.setDescription("Minimal tool");
+
+                McpServerSpec serverSpec = new McpServerSpec("localhost", 0, "minimal-mcp", null);
+                serverSpec.getTools().add(tool);
+
+                CapabilitySpec capabilitySpec = new CapabilitySpec();
+                capabilitySpec.getExposes().add(serverSpec);
+
+                NaftikoSpec spec = new NaftikoSpec();
+                spec.setNaftiko(schemaVersion);
+                spec.setCapability(capabilitySpec);
+
+                Capability localCapability = new Capability(spec);
+                McpServerAdapter localAdapter = (McpServerAdapter) localCapability.getServerAdapters().get(0);
+
+                assertNotNull(localAdapter.getPromptHandler(), "PromptHandler should exist even when prompts are omitted");
+                assertTrue(localAdapter.getPromptHandler().listAll().isEmpty(),
+                                "Omitted prompts should behave like an empty prompt list");
+        }
+
     @Test
     public void testToolLabelsMap() {
         Map<String, String> labels = adapter.getToolLabels();
         assertNotNull(labels, "Tool labels map should not be null");
         assertEquals("Query Database", labels.get("query-database"),
                 "Tool label should be in the labels map");
+    }
+
+    @Test
+    public void testToolHandlerCreatedWhenToolListContainsMalformedEntries() throws Exception {
+        McpServerToolSpec validTool = new McpServerToolSpec();
+        validTool.setName("ping");
+        validTool.setDescription("Minimal tool");
+
+        McpServerToolSpec nullNameTool = new McpServerToolSpec();
+        nullNameTool.setDescription("Malformed tool with null name");
+
+        McpServerToolSpec blankNameTool = new McpServerToolSpec();
+        blankNameTool.setName("   ");
+        blankNameTool.setDescription("Malformed tool with blank name");
+
+        McpServerSpec serverSpec = new McpServerSpec("localhost", 0, "minimal-mcp", null);
+        serverSpec.getTools().add(validTool);
+        serverSpec.getTools().add(null);
+        serverSpec.getTools().add(nullNameTool);
+        serverSpec.getTools().add(blankNameTool);
+
+        CapabilitySpec capabilitySpec = new CapabilitySpec();
+        capabilitySpec.getExposes().add(serverSpec);
+
+        NaftikoSpec spec = new NaftikoSpec();
+        spec.setNaftiko(schemaVersion);
+        spec.setCapability(capabilitySpec);
+
+        Capability localCapability = new Capability(spec);
+        McpServerAdapter localAdapter =
+                (McpServerAdapter) localCapability.getServerAdapters().get(0);
+
+        assertNotNull(localAdapter.getToolHandler(),
+                "ToolHandler should exist even when malformed tools are present");
+        assertEquals(1, localAdapter.getTools().size(),
+                "Only valid tools should be exposed");
+        assertEquals("ping", localAdapter.getTools().get(0).name());
     }
 
     // ── MCP protocol: initialize ──────────────────────────────────────────────────────────────────
@@ -587,4 +649,5 @@ public class ResourcesPromptsIntegrationTest {
         var dispatcher = new io.naftiko.engine.exposes.mcp.ProtocolDispatcher(adapter);
         return dispatcher.dispatch(request);
     }
+
 }

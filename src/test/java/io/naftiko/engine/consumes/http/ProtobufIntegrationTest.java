@@ -24,8 +24,8 @@ import com.fasterxml.jackson.dataformat.protobuf.schema.ProtobufSchemaLoader;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.naftiko.Capability;
 import io.naftiko.spec.NaftikoSpec;
-import io.naftiko.spec.consumes.HttpClientSpec;
-import io.naftiko.spec.exposes.RestServerSpec;
+import io.naftiko.spec.consumes.http.HttpClientSpec;
+import io.naftiko.spec.exposes.rest.RestServerSpec;
 import io.naftiko.util.VersionHelper;
 
 import java.io.File;

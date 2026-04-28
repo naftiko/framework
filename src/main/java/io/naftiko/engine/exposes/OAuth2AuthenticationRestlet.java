@@ -45,7 +45,7 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
-import io.naftiko.spec.consumes.OAuth2AuthenticationSpec;
+import io.naftiko.spec.consumes.http.OAuth2AuthenticationSpec;
 
 /**
  * Shared Restlet that implements OAuth 2.1 resource server authentication. Validates bearer tokens
@@ -352,7 +352,7 @@ public class OAuth2AuthenticationRestlet extends Restlet {
                 if (metadata.has("jwks_uri")) {
                     discoveredJwksUri = metadata.get("jwks_uri").asText();
                 }
-            } catch (Exception e) {
+            } catch (IOException e) {
                 Context.getCurrentLogger().log(Level.WARNING, "Failed to parse AS metadata", e);
             }
         }
@@ -390,7 +390,7 @@ public class OAuth2AuthenticationRestlet extends Restlet {
             }
             try {
                 fetchAndCacheJwkSet(discoveredJwksUri);
-            } catch (Exception e) {
+            } catch (IOException e) {
                 Context.getCurrentLogger().log(Level.WARNING, "JWKS refresh failed", e);
             }
             return cachedJwkSet;

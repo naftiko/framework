@@ -21,11 +21,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.naftiko.Capability;
 import io.naftiko.spec.NaftikoSpec;
-import io.naftiko.spec.ObservabilitySpec;
-import io.naftiko.spec.ObservabilityMetricsSpec;
-import io.naftiko.spec.ObservabilityLocalEndpointSpec;
-import io.naftiko.spec.ObservabilityTracesSpec;
-import io.naftiko.spec.ObservabilityTracesLocalSpec;
+import io.naftiko.spec.observability.ObservabilitySpec;
+import io.naftiko.spec.observability.ObservabilityMetricsSpec;
+import io.naftiko.spec.observability.ObservabilityLocalEndpointSpec;
+import io.naftiko.spec.observability.ObservabilityTracesSpec;
+import io.naftiko.spec.observability.ObservabilityTracesLocalSpec;
 
 import java.io.File;
 

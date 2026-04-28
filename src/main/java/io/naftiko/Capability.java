@@ -24,8 +24,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.naftiko.engine.aggregates.Aggregate;
 import io.naftiko.engine.aggregates.AggregateFunction;
 import io.naftiko.engine.aggregates.AggregateRefResolver;
-import io.naftiko.engine.exposes.OperationStepExecutor;
-import io.naftiko.engine.telemetry.TelemetryBootstrap;
+import io.naftiko.engine.util.OperationStepExecutor;
 import io.naftiko.spec.aggregates.AggregateSpec;
 import io.naftiko.spec.util.ExecutionContext;
 import io.naftiko.engine.consumes.ClientAdapter;
@@ -36,22 +35,27 @@ import io.naftiko.engine.exposes.control.ControlServerAdapter;
 import io.naftiko.engine.exposes.mcp.McpServerAdapter;
 import io.naftiko.engine.exposes.rest.RestServerAdapter;
 import io.naftiko.engine.exposes.skill.SkillServerAdapter;
+import io.naftiko.engine.observability.TelemetryBootstrap;
 import io.naftiko.engine.util.BindingResolver;
 import io.naftiko.spec.NaftikoSpec;
 import io.naftiko.spec.consumes.ClientSpec;
-import io.naftiko.spec.consumes.HttpClientSpec;
-import io.naftiko.spec.exposes.ControlServerSpec;
-import io.naftiko.spec.exposes.ScriptingManagementSpec;
-import io.naftiko.spec.exposes.RestServerSpec;
-import io.naftiko.spec.exposes.McpServerSpec;
+import io.naftiko.spec.consumes.http.HttpClientSpec;
+import io.naftiko.spec.exposes.control.ControlServerSpec;
+import io.naftiko.spec.exposes.control.ScriptingManagementSpec;
+import io.naftiko.spec.exposes.rest.RestServerSpec;
+import io.naftiko.spec.exposes.mcp.McpServerSpec;
 import io.naftiko.spec.exposes.ServerSpec;
-import io.naftiko.spec.exposes.SkillServerSpec;
+import io.naftiko.spec.exposes.skill.SkillServerSpec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
 /**
  * Main Capability class that initializes and manages adapters based on configuration
  */
 public class Capability {
+
+    private static final Logger logger = LoggerFactory.getLogger(Capability.class);
 
     private volatile NaftikoSpec spec;
     private volatile List<ServerAdapter> serverAdapters;
@@ -253,7 +257,7 @@ public class Capability {
         String filePath = (args.length > 0) ? args[0] : "naftiko.yaml";
 
         File file = new File(filePath);
-        System.out.println("Reading configuration from: " + file.getAbsolutePath());
+        logger.info("Reading configuration from: {}", file.getAbsolutePath());
 
         // Read the configuraton file
         if (file.exists()) {
@@ -267,10 +271,10 @@ public class Capability {
                 if (spec.getInfo() != null && spec.getInfo().getLabel() != null) {
                     serviceName = "naftiko-" + spec.getInfo().getLabel();
                 }
-                io.naftiko.spec.ObservabilitySpec observabilitySpec = null;
+                io.naftiko.spec.observability.ObservabilitySpec observabilitySpec = null;
                 if (spec.getCapability() != null) {
                     for (io.naftiko.spec.exposes.ServerSpec server : spec.getCapability().getExposes()) {
-                        if (server instanceof io.naftiko.spec.exposes.ControlServerSpec controlSpec) {
+                        if (server instanceof io.naftiko.spec.exposes.control.ControlServerSpec controlSpec) {
                             observabilitySpec = controlSpec.getObservability();
                             break;
                         }
@@ -281,13 +285,12 @@ public class Capability {
                 String capabilityDir = file.getParent();
                 Capability capability = new Capability(spec, capabilityDir);
                 capability.start();
-                System.out.println("Capability started successfully.");
+                logger.info("Capability started successfully.");
             } catch (Exception e) {
-                e.printStackTrace();
-                System.err.println("Error reading file: " + e.getMessage());
+                logger.error("Error reading file", e);
             }
         } else {
-            System.err.println("Error: File not found at " + filePath);
+            logger.error("Error: File not found at {}", filePath);
             System.exit(1);
         }
     }

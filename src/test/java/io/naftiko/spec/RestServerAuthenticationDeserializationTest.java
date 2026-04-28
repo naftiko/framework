@@ -20,9 +20,9 @@ import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import io.naftiko.spec.consumes.ApiKeyAuthenticationSpec;
-import io.naftiko.spec.consumes.BearerAuthenticationSpec;
-import io.naftiko.spec.exposes.RestServerSpec;
+import io.naftiko.spec.consumes.http.ApiKeyAuthenticationSpec;
+import io.naftiko.spec.consumes.http.BearerAuthenticationSpec;
+import io.naftiko.spec.exposes.rest.RestServerSpec;
 
 public class RestServerAuthenticationDeserializationTest {
 

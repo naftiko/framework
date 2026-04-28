@@ -23,8 +23,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.naftiko.Capability;
 import io.naftiko.spec.NaftikoSpec;
-import io.naftiko.spec.exposes.McpServerSpec;
-import io.naftiko.spec.exposes.McpServerToolSpec;
+import io.naftiko.spec.exposes.mcp.McpServerSpec;
+import io.naftiko.spec.exposes.mcp.McpServerToolSpec;
 
 public class ToolHandlerTest {
 
@@ -98,5 +98,31 @@ public class ToolHandlerTest {
         // Must NOT throw IllegalArgumentException("Unresolved template parameters in URI: ...")
         // (connection failure at HTTP level is acceptable — the template must be resolved first)
         assertDoesNotThrow(() -> handler.handleToolCall("get-ship", Map.of("imo", "IMO-9321483")));
+    }
+
+    @Test
+    public void constructorShouldHandleNullToolList() {
+        ToolHandler handler = assertDoesNotThrow(() -> new ToolHandler(null, null));
+
+        IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+                () -> handler.handleToolCall("unknown-tool", Map.of()));
+        assertTrue(error.getMessage().contains("Unknown tool"));
+    }
+
+    @Test
+    public void constructorShouldIgnoreMalformedToolEntries() throws Exception {
+        McpServerToolSpec valid = new McpServerToolSpec();
+        valid.setName("valid-tool");
+
+        McpServerToolSpec nullName = new McpServerToolSpec();
+        nullName.setName(null);
+
+        McpServerToolSpec blankName = new McpServerToolSpec();
+        blankName.setName("   ");
+
+        ToolHandler handler = assertDoesNotThrow(
+                () -> new ToolHandler(null, List.of(valid, nullName, blankName)));
+
+        assertNotNull(handler.handleToolCall("valid-tool", Map.of()));
     }
 }

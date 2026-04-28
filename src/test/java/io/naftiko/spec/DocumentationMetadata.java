@@ -16,11 +16,11 @@ package io.naftiko.spec;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import io.naftiko.spec.exposes.RestServerOperationSpec;
-import io.naftiko.spec.exposes.RestServerResourceSpec;
-import io.naftiko.spec.exposes.RestServerStepSpec;
-import io.naftiko.spec.exposes.OperationStepSpec;
-import io.naftiko.spec.exposes.OperationStepCallSpec;
+import io.naftiko.spec.exposes.rest.RestServerOperationSpec;
+import io.naftiko.spec.exposes.rest.RestServerResourceSpec;
+import io.naftiko.spec.exposes.rest.RestServerStepSpec;
+import io.naftiko.spec.util.OperationStepSpec;
+import io.naftiko.spec.util.OperationStepCallSpec;
 
 /**
  * Manages documentation metadata for capability specifications.

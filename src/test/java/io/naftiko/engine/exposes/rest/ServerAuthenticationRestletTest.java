@@ -22,8 +22,9 @@ import org.restlet.Restlet;
 import org.restlet.data.MediaType;
 import org.restlet.data.Method;
 import org.restlet.data.Status;
-import io.naftiko.spec.consumes.ApiKeyAuthenticationSpec;
-import io.naftiko.spec.consumes.BearerAuthenticationSpec;
+import io.naftiko.engine.exposes.ServerAuthenticationRestlet;
+import io.naftiko.spec.consumes.http.ApiKeyAuthenticationSpec;
+import io.naftiko.spec.consumes.http.BearerAuthenticationSpec;
 
 public class ServerAuthenticationRestletTest {
 

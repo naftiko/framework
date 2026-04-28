@@ -27,7 +27,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nimbusds.jose.jwk.JWKSet;
 import io.naftiko.engine.exposes.OAuth2AuthenticationRestlet;
-import io.naftiko.spec.consumes.OAuth2AuthenticationSpec;
+import io.naftiko.spec.consumes.http.OAuth2AuthenticationSpec;
 
 /**
  * MCP-specific OAuth 2.1 Restlet that extends {@link OAuth2AuthenticationRestlet} with

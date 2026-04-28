@@ -14,12 +14,11 @@
 package io.naftiko.engine.exposes.control;
 
 import static org.junit.jupiter.api.Assertions.*;
-
-import io.naftiko.engine.telemetry.TelemetryBootstrap;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.restlet.data.MediaType;
 import org.restlet.representation.Representation;
+import io.naftiko.engine.observability.TelemetryBootstrap;
 
 /**
  * Unit tests for {@link MetricsResource} — verifies Prometheus text output when the SDK is

@@ -28,8 +28,8 @@ import org.restlet.Context;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import io.naftiko.Capability;
-import io.naftiko.engine.exposes.OperationStepExecutor;
-import io.naftiko.spec.exposes.McpServerResourceSpec;
+import io.naftiko.engine.util.OperationStepExecutor;
+import io.naftiko.spec.exposes.mcp.McpServerResourceSpec;
 
 /**
  * Handles MCP resource reads by serving either dynamic (HTTP-backed) or static (file-backed)

@@ -23,9 +23,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.modelcontextprotocol.spec.McpSchema;
-import io.naftiko.spec.exposes.McpPromptArgumentSpec;
-import io.naftiko.spec.exposes.McpServerPromptSpec;
-import io.naftiko.spec.exposes.McpServerResourceSpec;
+import io.naftiko.spec.exposes.mcp.McpPromptArgumentSpec;
+import io.naftiko.spec.exposes.mcp.McpServerPromptSpec;
+import io.naftiko.spec.exposes.mcp.McpServerResourceSpec;
 
 /**
  * Transport-agnostic MCP JSON-RPC protocol dispatcher.
@@ -55,6 +55,10 @@ public class ProtocolDispatcher {
      * @return the JSON-RPC response envelope, or {@code null} for notifications
      */
     public ObjectNode dispatch(JsonNode request) {
+        if (request == null) {
+            return buildJsonRpcError(null, -32600, "Invalid Request: request body is missing");
+        }
+
         try {
             String jsonrpc = request.path("jsonrpc").asText("");
             JsonNode idNode = request.get("id");

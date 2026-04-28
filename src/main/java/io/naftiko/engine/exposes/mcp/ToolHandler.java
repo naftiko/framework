@@ -23,10 +23,10 @@ import io.modelcontextprotocol.spec.McpSchema;
 import io.naftiko.Capability;
 import io.naftiko.engine.aggregates.AggregateFunction;
 import io.naftiko.engine.aggregates.FunctionResult;
-import io.naftiko.engine.exposes.OperationStepExecutor;
-import io.naftiko.engine.telemetry.TelemetryBootstrap;
+import io.naftiko.engine.observability.TelemetryBootstrap;
+import io.naftiko.engine.util.OperationStepExecutor;
 import io.naftiko.engine.util.Resolver;
-import io.naftiko.spec.exposes.McpServerToolSpec;
+import io.naftiko.spec.exposes.mcp.McpServerToolSpec;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.context.Scope;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -57,8 +57,15 @@ public class ToolHandler {
         this.stepExecutor = new OperationStepExecutor(capability, exposeNamespace);
         this.exposeNamespace = exposeNamespace;
 
-        for (McpServerToolSpec tool : tools) {
-            toolSpecs.put(tool.getName(), tool);
+        if (tools != null) {
+            for (McpServerToolSpec tool : tools) {
+                if (tool == null || tool.getName() == null || tool.getName().isBlank()) {
+                    Context.getCurrentLogger().warning(
+                            "Skipping malformed MCP tool entry: tool or name is missing");
+                    continue;
+                }
+                toolSpecs.put(tool.getName(), tool);
+            }
         }
     }
 
