@@ -27,6 +27,13 @@ import io.naftiko.spec.exposes.mcp.McpPromptMessageSpec;
 public class PromptHandlerTest {
 
     @Test
+    public void constructorShouldTreatNullPromptListAsEmpty() {
+        PromptHandler handler = new PromptHandler(null);
+
+        assertTrue(handler.listAll().isEmpty(), "Null prompt list should behave like no prompts");
+    }
+
+    @Test
     public void renderShouldThrowWhenPromptUnknown() {
         McpServerPromptSpec spec = new McpServerPromptSpec();
         spec.setName("known-prompt");
