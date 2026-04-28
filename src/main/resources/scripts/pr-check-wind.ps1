@@ -7,7 +7,7 @@
 $PASS = 0
 $FAIL = 0
 
-function Run-Step {
+function Invoke-Step {
   param([string]$Label, [scriptblock]$Command)
   Write-Host ""
   Write-Host "------------------------------------------------------------"
@@ -28,12 +28,12 @@ function Run-Step {
   }
 }
 
-Run-Step "Maven clean + unit tests + JaCoCo" {
+Invoke-Step "Maven clean + unit tests + JaCoCo" {
   mvn clean test --no-transfer-progress
 }
 
 if (Get-Command trivy -ErrorAction SilentlyContinue) {
-  Run-Step "Trivy - vulnerabilities + secrets + misconfig" {
+  Invoke-Step "Trivy - vulnerabilities + secrets + misconfig" {
     trivy fs . --scanners vuln,secret,misconfig --format table --exit-code 0
   }
   trivy fs . --scanners vuln,secret,misconfig --format table 2>&1 | Out-File -FilePath trivy-report.txt
@@ -43,7 +43,7 @@ if (Get-Command trivy -ErrorAction SilentlyContinue) {
 }
 
 if (Get-Command gitleaks -ErrorAction SilentlyContinue) {
-  Run-Step "Gitleaks - secrets in git history" {
+  Invoke-Step "Gitleaks - secrets in git history" {
     gitleaks detect --source . --report-format json --report-path gitleaks-report.json --exit-code 0
   }
   Write-Host "Report saved: gitleaks-report.json" -ForegroundColor Yellow
