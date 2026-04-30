@@ -20,7 +20,12 @@ deploy_github(){
 
 deploy_central(){
   println "Deploying to Maven Central..."
-  mvn clean deploy -P central -DskipTests=true --no-transfer-progress
+  mvn clean deploy \
+    -P central \
+    -DskipTests=true \
+    -Dgpg.passphrase=$GPG_PASSPHRASE \
+    -Dgpg.pinentry.mode=loopback \
+    --no-transfer-progress
 }
 
 deploy_remote(){
