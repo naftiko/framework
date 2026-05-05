@@ -201,9 +201,9 @@ Tool signatures don't change. Output shapes don't change. But behind the scenes 
 Create `secrets.yaml` next to your capability:
 
 ~~~yaml
-REGISTRY_TOKEN: "sk-registry-XXXXXXXXXXXX"
-REGISTRY_VERSION: "2024-01-01"
-MCP_SERVER_TOKEN: "sk-mcp-YYYYYYYYYYYY"
+registry-bearer-token: "dummy-token"
+registry-api-version: "1.0.0-alpha2"
+mcp-server-token: "sk-mcp-YYYYYYYYYYYY"
 ~~~
 
 > 🧭 **What you learned:** `binds`, `authentication` on both consumes and MCP expose, consumes-level `inputParameters`, symmetric secret injection.
